@@ -3,9 +3,8 @@ export function tokenize(input) {
     const tokens = [];
 
     const TEXT_CHUNK_REG = /[^<>{}]/
-    const NAME_CHUNK_REG = /[a-z-]/i
-    const KEBAB_CASE = /^([a-z][a-z0-9]*)(-[a-z0-9]+)*$/i;
-
+    const KEBAB_CASE_SYMBOLS = /[a-z-]/
+    const KEBAB_CASE = /^([a-z][a-z0-9]*)(-[a-z0-9]+)*$/;
     const LOWER_CAMEL_CASE = /^[a-z][a-zA-Z0-9]+$/
 
     function getLastTagWithChildrenStarted() {
@@ -47,14 +46,14 @@ export function tokenize(input) {
         }
     }
 
-    function readNameToken() {
-        if (!NAME_CHUNK_REG.test(input[current])) {
+    function readKebabWord() {
+        if (!KEBAB_CASE_SYMBOLS.test(input[current])) {
             throw new TypeError(`Invalid name token chunk found at ${current}: ${input[current]}`)
         }
 
         let value = input[current];
 
-        while (NAME_CHUNK_REG.test(input[++current]) && current < input.length) {
+        while (KEBAB_CASE_SYMBOLS.test(input[++current]) && current < input.length) {
             value += input[current];
         }
 
@@ -70,35 +69,59 @@ export function tokenize(input) {
             throw new TypeError(`Invalid serial value. "{" expected at ${current}, not "${input[current]}"`)
         }
 
-        current++;
+        let value = input[++current];
 
-        let value = input[current];
-
-        while (input[current] !== '}') {
-            value += input[current++];
-
-            if (!LOWER_CAMEL_CASE.test(value)) {
-
-            }
+        while (input[++current] !== '}') {
+            value += input[current];
         }
-    }
 
-    function readAttrToken() {
-        const name = readNameToken();
-
-        if (input[current] !== '=') {
-            return { name, value: null };
+        if (!LOWER_CAMEL_CASE.test(value)) {
+            throw new TypeError(`Invalid serial value chunk found at ${current}: ${input[current]}`)
         }
 
         current++;
         skipSpaces();
 
-        let type;
-        let value;
+        return value;
+    }
+
+    function readStringValue() {
+        if (input[current] !== '"') {
+            throw new TypeError(`Invalid string value. '"' expected at ${current}, not '${input[current]}'`)
+        }
+
+        let value = input[++current];
+
+        while (input[++current] !== '"') {
+            value += input[current];
+        }
+
+        if (!LOWER_CAMEL_CASE.test(value)) {
+            throw new TypeError(`Invalid string value passed: ${value}`)
+        }
+
+        current++;
+        skipSpaces();
+
+        return value;
+    }
+
+    function readAttrToken() {
+        const name = readKebabWord();
+
+        if (input[current] !== '=') {
+            return {name, value: null};
+        }
+
+        current++;
+        skipSpaces();
 
         if (input[current] === '{') {
-            type = 'serial';
-            value = readSerialValue();
+            return {valueType: 'serial', value: readSerialValue()};
+        } else if (input[current] === '"') {
+            return {valueType: 'string', value: readStringValue()};
+        } else {
+            throw new TypeError(`Unresolved attribute value at ${current}. '{' or '"' expected, got ''${input[current]}`);
         }
     }
 
@@ -127,7 +150,7 @@ export function tokenize(input) {
             current++;
             skipSpaces();
 
-            const tagName = readNameToken();
+            const tagName = readKebabWord();
 
             if (input[current] !== '>') {
                 throw new TypeError(`Invalid end tag. ">" expected at ${current}, not "${input[current]}"`);
@@ -143,7 +166,7 @@ export function tokenize(input) {
             return {name: tagName, isStart: false};
         }
 
-        const tagName = readNameToken();
+        const tagName = readKebabWord();
         skipSpaces();
 
         return {name: tagName, isStart: true};
@@ -173,7 +196,7 @@ export function tokenize(input) {
         let char = input[current];
 
         if (char === '<') {
-            const { name, isStart } = readOpenedTag();
+            const {name, isStart} = readOpenedTag();
             tokens.push({
                 type: 'tag',
                 name: name,
@@ -240,18 +263,15 @@ export function tokenize(input) {
             && TEXT_CHUNK_REG.test(char)) {
 
             const text = readTextToken();
-            tokens.push({ type: 'text', value: text });
+            tokens.push({type: 'text', value: text});
 
             continue;
         }
 
-        if (lastTokenBodyState === 'start' && NAME_CHUNK_REG.test(char)) {
-            const nameToken = readNameToken();
+        if (lastTokenBodyState === 'start' && KEBAB_CASE_SYMBOLS.test(char)) {
+            const {valueType, value} = readAttrToken();
+            tokens.push({type: 'attr', valueType, value});
 
-            tokens.push({
-                type: 'name',
-                value: nameToken
-            })
             continue;
         }
 
