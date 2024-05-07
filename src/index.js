@@ -5,12 +5,12 @@ import {tokenize} from "./core/vanilla-jsx.js";
 
 const text = `
 <div>
-    <button disabled onclick={hello}>Click Me!</button>
-    <app-counter type="countdown"/>
-    <ul>
+    <button onclick={sayHello} onhover={sayBye} disabled></button>
+    <app-counter class="counter" _initial={initial} _onTick={sayHello}></app-counter>
+    <ul $mapping={cards} $mapContext="card">
         <article>
-            <p>(title)</p>
-            <button>Set favorite</button>
+            <p $context="card">(title)</p>
+            <button onclick={sayHello}>Set favorite</button>
         </article>
     </ul>
 </div>`

@@ -2,11 +2,6 @@ export function tokenize(input) {
     let current = 0;
     const tokens = [];
 
-    const TEXT_CHUNK_REG = /[^<>{}]/
-    const KEBAB_CASE_SYMBOLS = /[a-z-]/
-    const KEBAB_CASE = /^([a-z][a-z0-9]*)(-[a-z0-9]+)*$/;
-    const LOWER_CAMEL_CASE = /^[a-z][a-zA-Z0-9]+$/
-
     function getLastTagWithChildrenStarted() {
         let tagStack = [];
         const tags = tokens.filter(t => t.type === 'tag');
@@ -46,24 +41,50 @@ export function tokenize(input) {
     }
 
     function readKebabWord() {
-        if (!KEBAB_CASE_SYMBOLS.test(input[current])) {
-            throw new TypeError(`Invalid name token chunk found at ${current}: ${input[current]}`)
+        const ACCEPTED_SYMBOLS = /[a-z-]/;
+        const KEBAB_CASE = /^([a-z][a-z0-9]*)(-[a-z0-9]+)*$/;
+
+        if (!ACCEPTED_SYMBOLS.test(input[current])) {
+            throw new TypeError(`Invalid kebab word char found at ${current}: ${input[current]}`)
         }
 
         let value = input[current];
 
-        while (KEBAB_CASE_SYMBOLS.test(input[++current]) && current < input.length) {
+        while (ACCEPTED_SYMBOLS.test(input[++current]) && current < input.length) {
             value += input[current];
         }
 
         if (!KEBAB_CASE.test(value)) {
-            throw new TypeError(`Invalid name token "${value}"`)
+            throw new TypeError(`Invalid kebab word "${value}"`)
+        }
+
+        return value
+    }
+
+    function readCamelWord() {
+        const ACCEPTED_SYMBOLS = /[a-z0-9]/i
+        const LOWER_CAMEL_CASE = /^[a-z][a-zA-Z0-9]+$/;
+
+        if (!ACCEPTED_SYMBOLS.test(input[current])) {
+            throw new TypeError(`Invalid camel case word char found at ${current}: ${input[current]}`)
+        }
+
+        let value = input[current];
+
+        while (ACCEPTED_SYMBOLS.test(input[++current]) && current < input.length) {
+            value += input[current];
+        }
+
+        if (!LOWER_CAMEL_CASE.test(value)) {
+            throw new TypeError(`Invalid camel case word "${value}"`)
         }
 
         return value
     }
 
     function readSerialValue() {
+        const SERIAL_VALUE = /^[a-z][a-z0-9]*$/i
+
         if (input[current] !== '{') {
             throw new TypeError(`Invalid serial value. "{" expected at ${current}, not "${input[current]}"`)
         }
@@ -74,7 +95,7 @@ export function tokenize(input) {
             value += input[current];
         }
 
-        if (!LOWER_CAMEL_CASE.test(value)) {
+        if (!SERIAL_VALUE.test(value)) {
             throw new TypeError(`Invalid serial value chunk found at ${current}: ${input[current]}`)
         }
 
@@ -95,10 +116,6 @@ export function tokenize(input) {
             value += input[current];
         }
 
-        if (!LOWER_CAMEL_CASE.test(value)) {
-            throw new TypeError(`Invalid string value passed: ${value}`)
-        }
-
         current++;
         skipSpaces();
 
@@ -106,7 +123,13 @@ export function tokenize(input) {
     }
 
     function readAttrToken() {
-        const name = readKebabWord();
+        const ATTRIBUTE_PREFIX_REG = /[_$]/;
+        let prefix = '';
+
+        if (ATTRIBUTE_PREFIX_REG.test(input[current])) {
+            prefix = input[current++];
+        }
+        const name = prefix + readCamelWord();
 
         if (input[current] !== '=') {
             skipSpaces();
@@ -126,6 +149,8 @@ export function tokenize(input) {
     }
 
     function readTextToken() {
+        const TEXT_CHUNK_REG = /[^<>{}]/;
+
         if (!TEXT_CHUNK_REG.test(input[current])) {
             throw new TypeError(`Invalid text token chunk found at ${current}: ${input[current]}`)
         }
@@ -235,15 +260,14 @@ export function tokenize(input) {
 
         const lastTokenBodyState = tokens.filter(t => t.type === 'tag').at(-1).body;
 
-        if ((tokens.length === 0 || lastTokenBodyState !== 'start')
-            && TEXT_CHUNK_REG.test(char)) {
+        if (tokens.length === 0 || lastTokenBodyState !== 'start') {
             const text = readTextToken();
             tokens.push({type: 'text', value: text});
 
             continue;
         }
 
-        if (lastTokenBodyState === 'start' && KEBAB_CASE_SYMBOLS.test(char)) {
+        if (lastTokenBodyState === 'start') {
             const {name, valueType, value} = readAttrToken();
             tokens.push({type: 'attr', name, valueType, value});
 
