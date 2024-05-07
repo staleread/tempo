@@ -5,7 +5,7 @@ import {tokenize} from "./core/vanilla-jsx.js";
 
 const text = `
 <div>
-    <button onclick={hello} disabled>Click Me!</button>
+    <button disabled onclick={hello}>Click Me!</button>
     <app-counter type="countdown"/>
     <ul>
         <article>

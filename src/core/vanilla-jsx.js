@@ -22,7 +22,6 @@ export function tokenize(input) {
         return tagStack.at(-1);
     }
 
-
     function getLastTagWithBodyStarted() {
         let tagStack = [];
         const tags = tokens.filter(t => t.type === 'tag');
@@ -110,6 +109,7 @@ export function tokenize(input) {
         const name = readKebabWord();
 
         if (input[current] !== '=') {
+            skipSpaces();
             return {name, value: null};
         }
 
@@ -117,9 +117,9 @@ export function tokenize(input) {
         skipSpaces();
 
         if (input[current] === '{') {
-            return {valueType: 'serial', value: readSerialValue()};
+            return {name, valueType: 'serial', value: readSerialValue()};
         } else if (input[current] === '"') {
-            return {valueType: 'string', value: readStringValue()};
+            return {name, valueType: 'string', value: readStringValue()};
         } else {
             throw new TypeError(`Unresolved attribute value at ${current}. '{' or '"' expected, got ''${input[current]}`);
         }
@@ -233,35 +233,10 @@ export function tokenize(input) {
             continue;
         }
 
-        // if (char === '{') {
-        //     console.log('Found {');
-
-        //     tokens.push({
-        //         type: 'literal-paren',
-        //         value: '{'
-        //     });
-
-        //     current++;
-        //     continue;
-        // }
-
-        // if (char === '}') {
-        //     console.log('Found }');
-
-        //     tokens.push({
-        //         type: 'literal-paren',
-        //         value: '}'
-        //     });
-
-        //     current++;
-        //     continue;
-        // }
-
-        const lastTokenBodyState = tokens.at(-1)?.body;
+        const lastTokenBodyState = tokens.filter(t => t.type === 'tag').at(-1).body;
 
         if ((tokens.length === 0 || lastTokenBodyState !== 'start')
             && TEXT_CHUNK_REG.test(char)) {
-
             const text = readTextToken();
             tokens.push({type: 'text', value: text});
 
@@ -269,12 +244,13 @@ export function tokenize(input) {
         }
 
         if (lastTokenBodyState === 'start' && KEBAB_CASE_SYMBOLS.test(char)) {
-            const {valueType, value} = readAttrToken();
-            tokens.push({type: 'attr', valueType, value});
+            const {name, valueType, value} = readAttrToken();
+            tokens.push({type: 'attr', name, valueType, value});
 
             continue;
         }
 
+        console.log(tokens)
         throw new TypeError(`Not expected token found at ${current}: ${input[current]}`)
     }
     return tokens;
