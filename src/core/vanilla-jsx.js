@@ -172,7 +172,7 @@ export function tokenize(input) {
         return {name: tagName, isStart: true};
     }
 
-    function readChildfreeTagBodyEnd() {
+    function readChildFreeTagBodyEnd() {
         if (input[current] !== '/') {
             throw new TypeError(`Invalid closing end tag. "/" expected at ${current}, not "${input[current]}"`);
         }
@@ -208,7 +208,7 @@ export function tokenize(input) {
         }
 
         if (char === '/') {
-            const name = readChildfreeTagBodyEnd();
+            const name = readChildFreeTagBodyEnd();
             tokens.push({
                 type: 'tag',
                 name: name,
