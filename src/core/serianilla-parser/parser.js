@@ -1,6 +1,6 @@
 import {tokenize} from "./tokenizer.js";
 
-export function parseComponentChildren({template, imports, attach}) {
+export function parseUnwrappedComponentNodes({template, imports, attach}) {
     const attachMap = new Map(Object.entries(attach ?? {}));
     const importsMap = new Map(Object.entries(imports ?? {}));
 
@@ -40,7 +40,7 @@ export function parseComponentChildren({template, imports, attach}) {
             }
 
             const component = importsMap.get(token.name);
-            node.children = parseComponentChildren(component(props));
+            node.children = parseUnwrappedComponentNodes(component(props));
 
             // skip all implicit child nodes
             token = tokens[++current];

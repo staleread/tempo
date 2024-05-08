@@ -1,5 +1,5 @@
 import {printTree} from "../serianilla-parser/traverser.js";
-import {parseComponentChildren} from "../serianilla-parser/parser.js";
+import {parseUnwrappedComponentNodes} from "../serianilla-parser/parser.js";
 
 export class Serianilla {
     _virtualDOM = {};
@@ -18,7 +18,7 @@ export class Serianilla {
             children: []
         }
 
-        ast.children = parseComponentChildren(component())
+        ast.children = parseUnwrappedComponentNodes(component())
         console.log(ast)
         printTree(ast)
     }
