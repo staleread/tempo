@@ -24,14 +24,14 @@ export class Serianilla {
         }
     }
 
-    render({input, values, imports}) {
+    render(component) {
         const ast = {
             type: this._virtualDOM.type,
             name: this._virtualDOM.name,
             children: []
         }
 
-        ast.children = parseComponentChildren({input, values, imports})
+        ast.children = parseComponentChildren(component())
         console.log(ast)
         printTree(ast)
     }

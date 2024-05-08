@@ -36,4 +36,4 @@ import {App} from "./App.js";
 // printTree(virtualDOM);
 
 const ser = new Serianilla(document.getElementById('root'));
-ser.render(App())
+ser.render(App)
