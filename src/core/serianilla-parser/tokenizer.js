@@ -158,7 +158,7 @@ export function tokenize(input) {
 
         if (input[current] !== '=') {
             skipSpaces();
-            return {name, value: null};
+            return {name, valueType: 'empty', value: null};
         }
 
         current++;
@@ -181,11 +181,26 @@ export function tokenize(input) {
         const lastTag = getLastTag();
 
         if (!isTagBody() || !lastTag.isCustom) {
-            throw new TypeError(`Props token is not allowed here`)
+            throw new TypeError(`Trying to pass props at ${current}: Props are only allowed inside custom tag's body`)
         }
 
         current++;
-        return readAttrToken();
+        const name = readLowerCamelWord();
+
+        if (input[current] !== '=') {
+            throw new TypeError(`Invalid prop "$${name}" at ${current}: Empty props are not allowed`)
+        }
+
+        current++;
+        skipSpaces();
+
+        if (input[current] === '{') {
+            return {name, valueType: 'serial', value: readSerialValue()};
+        } else if (input[current] === '"') {
+            return {name, valueType: 'string', value: readStringValue()};
+        } else {
+            throw new TypeError(`Unresolved attribute value at ${current}. '{' or '"' expected, got ''${input[current]}`);
+        }
     }
 
     const readTextToken = () => {
