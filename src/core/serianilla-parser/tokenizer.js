@@ -2,6 +2,14 @@ export function tokenize(input) {
     let current = 0;
     const tokens = [];
 
+    const getLastTag = () => tokens.filter(t => t.type === 'tag').at(-1);
+
+    const isTagBody = () => {
+        const lastTag = getLastTag();
+
+        return lastTag && lastTag.body === 'start'
+    }
+
     function getLastTagWithChildrenStarted() {
         let tagStack = [];
         const tags = tokens.filter(t => t.type === 'tag');
@@ -146,13 +154,7 @@ export function tokenize(input) {
     }
 
     function readAttrToken() {
-        const ATTRIBUTE_PREFIX_REG = /[_$]/;
-        let prefix = '';
-
-        if (ATTRIBUTE_PREFIX_REG.test(input[current])) {
-            prefix = input[current++];
-        }
-        const name = prefix + readLowerCamelWord();
+        const name = readLowerCamelWord();
 
         if (input[current] !== '=') {
             skipSpaces();
@@ -169,6 +171,21 @@ export function tokenize(input) {
         } else {
             throw new TypeError(`Unresolved attribute value at ${current}. '{' or '"' expected, got ''${input[current]}`);
         }
+    }
+
+    function readPropsToken() {
+        if (input[current] !== '$') {
+            throw new TypeError(`Invalid props prefix at ${current}. '$' expected, got '${input[current]}'`)
+        }
+
+        const lastTag = getLastTag();
+
+        if (!isTagBody() || !lastTag.isCustom) {
+            throw new TypeError(`Props token is not allowed here`)
+        }
+
+        current++;
+        return readAttrToken();
     }
 
     function readTextToken() {
@@ -315,23 +332,18 @@ export function tokenize(input) {
             continue;
         }
 
-        const lastTokenBodyState = tokens.filter(t => t.type === 'tag').at(-1)?.body;
+        if (isTagBody()) {
+            const isProps = char === '$';
+            const {name, valueType, value} = isProps ? readPropsToken() : readAttrToken();
 
-        if (tokens.length === 0 || lastTokenBodyState !== 'start') {
-            const text = readTextToken();
-            tokens.push({type: 'text', value: text});
-
-            continue;
+            isProps
+                ? tokens.push({type: 'props', name, valueType, value})
+                : tokens.push({type: 'attr', name, valueType, value});
+            continue
         }
 
-        if (lastTokenBodyState === 'start') {
-            const {name, valueType, value} = readAttrToken();
-            tokens.push({type: 'attr', name, valueType, value});
-
-            continue;
-        }
-
-        throw new TypeError(`Not expected token found at ${current}: ${input[current]}`)
+        const text = readTextToken();
+        tokens.push({type: 'text', value: text});
     }
 
     const unclosedBodyTag = getLastTagWithBodyStarted();
