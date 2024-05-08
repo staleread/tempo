@@ -15,11 +15,8 @@ export class Serianilla {
     render(component) {
         const ast = {
             type: 'RootNode',
-            children: []
+            children: parseUnwrappedComponentNodes(component())
         }
-
-        ast.children = parseUnwrappedComponentNodes(component())
-        console.log(ast)
         printTree(ast)
     }
 }
