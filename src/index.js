@@ -1,5 +1,6 @@
 import {tokenize} from "./core/serianilla-parser/tokenizer.js";
 import {parseNodeList} from "./core/serianilla-parser/parser.js";
+import {printTree} from "./core/serianilla-parser/traverser.js";
 
 const cards = [
     {title: 'Summer'},
@@ -24,4 +25,13 @@ const tokens = tokenize(input);
 console.log(tokens)
 
 const nodes = parseNodeList(tokens);
-console.dir(nodes)
+console.dir(nodes);
+
+const virtualDOM = {
+    type: 'PrimitiveNode',
+    name: 'div',
+    attrs: [{name: 'class', valueType: 'string', value: 'root'}],
+    children: nodes
+}
+
+printTree(virtualDOM);
