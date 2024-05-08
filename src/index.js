@@ -1,4 +1,4 @@
-import {tokenize} from "./core/vanilla-jsx.js";
+import {tokenize} from "./core/serianilla-parser/tokenizer.js";
 
 // const text = `Hello, World`;
 const text = `
