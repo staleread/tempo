@@ -1,4 +1,5 @@
 import {tokenize} from "./core/serianilla-parser/tokenizer.js";
+import {parseNodeList} from "./core/serianilla-parser/parser.js";
 
 const cards = [
     {title: 'Summer'},
@@ -21,3 +22,6 @@ console.log(input)
 
 const tokens = tokenize(input);
 console.log(tokens)
+
+const nodes = parseNodeList(tokens);
+console.dir(nodes)
