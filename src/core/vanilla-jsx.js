@@ -283,8 +283,15 @@ export function tokenize(input) {
             continue;
         }
 
-        console.log(tokens)
         throw new TypeError(`Not expected token found at ${current}: ${input[current]}`)
     }
+
+    const unclosedBodyTag = getLastTagWithBodyStarted();
+    if (unclosedBodyTag) throw new TypeError(`Unclosed tag body detected: ${unclosedBodyTag}. Add "/>"`);
+
+    const unclosedChildrenTag = getLastTagWithChildrenStarted();
+    if (unclosedChildrenTag)
+        throw new TypeError(`Unclosed children of tag "${unclosedChildrenTag}" detected. Add "</ ${unclosedChildrenTag}>" closing tag`);
+
     return tokens;
 }

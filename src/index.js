@@ -6,7 +6,7 @@ const text = `
 <p>
     Hello {count} times! 
 </p>
-<img src="lalala" alt="happy">!</img>`;
+<img src="lalala" alt="happy">!</img> Happy!`;
 
 // const text = `
 // <div>
