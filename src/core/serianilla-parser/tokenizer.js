@@ -53,11 +53,10 @@ export function tokenize(input) {
         const KEBAB_CASE = /^([a-z][a-z0-9]*)(-[a-z0-9]+)*$/;
 
         if (!ACCEPTED_SYMBOLS.test(input[current])) {
-            throw new TypeError(`Invalid kebab word char found at ${current}: ${input[current]}`)
+            throw new TypeError(`Reading kebab word, an invalid char was found at ${current}: ${input[current]}`)
         }
 
         let value = input[current];
-
         while (ACCEPTED_SYMBOLS.test(input[++current]) && current < input.length) {
             value += input[current];
         }
@@ -66,6 +65,21 @@ export function tokenize(input) {
             throw new TypeError(`Invalid kebab word "${value}"`)
         }
 
+        return value
+    }
+
+    const readAttributeName = () => {
+        const ACCEPTED_SYMBOLS = /[a-z-]/i;
+
+        if (!ACCEPTED_SYMBOLS.test(input[current])) {
+            throw new TypeError(`Reading attribute name, an invalid char was found at ${current}: ${input[current]}`)
+        }
+
+        let value = input[current];
+
+        while (ACCEPTED_SYMBOLS.test(input[++current]) && current < input.length) {
+            value += input[current];
+        }
         return value
     }
 
@@ -154,7 +168,7 @@ export function tokenize(input) {
     }
 
     const readAttrToken = () => {
-        const name = readLowerCamelWord();
+        const name = readAttributeName();
 
         if (input[current] !== '=') {
             skipSpaces();
@@ -233,7 +247,7 @@ export function tokenize(input) {
             skipSpaces();
 
             const isCustom = UPPER.test(input[current]);
-            const tagName = isCustom ? readUpperCamelWord(): readKebabWord();
+            const tagName = isCustom ? readUpperCamelWord(): readAttributeName();
             skipSpaces();
 
             if (input[current] !== '>') {
