@@ -89,14 +89,15 @@ export function tokenize(input) {
             throw new TypeError(`Invalid serial value. "{" expected at ${current}, not "${input[current]}"`)
         }
 
-        let value = input[++current];
+        let value = '';
+        current++;
 
-        while (input[++current] !== '}') {
-            value += input[current];
+        while (input[current] !== '"') {
+            value += input[current++];
         }
 
         if (!SERIAL_VALUE.test(value)) {
-            throw new TypeError(`Invalid serial value chunk found at ${current}: ${input[current]}`)
+            throw new TypeError(`Invalid serial value found at ${current}: ${value}`)
         }
 
         current++;
@@ -110,10 +111,11 @@ export function tokenize(input) {
             throw new TypeError(`Invalid string value. '"' expected at ${current}, not '${input[current]}'`)
         }
 
-        let value = input[++current];
+        let value = '';
+        current++;
 
-        while (input[++current] !== '"') {
-            value += input[current];
+        while (input[current] !== '"') {
+            value += input[current++];
         }
 
         current++;
