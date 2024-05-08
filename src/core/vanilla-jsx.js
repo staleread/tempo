@@ -162,7 +162,7 @@ export function tokenize(input) {
         while (TEXT_CHUNK_REG.test(input[++current]) && current < input.length) {
             value += input[current];
         }
-        return value
+        return value.trim();
     }
 
     function readOpenedTag() {

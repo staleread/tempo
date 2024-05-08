@@ -1,7 +1,7 @@
 import {tokenize} from "./core/vanilla-jsx.js";
 
 // const text = `Hello, World`;
-const text = `<img src="" alt=""/> Some@#1 Text<img src="lalala" alt="happy">!</img>`;
+const text = `<img src="" alt=""/> Some@#1 Text <img src="lalala" alt="happy">!</img>`;
 
 // const text = `
 // <div>
