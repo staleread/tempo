@@ -1,4 +1,4 @@
-export function parseNodeList(tokens) {
+export function parseNodeList(tokens, valuesMap) {
     let current = 0;
 
     const walkChildNode = () => {
@@ -22,14 +22,12 @@ export function parseNodeList(tokens) {
                 if (token.type === 'props') {
                     node.props.push({
                         name: token.name,
-                        valueType: token.valueType,
-                        value: token.value
+                        value: token.valueType === 'serial' ? valuesMap.get(token.value) : token.value
                     })
                 } else if (token.type === 'attr') {
                     node.attrs.push({
                         name: token.name,
-                        valueType: token.valueType,
-                        value: token.value
+                        value: token.valueType === 'serial' ? valuesMap.get(token.value) : token.value
                     })
                 } else {
                     throw new TypeError(`Invalid token found inside tag body`);
@@ -70,8 +68,7 @@ export function parseNodeList(tokens) {
                 if (token.type === 'attr') {
                     node.attrs.push({
                         name: token.name,
-                        valueType: token.valueType,
-                        value: token.value
+                        value: token.valueType === 'serial' ? valuesMap.get(token.value) : token.value
                     })
                 } else {
                     throw new TypeError(`Invalid token found inside tag body`);
@@ -106,8 +103,8 @@ export function parseNodeList(tokens) {
             current++;
 
             return {
-                type: 'SerialValueNode',
-                value: token.value
+                type: 'TextNode',
+                value: valuesMap.get(token.value)
             }
         }
 
