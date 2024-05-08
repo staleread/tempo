@@ -23,27 +23,20 @@ export function traverseTree(ast, visitor) {
 }
 
 export const printTree = (ast) => traverseTree(ast, {
-    CustomNode: {
+    TagNode: {
         onEnter: (node) => {
-            console.log('Found Custom Node: ' + node.name)
-        }
-    },
-    PrimitiveNode: {
-        onEnter: (node) => {
-            console.log(`Found Primitive Node "${node.name}" with ${node.children.length} children`)
-        }
+            console.log(`-> <${node.tag}>`)
+        },
+        onExit: (node) => {
+            console.log(`<- <${node.tag}>`)
+        },
     },
     TextNode: {
         onEnter: (node) => {
-            console.log(`Found Text Node "${node.value}"`)
+            console.log(`->"${node.value}"`)
         },
         onExit: (node) => {
-            console.log(`Goodbye Text Node "${node.value}"!`)
+            console.log(`<- "${node.value}"`)
         }
     },
-    SerialValueNode: {
-        onEnter: (node) => {
-            console.log(`Found Serial Node "${node.value}"`)
-        }
-    }
 })
