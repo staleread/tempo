@@ -178,6 +178,7 @@ export function tokenize(input) {
             skipSpaces();
 
             const tagName = readKebabWord();
+            skipSpaces();
 
             if (input[current] !== '>') {
                 throw new TypeError(`Invalid end tag. ">" expected at ${current}, not "${input[current]}"`);
