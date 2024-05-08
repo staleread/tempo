@@ -6,8 +6,7 @@ export class Serianilla {
 
     constructor(root) {
         this._virtualDOM = {
-            type: 'TagNode',
-            tag: root.localName,
+            type: 'RootNode',
             ref: root,
             children: []
         }
@@ -15,8 +14,7 @@ export class Serianilla {
 
     render(component) {
         const ast = {
-            type: this._virtualDOM.type,
-            tag: this._virtualDOM.tag,
+            type: 'RootNode',
             children: []
         }
 

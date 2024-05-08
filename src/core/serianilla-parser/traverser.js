@@ -23,6 +23,14 @@ export function traverseTree(ast, visitor) {
 }
 
 export const printTree = (ast) => traverseTree(ast, {
+    RootNode: {
+        onEnter: (node) => {
+            console.log(`-> ROOT`)
+        },
+        onExit: (node) => {
+            console.log(`<- ROOT`)
+        },
+    },
     TagNode: {
         onEnter: (node) => {
             console.log(`-> <${node.tag}>`)
@@ -33,7 +41,7 @@ export const printTree = (ast) => traverseTree(ast, {
     },
     TextNode: {
         onEnter: (node) => {
-            console.log(`->"${node.value}"`)
+            console.log(`-> "${node.value}"`)
         },
         onExit: (node) => {
             console.log(`<- "${node.value}"`)
