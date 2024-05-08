@@ -1,6 +1,6 @@
 export const TestComponent = () => {
     return {
-        input: `
+        template: `
         <article>
             <p>Test Component</p>
         </article>`

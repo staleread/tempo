@@ -1,10 +1,10 @@
 import {tokenize} from "./tokenizer.js";
 
-export function parseComponentChildren({input, values = {}, imports = {}}) {
-    const valuesMap = new Map(Object.entries(values));
-    const importsMap = new Map(Object.entries(imports));
+export function parseComponentChildren({template, imports, attach}) {
+    const attachMap = new Map(Object.entries(attach ?? {}));
+    const importsMap = new Map(Object.entries(imports ?? {}));
 
-    const tokens = tokenize(input);
+    const tokens = tokenize(template);
     let current = 0;
 
     const walkChildNode = () => {
@@ -28,12 +28,12 @@ export function parseComponentChildren({input, values = {}, imports = {}}) {
                 if (token.type === 'props') {
                     node.props.push({
                         name: token.name,
-                        value: token.valueType === 'serial' ? valuesMap.get(token.value) : token.value
+                        value: token.valueType === 'serial' ? attachMap.get(token.value) : token.value
                     })
                 } else if (token.type === 'attr') {
                     node.attrs.push({
                         name: token.name,
-                        value: token.valueType === 'serial' ? valuesMap.get(token.value) : token.value
+                        value: token.valueType === 'serial' ? attachMap.get(token.value) : token.value
                     })
                 } else {
                     throw new TypeError(`Invalid token found inside tag body`);
@@ -71,7 +71,7 @@ export function parseComponentChildren({input, values = {}, imports = {}}) {
                 if (token.type === 'attr') {
                     node.attrs.push({
                         name: token.name,
-                        value: token.valueType === 'serial' ? valuesMap.get(token.value) : token.value
+                        value: token.valueType === 'serial' ? attachMap.get(token.value) : token.value
                     })
                 } else {
                     throw new TypeError(`Invalid token found inside tag body`);
@@ -107,7 +107,7 @@ export function parseComponentChildren({input, values = {}, imports = {}}) {
 
             return {
                 type: 'TextNode',
-                value: valuesMap.get(token.value)
+                value: attachMap.get(token.value)
             }
         }
         if (current >= tokens.length) {

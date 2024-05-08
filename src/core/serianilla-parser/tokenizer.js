@@ -218,7 +218,7 @@ export function tokenize(input) {
     }
 
     const readTextToken = () => {
-        const TEXT_CHUNK_REG = /[^<>{}]/;
+        const TEXT_CHUNK_REG = /[^<>]/;
 
         if (!TEXT_CHUNK_REG.test(input[current])) {
             throw new TypeError(`Invalid text token chunk found at ${current}: ${input[current]}`)
@@ -350,13 +350,6 @@ export function tokenize(input) {
                 body: 'end',
                 children: 'start',
             });
-
-            continue;
-        }
-
-        if (char === '{') {
-            const value = readSerialValue();
-            tokens.push({type: 'serial', value});
 
             continue;
         }

@@ -1,17 +1,22 @@
 import {TestComponent} from "./components/TestComponent.js";
 
 export const App = () => {
+    const name = 'Nicolas';
+
     return {
-        input: `
-        <div>
-            <TestComponent></TestComponent>
-            <button>Hello, {name}!</button>
-        </div>`,
-        values: {
-            name: 'Nicolas'
-        },
         imports: {
             TestComponent
-        }
+        },
+        template: `
+        <div>
+            <TestComponent $data={secretData}></TestComponent>
+            <button>Hello, ${name}!</button>
+        </div>`,
+        attach: {
+            secretData: {
+                title: 'Secret',
+                text: 'Super secret information'
+            }
+        },
     }
 }
