@@ -92,7 +92,7 @@ export function tokenize(input) {
         let value = '';
         current++;
 
-        while (input[current] !== '"') {
+        while (input[current] !== '}') {
             value += input[current++];
         }
 
@@ -256,6 +256,13 @@ export function tokenize(input) {
                 body: 'end',
                 children: 'start',
             });
+
+            continue;
+        }
+
+        if (char === '{') {
+            const value = readSerialValue();
+            tokens.push({type: 'serial', value});
 
             continue;
         }
