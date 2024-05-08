@@ -1,4 +1,10 @@
-export function parseNodeList(tokens, valuesMap) {
+import {tokenize} from "./tokenizer.js";
+
+export function parseComponentChildren({input, values = {}, imports = {}}) {
+    const valuesMap = new Map(Object.entries(values));
+    const importsMap = new Map(Object.entries(imports));
+
+    const tokens = tokenize(input);
     let current = 0;
 
     const walkChildNode = () => {
@@ -9,9 +15,9 @@ export function parseNodeList(tokens, valuesMap) {
             token.isCustom) {
 
             const node = {
-                type: 'CustomNode',
-                name: token.name,
-                attrs: [],
+                type: 'PrimitiveNode',
+                name: 'div',
+                attrs: [{name: 'class', value: token.name}],
                 props: [],
                 children: []
             };
@@ -36,17 +42,14 @@ export function parseNodeList(tokens, valuesMap) {
                 token = tokens[++current];
             }
 
-            // ===== Custom tags' children are ignored =====
-            // if (!token.children) {
-            //     return node;
-            // }
-            //
-            // while (token.type !== 'tag' && token.children !== 'end') {
-            //     node.children.push(walkChildNode());
-            //     token = tokens[current];
-            // }
-            // ==============================================
+            const componentFunc = importsMap.get(token.name);
+            node.children = parseComponentChildren(componentFunc());
 
+            // skip all implicit child nodes
+            token = tokens[++current];
+            while (token.type !== 'tag' && token.children !== 'end') {
+                token = tokens[++current];
+            }
             current++;
 
             return node;
@@ -107,7 +110,6 @@ export function parseNodeList(tokens, valuesMap) {
                 value: valuesMap.get(token.value)
             }
         }
-
         if (current >= tokens.length) {
             return
         }

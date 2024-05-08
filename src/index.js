@@ -1,6 +1,3 @@
-import {tokenize} from "./core/serianilla-parser/tokenizer.js";
-import {parseNodeList} from "./core/serianilla-parser/parser.js";
-import {printTree} from "./core/serianilla-parser/traverser.js";
 import {Serianilla} from "./core/serianilla-core/Serianilla.js";
 import {App} from "./App.js";
 

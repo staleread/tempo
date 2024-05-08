@@ -1,5 +1,5 @@
 import {printTree} from "../serianilla-parser/traverser.js";
-import {parseNodeList} from "../serianilla-parser/parser.js";
+import {parseComponentChildren} from "../serianilla-parser/parser.js";
 import {tokenize} from "../serianilla-parser/tokenizer.js";
 
 export class Serianilla {
@@ -31,10 +31,9 @@ export class Serianilla {
             children: []
         }
 
-        const valuesMap = new Map(Object.entries(values));
-        ast.children = parseNodeList(tokenize(input), valuesMap)
+        ast.children = parseComponentChildren({input, values, imports})
         console.log(ast)
-        // printTree(ast)
+        printTree(ast)
     }
 
     _serialRender = ({input, values, imports}) => {
