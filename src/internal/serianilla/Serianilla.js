@@ -1,5 +1,5 @@
-import {printTree} from "../serianilla-parser/traverser.js";
-import {parseUnwrappedComponentNodes} from "../serianilla-parser/parser.js";
+import {printTree} from "./traverser.js";
+import {parseUnwrappedComponentNodes} from "./parser.js";
 
 export class Serianilla {
     _virtualDOM = {};
