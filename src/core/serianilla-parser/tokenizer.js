@@ -10,7 +10,7 @@ export function tokenize(input) {
         return lastTag && lastTag.body === 'start'
     }
 
-    function getLastTagWithChildrenStarted() {
+    const getLastTagWithChildrenStarted = () => {
         let tagStack = [];
         const tags = tokens.filter(t => t.type === 'tag');
 
@@ -25,7 +25,7 @@ export function tokenize(input) {
         return tagStack.at(-1);
     }
 
-    function getLastTagWithBodyStarted() {
+    const getLastTagWithBodyStarted = () => {
         let tagStack = [];
         const tags = tokens.filter(t => t.type === 'tag');
 
@@ -40,7 +40,7 @@ export function tokenize(input) {
         return tagStack.at(-1);
     }
 
-    function skipSpaces() {
+    const skipSpaces = () => {
         const SPACE_REG = /\s/;
 
         while (SPACE_REG.test(input[current])) {
@@ -48,7 +48,7 @@ export function tokenize(input) {
         }
     }
 
-    function readKebabWord() {
+    const readKebabWord = () => {
         const ACCEPTED_SYMBOLS = /[a-z-]/;
         const KEBAB_CASE = /^([a-z][a-z0-9]*)(-[a-z0-9]+)*$/;
 
@@ -69,7 +69,7 @@ export function tokenize(input) {
         return value
     }
 
-    function readLowerCamelWord() {
+    const readLowerCamelWord = () => {
         const ACCEPTED_SYMBOLS = /[a-z0-9]/i
         const LOWER_CAMEL_CASE = /^[a-z][a-zA-Z0-9]+$/;
 
@@ -90,7 +90,7 @@ export function tokenize(input) {
         return value
     }
 
-    function readUpperCamelWord() {
+    const readUpperCamelWord = () => {
         const ACCEPTED_SYMBOLS = /[a-z0-9]/i
         const UPPER_CAMEL_CASE = /^[A-Z][a-zA-Z0-9]+$/;
 
@@ -111,7 +111,7 @@ export function tokenize(input) {
         return value
     }
 
-    function readSerialValue() {
+    const readSerialValue = () => {
         const SERIAL_VALUE = /^[a-z][a-z0-9]*$/i
 
         if (input[current] !== '{') {
@@ -135,7 +135,7 @@ export function tokenize(input) {
         return value;
     }
 
-    function readStringValue() {
+    const readStringValue = () => {
         if (input[current] !== '"') {
             throw new TypeError(`Invalid string value. '"' expected at ${current}, not '${input[current]}'`)
         }
@@ -153,7 +153,7 @@ export function tokenize(input) {
         return value;
     }
 
-    function readAttrToken() {
+    const readAttrToken = () => {
         const name = readLowerCamelWord();
 
         if (input[current] !== '=') {
@@ -173,7 +173,7 @@ export function tokenize(input) {
         }
     }
 
-    function readPropsToken() {
+    const readPropsToken = () => {
         if (input[current] !== '$') {
             throw new TypeError(`Invalid props prefix at ${current}. '$' expected, got '${input[current]}'`)
         }
@@ -188,7 +188,7 @@ export function tokenize(input) {
         return readAttrToken();
     }
 
-    function readTextToken() {
+    const readTextToken = () => {
         const TEXT_CHUNK_REG = /[^<>{}]/;
 
         if (!TEXT_CHUNK_REG.test(input[current])) {
@@ -203,7 +203,7 @@ export function tokenize(input) {
         return value.trim();
     }
 
-    function readOpenedTag() {
+    const readOpenedTag = () => {
         if (input[current] !== '<') {
             throw new TypeError(`Invalid opened tag. "<" expected at ${current}, not "${input[current]}"`);
         }
@@ -242,7 +242,7 @@ export function tokenize(input) {
         return {name: tagName, isCustom: isCustom, isStart: true};
     }
 
-    function readChildFreeTagBodyEnd() {
+    const readChildFreeTagBodyEnd = () => {
         if (input[current] !== '/') {
             throw new TypeError(`Invalid closing end tag. "/" expected at ${current}, not "${input[current]}"`);
         }
@@ -265,7 +265,7 @@ export function tokenize(input) {
         return tag;
     }
 
-    function readChildrenStartTag() {
+    const readChildrenStartTag = () => {
         if (input[current] !== '>') {
             throw new TypeError(`Invalid children start tag. ">" expected at ${current}, not "${input[current]}"`);
         }
