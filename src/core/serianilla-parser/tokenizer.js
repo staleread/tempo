@@ -8,7 +8,7 @@ export function tokenize(input) {
 
         for (const tag of tags) {
             if (tag.children === 'start') {
-                tagStack.push(tag.name);
+                tagStack.push(tag);
             } else if (tag.children === 'end') {
                 tagStack.pop();
             }
@@ -23,7 +23,7 @@ export function tokenize(input) {
 
         for (const tag of tags) {
             if (tag.body === 'start') {
-                tagStack.push(tag.name);
+                tagStack.push(tag);
             } else if (tag.body === 'end') {
                 tagStack.pop();
             }
@@ -61,12 +61,12 @@ export function tokenize(input) {
         return value
     }
 
-    function readCamelWord() {
+    function readLowerCamelWord() {
         const ACCEPTED_SYMBOLS = /[a-z0-9]/i
         const LOWER_CAMEL_CASE = /^[a-z][a-zA-Z0-9]+$/;
 
         if (!ACCEPTED_SYMBOLS.test(input[current])) {
-            throw new TypeError(`Invalid camel case word char found at ${current}: ${input[current]}`)
+            throw new TypeError(`Invalid lower camel case word char found at ${current}: ${input[current]}`)
         }
 
         let value = input[current];
@@ -76,7 +76,28 @@ export function tokenize(input) {
         }
 
         if (!LOWER_CAMEL_CASE.test(value)) {
-            throw new TypeError(`Invalid camel case word "${value}"`)
+            throw new TypeError(`Invalid lower camel case word "${value}"`)
+        }
+
+        return value
+    }
+
+    function readUpperCamelWord() {
+        const ACCEPTED_SYMBOLS = /[a-z0-9]/i
+        const UPPER_CAMEL_CASE = /^[A-Z][a-zA-Z0-9]+$/;
+
+        if (!ACCEPTED_SYMBOLS.test(input[current])) {
+            throw new TypeError(`Invalid upper camel case word char found at ${current}: ${input[current]}`)
+        }
+
+        let value = input[current];
+
+        while (ACCEPTED_SYMBOLS.test(input[++current]) && current < input.length) {
+            value += input[current];
+        }
+
+        if (!UPPER_CAMEL_CASE.test(value)) {
+            throw new TypeError(`Invalid upper camel case word "${value}"`)
         }
 
         return value
@@ -131,7 +152,7 @@ export function tokenize(input) {
         if (ATTRIBUTE_PREFIX_REG.test(input[current])) {
             prefix = input[current++];
         }
-        const name = prefix + readCamelWord();
+        const name = prefix + readLowerCamelWord();
 
         if (input[current] !== '=') {
             skipSpaces();
@@ -173,11 +194,14 @@ export function tokenize(input) {
         current++;
         skipSpaces();
 
+        const UPPER = /[A-Z]/;
+
         if (input[current] === '/') {
             current++;
             skipSpaces();
 
-            const tagName = readKebabWord();
+            const isCustom = UPPER.test(input[current]);
+            const tagName = isCustom ? readUpperCamelWord(): readKebabWord();
             skipSpaces();
 
             if (input[current] !== '>') {
@@ -191,13 +215,14 @@ export function tokenize(input) {
                 throw new TypeError(`Trying to closed not opened tag: ${tagName}`);
             }
 
-            return {name: tagName, isStart: false};
+            return {name: tagName, isCustom: isCustom, isStart: false};
         }
 
-        const tagName = readKebabWord();
+        const isCustom = UPPER.test(input[current]);
+        const tagName = isCustom ? readUpperCamelWord(): readKebabWord();
         skipSpaces();
 
-        return {name: tagName, isStart: true};
+        return {name: tagName, isCustom: isCustom, isStart: true};
     }
 
     function readChildFreeTagBodyEnd() {
@@ -215,7 +240,28 @@ export function tokenize(input) {
         current++;
         skipSpaces();
 
-        return getLastTagWithBodyStarted();
+        const tag = getLastTagWithBodyStarted();
+
+        if (!tag) {
+            throw new TypeError(`Trying to close an unopened tag at ${current}`);
+        }
+        return tag;
+    }
+
+    function readChildrenStartTag() {
+        if (input[current] !== '>') {
+            throw new TypeError(`Invalid children start tag. ">" expected at ${current}, not "${input[current]}"`);
+        }
+
+        current++;
+        skipSpaces();
+
+        const tag = getLastTagWithBodyStarted();
+
+        if (!tag) {
+            throw new TypeError(`Trying to close an unopened tag at ${current}`);
+        }
+        return tag;
     }
 
     skipSpaces();
@@ -224,10 +270,11 @@ export function tokenize(input) {
         let char = input[current];
 
         if (char === '<') {
-            const {name, isStart} = readOpenedTag();
+            const {name, isCustom, isStart} = readOpenedTag();
             tokens.push({
                 type: 'tag',
-                name: name,
+                name,
+                isCustom,
                 body: isStart ? 'start' : null,
                 children: isStart ? null : 'end',
             });
@@ -236,10 +283,11 @@ export function tokenize(input) {
         }
 
         if (char === '/') {
-            const name = readChildFreeTagBodyEnd();
+            const {name, isCustom} = readChildFreeTagBodyEnd();
             tokens.push({
                 type: 'tag',
-                name: name,
+                name,
+                isCustom,
                 body: 'end',
                 children: null,
             });
@@ -248,12 +296,11 @@ export function tokenize(input) {
         }
 
         if (char === '>') {
-            current++;
-            skipSpaces();
+            const tag = readChildrenStartTag();
 
             tokens.push({
                 type: 'tag',
-                name: getLastTagWithBodyStarted(),
+                name: tag.name,
                 body: 'end',
                 children: 'start',
             });
@@ -268,7 +315,7 @@ export function tokenize(input) {
             continue;
         }
 
-        const lastTokenBodyState = tokens.filter(t => t.type === 'tag').at(-1).body;
+        const lastTokenBodyState = tokens.filter(t => t.type === 'tag').at(-1)?.body;
 
         if (tokens.length === 0 || lastTokenBodyState !== 'start') {
             const text = readTextToken();
@@ -288,11 +335,11 @@ export function tokenize(input) {
     }
 
     const unclosedBodyTag = getLastTagWithBodyStarted();
-    if (unclosedBodyTag) throw new TypeError(`Unclosed tag body detected: ${unclosedBodyTag}. Add "/>"`);
+    if (unclosedBodyTag) throw new TypeError(`Unclosed tag body detected: ${unclosedBodyTag.name}. Add "/>"`);
 
     const unclosedChildrenTag = getLastTagWithChildrenStarted();
     if (unclosedChildrenTag)
-        throw new TypeError(`Unclosed children of tag "${unclosedChildrenTag}" detected. Add "</ ${unclosedChildrenTag}>" closing tag`);
+        throw new TypeError(`Unclosed children of tag "${unclosedChildrenTag}" detected. Add "</ ${unclosedChildrenTag.name}>" closing tag`);
 
     return tokens;
 }
