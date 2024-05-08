@@ -49,7 +49,7 @@ export function tokenize(input) {
     }
 
     const readKebabWord = () => {
-        const ACCEPTED_SYMBOLS = /[a-z-]/;
+        const ACCEPTED_SYMBOLS = /[a-z-0-9]/;
         const KEBAB_CASE = /^([a-z][a-z0-9]*)(-[a-z0-9]+)*$/;
 
         if (!ACCEPTED_SYMBOLS.test(input[current])) {
@@ -247,7 +247,7 @@ export function tokenize(input) {
             skipSpaces();
 
             const isCustom = UPPER.test(input[current]);
-            const tagName = isCustom ? readUpperCamelWord(): readAttributeName();
+            const tagName = isCustom ? readUpperCamelWord(): readKebabWord();
             skipSpaces();
 
             if (input[current] !== '>') {
