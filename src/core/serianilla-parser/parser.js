@@ -15,8 +15,8 @@ export function parseComponentChildren({template, imports, attach}) {
             token.isCustom) {
 
             const node = {
-                type: 'PrimitiveNode',
-                name: 'div',
+                type: 'TagNode',
+                tag: 'div',
                 attrs: [{name: 'class', value: token.name}],
                 props: [],
                 children: []
@@ -59,8 +59,8 @@ export function parseComponentChildren({template, imports, attach}) {
             !token.isCustom) {
 
             const node = {
-                type: 'PrimitiveNode',
-                name: token.name,
+                type: 'TagNode',
+                tag: token.name,
                 attrs: [],
                 children: []
             }
