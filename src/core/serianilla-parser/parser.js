@@ -18,18 +18,15 @@ export function parseComponentChildren({template, imports, attach}) {
                 type: 'TagNode',
                 tag: 'div',
                 attrs: [{name: 'class', value: token.name}],
-                props: [],
                 children: []
             };
 
             token = tokens[++current];
+            const props = {}
 
             while (token.type !== 'tag' && token.body !== 'end') {
                 if (token.type === 'props') {
-                    node.props.push({
-                        name: token.name,
-                        value: token.valueType === 'serial' ? attachMap.get(token.value) : token.value
-                    })
+                    props[token.name] = token.valueType === 'serial' ? attachMap.get(token.value) : token.value;
                 } else if (token.type === 'attr') {
                     node.attrs.push({
                         name: token.name,
@@ -42,8 +39,8 @@ export function parseComponentChildren({template, imports, attach}) {
                 token = tokens[++current];
             }
 
-            const componentFunc = importsMap.get(token.name);
-            node.children = parseComponentChildren(componentFunc());
+            const component = importsMap.get(token.name);
+            node.children = parseComponentChildren(component(props));
 
             // skip all implicit child nodes
             token = tokens[++current];

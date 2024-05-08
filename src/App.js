@@ -1,22 +1,19 @@
-import {TestComponent} from "./components/TestComponent.js";
+import {Card} from "./components/Card.js";
 
 export const App = () => {
     const name = 'Nicolas';
 
     return {
         imports: {
-            TestComponent
+            Card
         },
         template: `
         <div>
-            <TestComponent $data={secretData}></TestComponent>
+            <Card $name="Nicolas" $price={price}></Card>
             <button>Hello, ${name}!</button>
         </div>`,
         attach: {
-            secretData: {
-                title: 'Secret',
-                text: 'Super secret information'
-            }
+            price: 15
         },
     }
 }
