@@ -5,6 +5,7 @@ export function parseNode({template, imports, attach}) {
     const importsMap = imports ? new Map(Object.entries(imports)) : new Map();
 
     const tokens = tokenize(template);
+    console.log(tokens)
     let current = 0;
 
     const walkChildNode = () => {
@@ -21,7 +22,7 @@ export function parseNode({template, imports, attach}) {
 
             while (token.type !== 'tag' && token.body !== 'end') {
                 if (token.type !== 'props') {
-                    throw new TypeError(`Invalid token found inside custom tag body`);
+                    throw new TypeError(`Invalid token with type "${token.type}" found inside custom tag body`);
                 }
 
                 props[token.name] = token.valueType === 'serial' ? attachMap.get(token.value) : token.value;
@@ -64,7 +65,7 @@ export function parseNode({template, imports, attach}) {
                         value: token.valueType === 'serial' ? attachMap.get(token.value) : token.value
                     })
                 } else {
-                    throw new TypeError(`Invalid token found inside tag body`);
+                    throw new TypeError(`Invalid token with type "${token.type}" found inside tag body`);
                 }
 
                 token = tokens[++current];
