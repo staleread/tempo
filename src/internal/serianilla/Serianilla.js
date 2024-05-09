@@ -1,6 +1,4 @@
 import {printTree} from "./traverser.js";
-import {parseNode} from "./parser.js";
-import {tokenize} from "./tokenizer.js";
 
 export class Serianilla {
     _virtualDOM = {};
@@ -13,19 +11,11 @@ export class Serianilla {
         }
     }
 
-    render(component) {
+    render(node) {
         const ast = {
             type: 'RootNode',
-            children: []
+            children: [node]
         }
-
-        const obj = component();
-        console.log('TOKENS', tokenize(obj.template))
-
-        const nodeTree = parseNode(obj);
-        console.log('NODE TREE', nodeTree)
-
-        ast.children.push(nodeTree);
 
         printTree(ast)
     }

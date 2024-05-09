@@ -188,21 +188,10 @@ export function tokenize(input) {
     }
 
     const readPropsToken = () => {
-        if (input[current] !== '$') {
-            throw new TypeError(`Invalid props prefix at ${current}. '$' expected, got '${input[current]}'`)
-        }
-
-        const lastTag = getLastTag();
-
-        if (!isTagBody() || !lastTag.isCustom) {
-            throw new TypeError(`Trying to pass props at ${current}: Props are only allowed inside custom tag's body`)
-        }
-
-        current++;
         const name = readLowerCamelWord();
 
         if (input[current] !== '=') {
-            throw new TypeError(`Invalid prop "$${name}" at ${current}: Empty props are not allowed`)
+            throw new TypeError(`Invalid prop "${name}" at ${current}: Empty props are not allowed`)
         }
 
         current++;
@@ -355,10 +344,10 @@ export function tokenize(input) {
         }
 
         if (isTagBody()) {
-            const isProps = char === '$';
-            const {name, valueType, value} = isProps ? readPropsToken() : readAttrToken();
+            const isCustom = getLastTag().isCustom;
+            const {name, valueType, value} = isCustom ? readPropsToken() : readAttrToken();
 
-            isProps
+            isCustom
                 ? tokens.push({type: 'props', name, valueType, value})
                 : tokens.push({type: 'attr', name, valueType, value});
             continue

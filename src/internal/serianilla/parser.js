@@ -14,43 +14,34 @@ export function parseNode({template, imports, attach}) {
             token.body === 'start' &&
             token.isCustom) {
 
-            const node = {
-                type: 'TagNode',
-                tag: 'div',
-                attrs: [{name: 'class', value: token.name}],
-                children: []
-            };
-
-            token = tokens[++current];
+            const componentName = token.name
             const props = {}
 
-            while (token.type !== 'tag' && token.body !== 'end') {
-                // TODO disable custom tag attributes
+            token = tokens[++current];
 
-                if (token.type === 'props') {
-                    props[token.name] = token.valueType === 'serial' ? attachMap.get(token.value) : token.value;
-                } else if (token.type === 'attr') {
-                    node.attrs.push({
-                        name: token.name,
-                        value: token.valueType === 'serial' ? attachMap.get(token.value) : token.value
-                    })
-                } else {
-                    throw new TypeError(`Invalid token found inside tag body`);
+            while (token.type !== 'tag' && token.body !== 'end') {
+                if (token.type !== 'props') {
+                    throw new TypeError(`Invalid token found inside custom tag body`);
                 }
 
+                props[token.name] = token.valueType === 'serial' ? attachMap.get(token.value) : token.value;
                 token = tokens[++current];
             }
 
-            const component = importsMap.get(token.name);
-            node.children = [parseNode(component(props))];
+            const component = importsMap.get(componentName);
+            const node = component(props);
 
-            // skip all implicit child nodes
+            if (token.children !== 'start') {
+                return node;
+            }
+
             token = tokens[++current];
-            while (token.type !== 'tag' && token.children !== 'end') {
-                token = tokens[++current];
-            }
-            current++;
 
+            if (!(token.type === 'tag' && token.children === 'end')) {
+                throw new TypeError('Custom tags must be child free')
+            }
+
+            current++;
             return node;
         }
         if (token.type === 'tag' &&
