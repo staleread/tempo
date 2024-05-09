@@ -13,11 +13,7 @@ export function traverseTree(ast, visitor) {
         }
     }
 
-    const traverseMany = (children, parent) => {
-        for (const child of children) {
-            traverse(child, parent);
-        }
-    }
+    const traverseMany = (children) => children.forEach(child => traverse(child))
 
     traverse(ast);
 }
