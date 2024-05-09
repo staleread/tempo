@@ -3,16 +3,38 @@ import {parseNode} from "./internal/serianilla/parser.js";
 
 export const App = () => {
     const name = 'Nicolas';
+    const cards = [
+        {name: 'Apple', price: 4},
+        {name: 'Carrot', price: 5}
+    ]
+
+    // return parseNode({
+    //     imports: {Card},
+    //     template: `
+    //     <div>
+    //         <ul $map={mapCards}>
+    //             <Card name={$card.name} price={$card.price}></Card>
+    //         </ul>
+    //         <button>Hello, ${name}!</button>
+    //     </div>`,
+    //     attach: {
+    //         price: 15,
+    //         mapCards: {list: cards, context: 'card'}
+    //     }
+    // })
 
     return parseNode({
         imports: {Card},
         template: `
         <div>
-            <Card name="Nicolas" price={price}></Card>
+            <ul $map={sdf}>
+                <Card name={name} price={price}></Card>  
+            </ul>
             <button>Hello, ${name}!</button>
         </div>`,
-        attach: {price: 15}
+        attach: {
+            name: cards[0].name,
+            price: cards[0].price
+        }
     })
 }
-
-// TODO: how to implement mapped attachments? e.g. cards.map(c => ...)

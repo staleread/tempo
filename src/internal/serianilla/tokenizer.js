@@ -1,13 +1,19 @@
+const SUPPORTED_COMMANDS = ['map']
+
 export function tokenize(input) {
     let current = 0;
     const tokens = [];
 
     const getLastTag = () => tokens.filter(t => t.type === 'tag').at(-1);
 
+    const isCustomTagBody = () => {
+        const lastTag = getLastTag();
+        return lastTag && lastTag.body === 'start' && lastTag.isCustom;
+    }
+
     const isTagBody = () => {
         const lastTag = getLastTag();
-
-        return lastTag && lastTag.body === 'start'
+        return lastTag && lastTag.body === 'start';
     }
 
     const getLastTagWithChildrenStarted = () => {
@@ -299,6 +305,32 @@ export function tokenize(input) {
         return tag;
     }
 
+    const readCommand = () => {
+        if (input[current] !== '$') {
+            throw new TypeError(`Invalid command. "$" expected at ${current}, not "${input[current]}"`);
+        }
+
+        current++;
+        const cmdName = readLowerCamelWord();
+
+        if (!SUPPORTED_COMMANDS.includes(cmdName)) {
+            const commands = SUPPORTED_COMMANDS.map(c => '$' + c).join(', ')
+            throw new TypeError(`Unknown command "$${cmdName}" at ${current}: One of ${commands} expected`)
+        }
+
+        if (input[current] !== '=') {
+            throw new TypeError(`Invalid command "$${cmdName}" at ${current}: Commands must contain a serial value`)
+        }
+
+        current++;
+        skipSpaces();
+
+        if (input[current] !== '{') {
+            throw new TypeError(`Unresolved attribute value at ${current}. '{' expected, got ''${input[current]}`);
+        }
+        return {cmd: cmdName, paramsRef: readSerialValue()};
+    }
+
     skipSpaces();
 
     while (current < input.length) {
@@ -343,18 +375,26 @@ export function tokenize(input) {
             continue;
         }
 
-        if (isTagBody()) {
-            const isCustom = getLastTag().isCustom;
-            const {name, valueType, value} = isCustom ? readPropsToken() : readAttrToken();
-
-            isCustom
-                ? tokens.push({type: 'props', name, valueType, value})
-                : tokens.push({type: 'attr', name, valueType, value});
+        if (!isTagBody()) {
+            const text = readTextToken();
+            tokens.push({type: 'text', value: text});
             continue
         }
 
-        const text = readTextToken();
-        tokens.push({type: 'text', value: text});
+        if (isCustomTagBody()) {
+            const {name, valueType, value} = readPropsToken();
+            tokens.push({type: 'props', name, valueType, value});
+            continue;
+        }
+
+        if (char === '$') {
+            const {cmd, paramsRef} = readCommand();
+            tokens.push({type: 'cmd', name: cmd, paramsRef});
+            continue;
+        }
+
+        const {name, valueType, value} = readAttrToken();
+        tokens.push({type: 'attr', name, valueType, value});
     }
 
     const unclosedBodyTag = getLastTagWithBodyStarted();
