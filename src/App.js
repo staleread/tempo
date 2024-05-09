@@ -17,3 +17,5 @@ export const App = () => {
         },
     }
 }
+
+// TODO: how to implement mapped attachments? e.g. cards.map(c => ...)

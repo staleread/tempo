@@ -1,8 +1,8 @@
 import {tokenize} from "./tokenizer.js";
 
-export function parseUnwrappedComponentNodes({template, imports, attach}) {
-    const attachMap = new Map(Object.entries(attach ?? {}));
-    const importsMap = new Map(Object.entries(imports ?? {}));
+export function parseNode({template, imports, attach}) {
+    const attachMap = attach ? new Map(Object.entries(attach)) : new Map();
+    const importsMap = imports ? new Map(Object.entries(imports)) : new Map();
 
     const tokens = tokenize(template);
     let current = 0;
@@ -25,6 +25,8 @@ export function parseUnwrappedComponentNodes({template, imports, attach}) {
             const props = {}
 
             while (token.type !== 'tag' && token.body !== 'end') {
+                // TODO disable custom tag attributes
+
                 if (token.type === 'props') {
                     props[token.name] = token.valueType === 'serial' ? attachMap.get(token.value) : token.value;
                 } else if (token.type === 'attr') {
@@ -40,7 +42,7 @@ export function parseUnwrappedComponentNodes({template, imports, attach}) {
             }
 
             const component = importsMap.get(token.name);
-            node.children = parseUnwrappedComponentNodes(component(props));
+            node.children = [parseNode(component(props))];
 
             // skip all implicit child nodes
             token = tokens[++current];
@@ -114,11 +116,10 @@ export function parseUnwrappedComponentNodes({template, imports, attach}) {
         throw new TypeError(`Invalid node type at ${current}: "${token.type}". Child node expected`)
     }
 
-    const nodes = [];
+    const ast = walkChildNode();
 
-    while (current < tokens.length) {
-        nodes.push(walkChildNode());
+    if (current < tokens.length) {
+        throw new TypeError(`${tokens.length - current} extra tokens found after root. Only 1 node expected`)
     }
-
-    return nodes;
+    return ast;
 }
