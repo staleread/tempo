@@ -8,33 +8,18 @@ export const App = () => {
         {name: 'Carrot', price: 5}
     ]
 
-    // return parseNode({
-    //     imports: {Card},
-    //     template: `
-    //     <div>
-    //         <ul $map={mapCards}>
-    //             <Card name={$card.name} price={$card.price}></Card>
-    //         </ul>
-    //         <button>Hello, ${name}!</button>
-    //     </div>`,
-    //     attach: {
-    //         price: 15,
-    //         mapCards: {list: cards, context: 'card'}
-    //     }
-    // })
-
     return parseNode({
         imports: {Card},
         template: `
         <div>
-            <ul $map={sdf}>
-                <Card name={name} price={price}></Card>  
+            <ul $map={mapCards}>
+                <Card name={$card.name} price={$card.price.currency}></Card>
             </ul>
             <button>Hello, ${name}!</button>
         </div>`,
         attach: {
-            name: cards[0].name,
-            price: cards[0].price
+            price: 15,
+            mapCards: {list: cards, context: 'card'}
         }
     })
 }
