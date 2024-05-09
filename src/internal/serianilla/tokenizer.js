@@ -202,7 +202,7 @@ export function tokenize(input) {
         } else if (input[current] === '"') {
             return {name, valueType: 'string', value: readStringValue()};
         } else {
-            throw new TypeError(`Unresolved attribute value at ${current}. '{' or '"' expected, got ''${input[current]}`);
+            throw new TypeError(`Unresolved props value at ${current}. '{' or '"' expected, got ''${input[current]}`);
         }
     }
 
