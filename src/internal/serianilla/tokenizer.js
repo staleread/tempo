@@ -4,18 +4,6 @@ export function tokenize(input) {
     let current = 0;
     const tokens = [];
 
-    const getLastTag = () => tokens.filter(t => t.type === 'tag').at(-1);
-
-    const isCustomTagBody = () => {
-        const lastTag = getLastTag();
-        return lastTag && lastTag.body === 'start' && lastTag.isCustom;
-    }
-
-    const isTagBody = () => {
-        const lastTag = getLastTag();
-        return lastTag && lastTag.body === 'start';
-    }
-
     const getLastTagWithChildrenStarted = () => {
         let tagStack = [];
         const tags = tokens.filter(t => t.type === 'tag');
@@ -59,7 +47,7 @@ export function tokenize(input) {
         const KEBAB_CASE = /^([a-z][a-z0-9]*)(-[a-z0-9]+)*$/;
 
         if (!ACCEPTED_SYMBOLS.test(input[current])) {
-            throw new TypeError(`Reading kebab word, an invalid char was found at ${current}: ${input[current]}`)
+            throw new TypeError(`Invalid char was found in kebab word at ${current}: ${input[current]}`)
         }
 
         let value = input[current];
@@ -78,7 +66,7 @@ export function tokenize(input) {
         const ACCEPTED_SYMBOLS = /[a-z-]/i;
 
         if (!ACCEPTED_SYMBOLS.test(input[current])) {
-            throw new TypeError(`Reading attribute name, an invalid char was found at ${current}: ${input[current]}`)
+            throw new TypeError(`Invalid char was found in attr name at ${current}: ${input[current]}`)
         }
 
         let value = input[current];
@@ -346,6 +334,22 @@ export function tokenize(input) {
                 children: isStart ? null : 'end',
             });
 
+            if (!isStart) {
+                continue;
+            }
+
+            while (input[current] !== '/' && input[current] !== '>') {
+                if (isCustom) {
+                    const {name, valueType, value} = readPropsToken();
+                    tokens.push({type: 'props', name, valueType, value});
+                } else if (input[current] === '$') {
+                    const {cmd, paramsRef} = readCommand();
+                    tokens.push({type: 'cmd', name: cmd, paramsRef});
+                } else {
+                    const {name, valueType, value} = readAttrToken();
+                    tokens.push({type: 'attr', name, valueType, value});
+                }
+            }
             continue;
         }
 
@@ -375,26 +379,8 @@ export function tokenize(input) {
             continue;
         }
 
-        if (!isTagBody()) {
-            const text = readTextToken();
-            tokens.push({type: 'text', value: text});
-            continue
-        }
-
-        if (isCustomTagBody()) {
-            const {name, valueType, value} = readPropsToken();
-            tokens.push({type: 'props', name, valueType, value});
-            continue;
-        }
-
-        if (char === '$') {
-            const {cmd, paramsRef} = readCommand();
-            tokens.push({type: 'cmd', name: cmd, paramsRef});
-            continue;
-        }
-
-        const {name, valueType, value} = readAttrToken();
-        tokens.push({type: 'attr', name, valueType, value});
+        const text = readTextToken();
+        tokens.push({type: 'text', value: text});
     }
 
     const unclosedBodyTag = getLastTagWithBodyStarted();
