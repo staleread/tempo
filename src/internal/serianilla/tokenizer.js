@@ -3,6 +3,11 @@ import {
     processCustomTagBodyStart,
     processCustomTagChildrenEnd
 } from "./tokenize-utils/custom-tag.js";
+import {
+    processCommandTagBody,
+    processCommandTagBodyStart,
+    processCommandTagChildrenEnd
+} from "./tokenize-utils/command-tag.js";
 
 export function tokenize(input) {
     let current = 0;
@@ -90,135 +95,6 @@ export function tokenize(input) {
         tokens.push({
             type: 'tag-body-end',
             isChildStart: false
-        });
-    }
-    //endregion
-
-    //region Command Tag
-    const readCommandParamName = () => {
-        const VALID_CHAR = /[^=\s]/;
-        const VALID_WORD = /^[a-z][a-zA-Z0-9]+$/;   // lowerCamelCase
-
-        let value = input[current];
-
-        while (VALID_CHAR.test(input[++current])) {
-            value += input[current];
-        }
-
-        if (!VALID_WORD.test(value)) {
-            throw new TypeError(`Invalid params name "${value}"`)
-        }
-
-        return value
-    }
-
-    const readCommandTagName = () => {
-        const VALID_CHAR = /[^/>\s]/;
-        const VALID_WORD = /^[a-z][a-zA-Z0-9]+$/;   // lowerCamelCase
-
-        let value = input[current];
-
-        while (VALID_CHAR.test(input[++current])) {
-            value += input[current];
-        }
-
-        if (!VALID_WORD.test(value)) {
-            throw new TypeError(`Invalid command tag name "$${value}"`)
-        }
-
-        return value
-    }
-
-    const processCommandParamsToken = () => {
-        const paramName = readCommandParamName();
-
-        let char = input[current];
-
-        if (char !== '=') {
-            throw new TypeError(`Invalid command parameter "${name}" at ${current}: Empty parameters are not allowed`)
-        }
-
-        current++;
-        skipSpaces();
-        char = input[current];
-
-        if (char !== '"' && char !== '{') {
-            throw new TypeError(`Unresolved command parameter value at ${current}. '{' or '"' expected, got '${char}'`);
-        }
-
-        if (char === '"') {
-            const string = readStringValue()
-
-            tokens.push({
-                type: 'param',
-                name: paramName,
-                valueType: 'string',
-                value: string
-            });
-            return;
-        }
-
-        const tmpCurrent = current;
-
-        current++;
-        skipSpaces();
-        char = input[current];
-
-        if (char === '$') {
-            const refChainInfo = readReferenceChain();
-
-            tokens.push({
-                type: 'param',
-                name: paramName,
-                valueType: 'ref-chain',
-                value: refChainInfo
-            });
-            return
-        }
-
-        current = tmpCurrent;
-        const ref = readReferenceValue();
-
-        tokens.push({
-            type: 'param',
-            name: paramName,
-            valueType: 'ref',
-            value: ref});
-    }
-
-    const processCommandTagBodyStart = () => {
-        const tagName = readCommandTagName();
-
-        tokens.push({
-            type: 'tag-body-start',
-            name: tagName,
-            isCommand: true,
-            isCustom: false
-        });
-
-        skipSpaces();
-    }
-
-    const processCommandTagBody = () => {
-        const STOP_CHARS = '/>';
-        let char = input[current];
-
-        while (!STOP_CHARS.includes(char)) {
-            processCommandParamsToken();
-            char = input[current];
-        }
-    }
-
-    const processCommandTagChildrenEnd = () => {
-        const tagName = readCommandTagName();
-
-        // skip the upcoming ">"
-        current++;
-        skipSpaces()
-
-        tokens.push({
-            type: 'tag-child-end',
-            name: tagName
         });
     }
     //endregion
@@ -516,10 +392,12 @@ export function tokenize(input) {
             }
 
             if (char === '$') {
-                current++;
+                let startToken, paramTokens;
 
-                processCommandTagBodyStart();
-                processCommandTagBody();
+                [startToken, current] = processCommandTagBodyStart(input, ++current);
+                [paramTokens, current] = processCommandTagBody(input, current);
+
+                tokens.push(startToken, ...paramTokens);
                 continue;
             }
 
@@ -551,8 +429,9 @@ export function tokenize(input) {
             }
 
             if (char === '$') {
-                current++;
-                processCommandTagChildrenEnd();
+                let token;
+                [token, current] = processCommandTagChildrenEnd(input, ++current);
+                tokens.push(token);
                 continue
             }
 
