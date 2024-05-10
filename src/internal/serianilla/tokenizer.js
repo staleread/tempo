@@ -78,6 +78,22 @@ export function tokenize(input) {
         return value
     }
 
+    const readEventName = () => {
+        const VALID_CHAR = /[^=\s]/;
+        const VALID_WORD = /^[a-z]+$/;   // lowercase
+
+        let value = input[current];
+
+        while (VALID_CHAR.test(input[++current])) {
+            value += input[current];
+        }
+
+        if (!VALID_WORD.test(value)) {
+            throw new TypeError(`Invalid event name "${value}"`)
+        }
+        return value;
+    }
+
     const readReferenceValue = () => {
         const VALID_WORD = /^[a-z][a-zA-Z0-9]+$/;
 
@@ -134,6 +150,7 @@ export function tokenize(input) {
         return value;
     }
 
+    // TODO skip $ before
     const processCommandToken = () => {
         if (input[current] !== '$') {
             throw new TypeError(`Invalid command. "$" expected at ${current}, not "${input[current]}"`);
@@ -156,6 +173,51 @@ export function tokenize(input) {
             name: cmdName,
             paramsRef: ref
         });
+    }
+
+    const processEventToken = () => {
+        const eventName = readEventName();
+
+        let char = input[current];
+
+        if (char !== '=') {
+            throw new TypeError(`Invalid event "${name}": Empty events are not allowed`)
+        }
+
+        current++;
+        skipSpaces();
+        char = input[current];
+
+        if (char !== '{') {
+            throw new TypeError(`Unresolved event value at ${current}. '{' expected, got '${char}'`);
+        }
+
+        const tmpCurrent = current;
+
+        current++;
+        skipSpaces();
+        char = input[current];
+
+        if (char === '$') {
+            const refChainInfo = readReferenceChain();
+
+            tokens.push({
+                type: 'event',
+                name: eventName,
+                refType: 'ref-chain',
+                ref: refChainInfo
+            });
+            return
+        }
+
+        current = tmpCurrent;
+        const ref = readReferenceValue();
+
+        tokens.push({
+            type: 'event',
+            name: eventName,
+            refType: 'ref',
+            ref: ref});
     }
 
     const processPropsToken = () => {
@@ -332,6 +394,9 @@ export function tokenize(input) {
         while (!STOP_CHARS.includes(char)) {
             if (char === '$') {
                 processCommandToken();
+            } else if (char + input[current + 1] === 'on') {
+                current += 2;
+                processEventToken();
             } else {
                 processAttributeToken();
             }

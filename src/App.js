@@ -11,7 +11,7 @@ export const App = () => {
     return parseNode({
         imports: {Card},
         template: `
-        <div empty-attr>
+        <div empty-attr onclick={handleDivClick}>
             <ul $map={mapCards}>
                 <Card name={$card.name} price={$card.price.currency}></Card>
             </ul>
