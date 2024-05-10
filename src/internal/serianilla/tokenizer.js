@@ -1,3 +1,9 @@
+import {
+    processCustomTagBody,
+    processCustomTagBodyStart,
+    processCustomTagChildrenEnd
+} from "./tokenize-utils/custom-tag.js";
+
 export function tokenize(input) {
     let current = 0;
     const tokens = [];
@@ -86,136 +92,6 @@ export function tokenize(input) {
             isChildStart: false
         });
     }
-    //endregion
-
-    //region Custom Tag
-    const readPropsName = () => {
-        const VALID_CHAR = /[^=\s]/;
-        const VALID_WORD = /^[a-z][a-zA-Z0-9]+$/;   // lowerCamelCase
-
-        let value = input[current];
-
-        while (VALID_CHAR.test(input[++current])) {
-            value += input[current];
-        }
-
-        if (!VALID_WORD.test(value)) {
-            throw new TypeError(`Invalid props name "${value}"`)
-        }
-
-        return value
-    }
-
-    const readCustomTagName = () => {
-        const VALID_CHAR = /[^/>\s]/;
-        const VALID_WORD = /^[A-Z][a-zA-Z0-9]+$/;   // UpperCamelCase
-
-        let value = input[current];
-
-        while (VALID_CHAR.test(input[++current])) {
-            value += input[current];
-        }
-
-        if (!VALID_WORD.test(value)) {
-            throw new TypeError(`Invalid regular tag name "${value}"`)
-        }
-
-        return value
-    }
-
-    const processPropsToken = () => {
-        const propsName = readPropsName();
-
-        let char = input[current];
-
-        if (char !== '=') {
-            throw new TypeError(`Invalid prop "${name}" at ${current}: Empty props are not allowed`)
-        }
-
-        current++;
-        skipSpaces();
-        char = input[current];
-
-        if (char !== '"' && char !== '{') {
-            throw new TypeError(`Unresolved props value at ${current}. '{' or '"' expected, got '${char}'`);
-        }
-
-        if (char === '"') {
-            const string = readStringValue()
-
-            tokens.push({
-                type: 'props',
-                name: propsName,
-                valueType: 'string',
-                value: string
-            });
-            return;
-        }
-
-        const tmpCurrent = current;
-
-        current++;
-        skipSpaces();
-        char = input[current];
-
-        if (char === '$') {
-            const refChainInfo = readReferenceChain();
-
-            tokens.push({
-                type: 'props',
-                name: propsName,
-                valueType: 'ref-chain',
-                value: refChainInfo
-            });
-            return
-        }
-
-        current = tmpCurrent;
-        const ref = readReferenceValue();
-
-        tokens.push({
-            type: 'props',
-            name: propsName,
-            valueType: 'ref',
-            value: ref});
-    }
-
-    const processCustomTagBodyStart = () => {
-        const tagName = readCustomTagName();
-
-        tokens.push({
-            type: 'tag-body-start',
-            name: tagName,
-            isCommand: false,
-            isCustom: true
-        });
-
-        skipSpaces();
-    }
-
-    const processCustomTagBody = () => {
-        const STOP_CHARS = '/>';
-        let char = input[current];
-
-        while (!STOP_CHARS.includes(char)) {
-            processPropsToken();
-            char = input[current];
-        }
-    }
-
-    const processCustomTagChildrenEnd = () => {
-        const tagName = readCustomTagName();
-
-        // skip the upcoming ">"
-        current++;
-        skipSpaces()
-
-        tokens.push({
-            type: 'tag-child-end',
-            name: tagName
-        });
-    }
-
     //endregion
 
     //region Command Tag
@@ -650,8 +526,12 @@ export function tokenize(input) {
             const isCustom = UPPER.test(char);
 
             if (isCustom) {
-                processCustomTagBodyStart();
-                processCustomTagBody();
+                let startToken, propsTokens;
+
+                [startToken, current] = processCustomTagBodyStart(input, current);
+                [propsTokens, current] = processCustomTagBody(input, current);
+
+                tokens.push(startToken, ...propsTokens);
                 continue;
             }
             processRegularTagBodyStart();
@@ -678,9 +558,14 @@ export function tokenize(input) {
 
             const isCustom = UPPER.test(char);
 
-            isCustom
-                ? processCustomTagChildrenEnd()
-                : processRegularTagChildrenEnd();
+            if (isCustom) {
+                let token;
+                [token, current] = processCustomTagChildrenEnd(input, current);
+                tokens.push(token);
+                continue;
+            }
+
+            processRegularTagChildrenEnd();
             continue;
         }
 
