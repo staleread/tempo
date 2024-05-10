@@ -145,7 +145,7 @@ export const readRegularTagName = (input, current) => {
 }
 
 export const readAttributeName = (input, current) => {
-    const VALID_CHAR = /[^/>\s]/;
+    const VALID_CHAR = /[^=/>\s]/;
     const VALID_WORD = /^(([a-z][a-z0-9]*)(-[a-z0-9]+)*|[a-z][a-zA-Z0-9]+)$/;   // kebab-case or lowerCamelCase
 
     let value = input[current];
