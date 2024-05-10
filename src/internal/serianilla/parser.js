@@ -58,14 +58,14 @@ export function parseNode({template, imports, attach}) {
         const component = importsMap.get(componentName);
         const node = component(props);
 
-        if (token.children !== 'start') {
+        if (!token.isChildStart) {
             return node;
         }
 
         token = tokens[++current];
 
-        if (!(token.type === 'tag' && token.children === 'end')) {
-            throw new TypeError('Custom tags must be child free')
+        if (token.type !== 'tag-child-end') {
+            throw new TypeError('Custom tags must be without child nodes');
         }
 
         current++;
