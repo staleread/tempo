@@ -78,7 +78,23 @@ export function tokenize(input) {
         return value
     }
 
-    const readEventName = () => {
+    const readBubblingEventName = () => {
+        const VALID_CHAR = /[^=\s]/;
+        const VALID_WORD = /^[A-Z][a-zA-Z0-9]+$/;   // UpperCamelCase
+
+        let value = input[current];
+
+        while (VALID_CHAR.test(input[++current])) {
+            value += input[current];
+        }
+
+        if (!VALID_WORD.test(value)) {
+            throw new TypeError(`Invalid bubbling event name "on${value}"`)
+        }
+        return value.toLowerCase();
+    }
+
+    const readImplicitEventName = () => {
         const VALID_CHAR = /[^=\s]/;
         const VALID_WORD = /^[a-z]+$/;   // lowercase
 
@@ -89,7 +105,7 @@ export function tokenize(input) {
         }
 
         if (!VALID_WORD.test(value)) {
-            throw new TypeError(`Invalid event name "${value}"`)
+            throw new TypeError(`Invalid implicit event name "on${value}"`)
         }
         return value;
     }
@@ -169,13 +185,12 @@ export function tokenize(input) {
         });
     }
 
-    const processEventToken = () => {
-        const eventName = readEventName();
-
+    const processBubblingEventToken = () => {
+        const eventName = readBubblingEventName();
         let char = input[current];
 
         if (char !== '=') {
-            throw new TypeError(`Invalid event "${name}": Empty events are not allowed`)
+            throw new TypeError(`Invalid bubbling event "on${name}": Empty events are not allowed`)
         }
 
         current++;
@@ -183,7 +198,7 @@ export function tokenize(input) {
         char = input[current];
 
         if (char !== '{') {
-            throw new TypeError(`Unresolved event value at ${current}. '{' expected, got '${char}'`);
+            throw new TypeError(`Unresolved bubbling event value at ${current}. '{' expected, got '${char}'`);
         }
 
         const tmpCurrent = current;
@@ -196,7 +211,7 @@ export function tokenize(input) {
             const refChainInfo = readReferenceChain();
 
             tokens.push({
-                type: 'event',
+                type: 'bubbling-event',
                 name: eventName,
                 refType: 'ref-chain',
                 ref: refChainInfo
@@ -208,7 +223,52 @@ export function tokenize(input) {
         const ref = readReferenceValue();
 
         tokens.push({
-            type: 'event',
+            type: 'bubbling-event',
+            name: eventName,
+            refType: 'ref',
+            ref: ref});
+    }
+
+    const processImplicitEventToken = () => {
+        const eventName = readImplicitEventName();
+
+        let char = input[current];
+
+        if (char !== '=') {
+            throw new TypeError(`Invalid implicit event "on${name}": Empty events are not allowed`)
+        }
+
+        current++;
+        skipSpaces();
+        char = input[current];
+
+        if (char !== '{') {
+            throw new TypeError(`Unresolved implicit event value at ${current}. '{' expected, got '${char}'`);
+        }
+
+        const tmpCurrent = current;
+
+        current++;
+        skipSpaces();
+        char = input[current];
+
+        if (char === '$') {
+            const refChainInfo = readReferenceChain();
+
+            tokens.push({
+                type: 'implicit-event',
+                name: eventName,
+                refType: 'ref-chain',
+                ref: refChainInfo
+            });
+            return
+        }
+
+        current = tmpCurrent;
+        const ref = readReferenceValue();
+
+        tokens.push({
+            type: 'implicit-event',
             name: eventName,
             refType: 'ref',
             ref: ref});
@@ -389,9 +449,12 @@ export function tokenize(input) {
             if (char === '$') {
                 current++;
                 processCommandToken();
+            } else if (char + input[current + 1] === 'on' && input[current + 2] === input[current + 2].toUpperCase()) {
+                current += 2;
+                processBubblingEventToken();
             } else if (char + input[current + 1] === 'on') {
                 current += 2;
-                processEventToken();
+                processImplicitEventToken();
             } else {
                 processAttributeToken();
             }
