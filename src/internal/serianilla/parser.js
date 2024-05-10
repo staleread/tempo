@@ -6,6 +6,7 @@ export function parseNode({template, imports, attach}) {
     const contextMap = new Map();
 
     const tokens = tokenize(template);
+    const bubblingEvents = [];
     let current = 0;
 
     const retrieveProps = (token) => {
@@ -124,22 +125,27 @@ export function parseNode({template, imports, attach}) {
             children: []
         }
 
+        let mapInfo;
+
         token = tokens[++current];
 
         while (token.type !== 'tag-body-end') {
             if (token.type === 'attr') {
                 const attrValue = retrieveAttributeValue(token);
                 node.attrs.push({name: token.name, value: attrValue});
-            } else if (token.type === 'cmd' && token.name === 'map') {
-                // TODO handle command
-                // escape for now
-            } else if (token.type === 'bubbling-event') {
+            }
+            else if (token.type === 'cmd' && token.name === 'map') {
+                mapInfo = attachMap.get(token.paramsRef);
+            }
+            else if (token.type === 'bubbling-event') {
                 const handler = retrieveEventHandler(token);
                 bubblingEvents.push({name: token.name, handler})
-            } else if (token.type === 'implicit-event') {
+            }
+            else if (token.type === 'implicit-event') {
                 const handler = retrieveEventHandler(token);
                 node.events.push({name: token.name, handler})
-            } else {
+            }
+            else {
                 throw new TypeError(`Invalid token "${token.type}" found inside tag body`);
             }
             token = tokens[++current];
@@ -149,13 +155,32 @@ export function parseNode({template, imports, attach}) {
             current++;
             return node;
         }
-
         token = tokens[++current];
 
-        while (token.type !== 'tag-child-end') {
-            node.children.push(walkChildNode());
-            token = tokens[current];
+        if (!mapInfo) {
+            while (token.type !== 'tag-child-end') {
+                node.children.push(walkChildNode());
+                token = tokens[current];
+            }
+
+            current++;
+            return node;
         }
+
+        const context = mapInfo.context;
+        const tmpCurrent = current;
+
+        mapInfo.list.forEach(item => {
+            current = tmpCurrent;
+            token = tokens[current];
+            contextMap.set(context, item);
+
+            while (token.type !== 'tag-child-end') {
+                node.children.push(walkChildNode());
+                token = tokens[current];
+            }
+        });
+        contextMap.delete(context);
 
         current++;
         return node;
@@ -178,7 +203,6 @@ export function parseNode({template, imports, attach}) {
             : walkNotCustomTag();
     }
 
-    const bubblingEvents = []
     const ast = walkChildNode();
 
     if (current < tokens.length) {
