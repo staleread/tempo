@@ -12,7 +12,7 @@ export const App = () => {
         imports: {Card},
         template: `
         <div onclick={handleDivClick} onClick={handleClick}>
-            <ul>
+            <ul class="my-ul">
                 <$map items={cards} context="card">
                     <Card
                         name={$card.name}
