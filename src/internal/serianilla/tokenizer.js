@@ -222,7 +222,13 @@ export function tokenize(input) {
 
         if (char !== '=') {
             skipSpaces();
-            return {name: attrName, valueType: 'empty', value: null};
+
+            tokens.push({
+                type: 'attr',
+                name: attrName,
+                valueType: 'empty'
+            });
+            return;
         }
 
         current++;
