@@ -44,6 +44,23 @@ export function tokenize(input) {
         return value
     }
 
+    const readCommandTagName = () => {
+        const VALID_CHAR = /[^/>\s]/;
+        const VALID_WORD = /^[a-z][a-zA-Z0-9]+$/;   // lowerCamelCase
+
+        let value = input[current];
+
+        while (VALID_CHAR.test(input[++current])) {
+            value += input[current];
+        }
+
+        if (!VALID_WORD.test(value)) {
+            throw new TypeError(`Invalid command tag name "$${value}"`)
+        }
+
+        return value
+    }
+
     const readAttributeName = () => {
         const VALID_CHAR = /[^/>\s]/;
         const VALID_WORD = /^(([a-z][a-z0-9]*)(-[a-z0-9]+)*|[a-z][a-zA-Z0-9]+)$/;   // kebab-case or lowerCamelCase
@@ -73,6 +90,23 @@ export function tokenize(input) {
 
         if (!VALID_WORD.test(value)) {
             throw new TypeError(`Invalid props name "${value}"`)
+        }
+
+        return value
+    }
+
+    const readCommandParamName = () => {
+        const VALID_CHAR = /[^=\s]/;
+        const VALID_WORD = /^[a-z][a-zA-Z0-9]+$/;   // lowerCamelCase
+
+        let value = input[current];
+
+        while (VALID_CHAR.test(input[++current])) {
+            value += input[current];
+        }
+
+        if (!VALID_WORD.test(value)) {
+            throw new TypeError(`Invalid params name "${value}"`)
         }
 
         return value
@@ -164,25 +198,6 @@ export function tokenize(input) {
         skipSpaces();
 
         return value;
-    }
-
-    const processCommandToken = () => {
-        const cmdName = readPropsName();
-
-        if (input[current] !== '=') {
-            throw new TypeError(`Invalid command "$${cmdName}" at ${current}: Commands must contain a reference value`)
-        }
-
-        current++;
-        skipSpaces();
-
-        const ref = readReferenceValue();
-
-        tokens.push({
-            type: 'cmd',
-            name: cmdName,
-            paramsRef: ref
-        });
     }
 
     const processBubblingEventToken = () => {
@@ -331,6 +346,63 @@ export function tokenize(input) {
             value: ref});
     }
 
+    const processCommandParamsToken = () => {
+        const paramName = readCommandParamName();
+
+        let char = input[current];
+
+        if (char !== '=') {
+            throw new TypeError(`Invalid command parameter "${name}" at ${current}: Empty parameters are not allowed`)
+        }
+
+        current++;
+        skipSpaces();
+        char = input[current];
+
+        if (char !== '"' && char !== '{') {
+            throw new TypeError(`Unresolved command parameter value at ${current}. '{' or '"' expected, got '${char}'`);
+        }
+
+        if (char === '"') {
+            const string = readStringValue()
+
+            tokens.push({
+                type: 'param',
+                name: paramName,
+                valueType: 'string',
+                value: string
+            });
+            return;
+        }
+
+        const tmpCurrent = current;
+
+        current++;
+        skipSpaces();
+        char = input[current];
+
+        if (char === '$') {
+            const refChainInfo = readReferenceChain();
+
+            tokens.push({
+                type: 'param',
+                name: paramName,
+                valueType: 'ref-chain',
+                value: refChainInfo
+            });
+            return
+        }
+
+        current = tmpCurrent;
+        const ref = readReferenceValue();
+
+        tokens.push({
+            type: 'param',
+            name: paramName,
+            valueType: 'ref',
+            value: ref});
+    }
+
     const processAttributeToken = () => {
         const attrName = readAttributeName();
 
@@ -413,6 +485,7 @@ export function tokenize(input) {
         tokens.push({
             type: 'tag-body-start',
             name: tagName,
+            isCommand: false,
             isCustom: true
         });
 
@@ -425,6 +498,20 @@ export function tokenize(input) {
         tokens.push({
             type: 'tag-body-start',
             name: tagName,
+            isCommand: false,
+            isCustom: false
+        });
+
+        skipSpaces();
+    }
+
+    const processCommandTagBodyStart = () => {
+        const tagName = readCommandTagName();
+
+        tokens.push({
+            type: 'tag-body-start',
+            name: tagName,
+            isCommand: true,
             isCustom: false
         });
 
@@ -446,10 +533,7 @@ export function tokenize(input) {
         let char = input[current];
 
         while (!STOP_CHARS.includes(char)) {
-            if (char === '$') {
-                current++;
-                processCommandToken();
-            } else if (char + input[current + 1] === 'on' && input[current + 2] === input[current + 2].toUpperCase()) {
+            if (char + input[current + 1] === 'on' && input[current + 2] === input[current + 2].toUpperCase()) {
                 current += 2;
                 processBubblingEventToken();
             } else if (char + input[current + 1] === 'on') {
@@ -458,6 +542,16 @@ export function tokenize(input) {
             } else {
                 processAttributeToken();
             }
+            char = input[current];
+        }
+    }
+
+    const processCommandTagBody = () => {
+        const STOP_CHARS = '/>';
+        let char = input[current];
+
+        while (!STOP_CHARS.includes(char)) {
+            processCommandParamsToken();
             char = input[current];
         }
     }
@@ -508,6 +602,19 @@ export function tokenize(input) {
         });
     }
 
+    const processCommandTagChildrenEnd = () => {
+        const tagName = readCommandTagName();
+
+        // skip the upcoming ">"
+        current++;
+        skipSpaces()
+
+        tokens.push({
+            type: 'tag-child-end',
+            name: tagName
+        });
+    }
+
     skipSpaces();
 
     const UPPER = /[A-Z]/;
@@ -522,6 +629,14 @@ export function tokenize(input) {
             char = input[current];
 
             if (char === '/') {
+                continue;
+            }
+
+            if (char === '$') {
+                current++;
+
+                processCommandTagBodyStart();
+                processCommandTagBody();
                 continue;
             }
 
@@ -545,6 +660,13 @@ export function tokenize(input) {
 
             if (char === '>') {
                 processMonoTagBodyEnd();
+                continue;
+            }
+
+            if (char === '$') {
+                current++;
+                processCommandTagChildrenEnd();
+                continue
             }
 
             const isCustom = UPPER.test(char);
