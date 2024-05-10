@@ -16,7 +16,5 @@ export class Serianilla {
             type: 'RootNode',
             children: [node.ast]
         }
-
-        printTree(ast)
     }
 }

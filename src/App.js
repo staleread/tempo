@@ -11,21 +11,22 @@ export const App = () => {
     return parseNode({
         imports: {Card},
         template: `
-        <div empty-attr onclick={handleDivClick} onClick={handleClick}>
-            <ul $map={mapCards}>
-                <Card 
-                    type="Super card" 
-                    name={cardName} 
-                    price={$card.price.amount} 
-                    currency={$card.price.currency}
-                ></Card>
+        <div onclick={handleDivClick} onClick={handleClick}>
+            <ul>
+                <$map items={cards} context="card">
+                    <Card
+                        name={$card.name}
+                        price={$card.price.amount}
+                        currency={$card.price.currency}
+                    ></Card>
+                </$map>
             </ul>
             <button>Hello, ${name}!</button>
         </div>`,
         attach: {
-            price: 15,
-            mapCards: {list: cards, context: 'card'},
-            cardName: 'My Card'
+            cards: cards,
+            handleDivClick: () => console.log('Clicked implicitly!'),
+            handleClick: () => console.log(name + ' clicked me!')
         }
     })
 }
