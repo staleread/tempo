@@ -345,7 +345,7 @@ export function tokenize(input) {
 
         tokens.push({
             type: 'tag-body-end',
-            childrenStart: false
+            isChildStart: false
         });
     }
 
@@ -355,7 +355,7 @@ export function tokenize(input) {
 
         tokens.push({
             type: 'tag-body-end',
-            childrenStart: true
+            isChildStart: true
         });
     }
 
@@ -367,7 +367,7 @@ export function tokenize(input) {
         skipSpaces()
 
         tokens.push({
-            type: 'tag-children-end',
+            type: 'tag-child-end',
             name: tagName
         });
     }
@@ -380,7 +380,7 @@ export function tokenize(input) {
         skipSpaces()
 
         tokens.push({
-            type: 'tag-children-end',
+            type: 'tag-child-end',
             name: tagName
         });
     }
