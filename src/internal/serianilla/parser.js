@@ -72,6 +72,11 @@ export function parseNode({template, imports, attach}) {
     const walkCustomTag = () => {
         let token = tokens[current];
 
+        const node = {
+            type: 'CustomNode',
+            children: []
+        }
+
         const componentName = token.name
         const props = {}
 
@@ -89,12 +94,14 @@ export function parseNode({template, imports, attach}) {
         const component = importsMap.get(componentName);
         const nodeInfo = component(props);
 
+        node.children.push(nodeInfo.ast);
+
         if (nodeInfo.bubblingEvents) {
             bubblingEvents.push(...nodeInfo.bubblingEvents);
         }
 
         if (!token.isChildStart) {
-            return nodeInfo.ast;
+            return node;
         }
 
         token = tokens[++current];
@@ -104,7 +111,7 @@ export function parseNode({template, imports, attach}) {
         }
 
         current++;
-        return nodeInfo.ast;
+        return node;
     }
 
     const handleCommand = (cmdName, node) => {

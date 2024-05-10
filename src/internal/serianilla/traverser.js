@@ -43,6 +43,14 @@ export const printTree = (ast) => traverseTree(ast, {
             console.log(`<- "${node.value}"`)
         }
     },
+    CustomNode: {
+        onEnter: () => {
+            console.log(`-> CUSTOM`)
+        },
+        onExit: () => {
+            console.log(`<- CUSTOM`)
+        },
+    },
 })
 
 export const renderTree = (ast) => traverseTree(ast, {
@@ -61,6 +69,11 @@ export const renderTree = (ast) => traverseTree(ast, {
     TextNode: {
         onEnter: (node, parent) => {
             parent.ref.innerText = node.value;
+        }
+    },
+    CustomNode: {
+        onEnter: (node, parent) => {
+            node.ref = parent.ref;
         }
     },
 })
