@@ -287,7 +287,6 @@ export function tokenize(input) {
 
     const processCustomTagBodyStart = () => {
         const tagName = readCustomTagName();
-        skipSpaces();
 
         tokens.push({
             type: 'tag-body-start',
@@ -295,18 +294,11 @@ export function tokenize(input) {
             isCustom: true
         });
 
-        const VALID_ATTR_START = /[^</>]/;
-        let char = input[current];
-
-        while (VALID_ATTR_START.test(char)) {
-            processPropsToken();
-            char = input[current];
-        }
+        skipSpaces();
     }
 
     const processRegularTagBodyStart = () => {
         const tagName = readRegularTagName();
-        skipSpaces();
 
         tokens.push({
             type: 'tag-body-start',
@@ -314,9 +306,24 @@ export function tokenize(input) {
             isCustom: false
         });
 
+        skipSpaces();
+    }
+
+    const processCustomTagBody = () => {
+        const STOP_CHARS = '/>';
         let char = input[current];
 
-        while (!'/>'.includes(char)) {
+        while (!STOP_CHARS.includes(char)) {
+            processPropsToken();
+            char = input[current];
+        }
+    }
+
+    const processRegularTagBody = () => {
+        const STOP_CHARS = '/>';
+        let char = input[current];
+
+        while (!STOP_CHARS.includes(char)) {
             if (char === '$') {
                 processCommandToken();
             } else {
@@ -391,9 +398,13 @@ export function tokenize(input) {
 
             const isCustom = UPPER.test(char);
 
-            isCustom
-                ? processCustomTagBodyStart()
-                : processRegularTagBodyStart();
+            if (isCustom) {
+                processCustomTagBodyStart();
+                processCustomTagBody();
+                continue;
+            }
+            processRegularTagBodyStart();
+            processRegularTagBody();
             continue;
         }
 
