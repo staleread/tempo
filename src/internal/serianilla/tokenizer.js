@@ -213,8 +213,8 @@ export function tokenize(input) {
             tokens.push({
                 type: 'bubbling-event',
                 name: eventName,
-                refType: 'ref-chain',
-                ref: refChainInfo
+                valueType: 'ref-chain',
+                value: refChainInfo
             });
             return
         }
@@ -225,8 +225,8 @@ export function tokenize(input) {
         tokens.push({
             type: 'bubbling-event',
             name: eventName,
-            refType: 'ref',
-            ref: ref});
+            valueType: 'ref',
+            value: ref});
     }
 
     const processImplicitEventToken = () => {
@@ -258,8 +258,8 @@ export function tokenize(input) {
             tokens.push({
                 type: 'implicit-event',
                 name: eventName,
-                refType: 'ref-chain',
-                ref: refChainInfo
+                valueType: 'ref-chain',
+                value: refChainInfo
             });
             return
         }
@@ -270,8 +270,8 @@ export function tokenize(input) {
         tokens.push({
             type: 'implicit-event',
             name: eventName,
-            refType: 'ref',
-            ref: ref});
+            valueType: 'ref',
+            value: ref});
     }
 
     const processPropsToken = () => {
