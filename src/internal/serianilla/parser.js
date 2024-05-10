@@ -1,14 +1,11 @@
 import {tokenize} from "./tokenizer.js";
 
-const SUPPORTED_COMMANDS = ['map']
-
 export function parseNode({template, imports, attach}) {
     const attachMap = attach ? new Map(Object.entries(attach)) : new Map();
     const importsMap = imports ? new Map(Object.entries(imports)) : new Map();
     const contextMap = new Map();
 
     const tokens = tokenize(template);
-    console.log(tokens)
     let current = 0;
 
     const retrieveProps = (token) => {
@@ -20,6 +17,46 @@ export function parseNode({template, imports, attach}) {
         }
         if (token.valueType !== 'ref-chain') {
             throw new TypeError(`Unresolved props value type: ${token.valueType}`);
+        }
+
+        const chainInfo = token.value;
+        let value = contextMap.get(chainInfo.context);
+
+        for (const chainMember of chainInfo.chain) {
+            value = value[chainMember];
+        }
+        return value;
+    }
+
+    const retrieveAttributeValue = (token) => {
+        if (token.valueType === 'empty') {
+            return null;
+        }
+        if (token.valueType === 'string') {
+            return token.value;
+        }
+        if (token.valueType === 'ref') {
+            return attachMap.get(token.value);
+        }
+        if (token.valueType !== 'ref-chain') {
+            throw new TypeError(`Unresolved attribute value type: ${token.valueType}`);
+        }
+
+        const chainInfo = token.value;
+        let value = contextMap.get(chainInfo.context);
+
+        for (const chainMember of chainInfo.chain) {
+            value = value[chainMember];
+        }
+        return value;
+    }
+
+    const retrieveEventHandler = (token) => {
+        if (token.valueType === 'ref') {
+            return attachMap.get(token.value);
+        }
+        if (token.valueType !== 'ref-chain') {
+            throw new TypeError(`Unresolved event value type: ${token.valueType}`);
         }
 
         const chainInfo = token.value;
@@ -56,10 +93,14 @@ export function parseNode({template, imports, attach}) {
         }
 
         const component = importsMap.get(componentName);
-        const node = component(props);
+        const nodeInfo = component(props);
+
+        if (nodeInfo.bubblingEvents) {
+            bubblingEvents.push(...nodeInfo.bubblingEvents);
+        }
 
         if (!token.isChildStart) {
-            return node;
+            return nodeInfo.ast;
         }
 
         token = tokens[++current];
@@ -69,7 +110,7 @@ export function parseNode({template, imports, attach}) {
         }
 
         current++;
-        return node;
+        return nodeInfo.ast;
     }
 
     const walkNotCustomTag = () => {
@@ -79,33 +120,39 @@ export function parseNode({template, imports, attach}) {
             type: 'TagNode',
             tag: token.name,
             attrs: [],
+            events: [],
             children: []
         }
 
         token = tokens[++current];
 
-        while (token.type !== 'tag' && token.body !== 'end') {
+        while (token.type !== 'tag-body-end') {
             if (token.type === 'attr') {
-                node.attrs.push({
-                    name: token.name,
-                    value: token.valueType === 'serial' ? attachMap.get(token.value) : token.value
-                })
-            } else if (token.type === 'cmd') {
-                // handle command
+                const attrValue = retrieveAttributeValue(token);
+                node.attrs.push({name: token.name, value: attrValue});
+            } else if (token.type === 'cmd' && token.name === 'map') {
+                // TODO handle command
+                // escape for now
+            } else if (token.type === 'bubbling-event') {
+                const handler = retrieveEventHandler(token);
+                bubblingEvents.push({name: token.name, handler})
+            } else if (token.type === 'implicit-event') {
+                const handler = retrieveEventHandler(token);
+                node.events.push({name: token.name, handler})
             } else {
-                throw new TypeError(`Invalid token with type "${token.type}" found inside tag body`);
+                throw new TypeError(`Invalid token "${token.type}" found inside tag body`);
             }
-
             token = tokens[++current];
         }
 
-        if (!token.children) {
+        if (!token.isChildStart) {
+            current++;
             return node;
         }
 
         token = tokens[++current];
 
-        while (token.type !== 'tag' || token.children !== 'end') {
+        while (token.type !== 'tag-child-end') {
             node.children.push(walkChildNode());
             token = tokens[current];
         }
@@ -131,10 +178,12 @@ export function parseNode({template, imports, attach}) {
             : walkNotCustomTag();
     }
 
+    const bubblingEvents = []
     const ast = walkChildNode();
 
     if (current < tokens.length) {
         throw new TypeError(`${tokens.length - current} extra tokens found after root. Only 1 node expected`)
     }
-    return ast;
+
+    return {ast, bubblingEvents};
 }

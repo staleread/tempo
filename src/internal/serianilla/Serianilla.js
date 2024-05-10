@@ -14,7 +14,7 @@ export class Serianilla {
     render(node) {
         const ast = {
             type: 'RootNode',
-            children: [node]
+            children: [node.ast]
         }
 
         printTree(ast)
