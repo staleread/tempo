@@ -1,4 +1,4 @@
-import {printTree} from "./traverser.js";
+import {printTree, renderTree} from "./traverser.js";
 
 export class Serianilla {
     _virtualDOM = {};
@@ -12,9 +12,7 @@ export class Serianilla {
     }
 
     render(node) {
-        const ast = {
-            type: 'RootNode',
-            children: [node.ast]
-        }
+        this._virtualDOM.children.push(node.ast);
+        renderTree(this._virtualDOM)
     }
 }
