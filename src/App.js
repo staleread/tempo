@@ -13,13 +13,14 @@ export const App = () => {
         template: `
         <div empty-attr onclick={handleDivClick} onClick={handleClick}>
             <ul $map={mapCards}>
-                <Card name={$card.name} price={$card.price.currency}></Card>
+                <Card type="Super card" name={cardName} price={$card.price.currency}></Card>
             </ul>
             <button>Hello, ${name}!</button>
         </div>`,
         attach: {
             price: 15,
-            mapCards: {list: cards, context: 'card'}
+            mapCards: {list: cards, context: 'card'},
+            cardName: 'My Card'
         }
     })
 }

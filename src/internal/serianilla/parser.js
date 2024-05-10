@@ -5,9 +5,38 @@ const SUPPORTED_COMMANDS = ['map']
 export function parseNode({template, imports, attach}) {
     const attachMap = attach ? new Map(Object.entries(attach)) : new Map();
     const importsMap = imports ? new Map(Object.entries(imports)) : new Map();
+    const contextMap = new Map();
 
     const tokens = tokenize(template);
+    console.log(tokens)
     let current = 0;
+
+    const retrieveProps = (token) => {
+        if (token.valueType === 'string') {
+            return token.value;
+        }
+        if (token.valueType === 'ref') {
+            return attachMap.get(token.value);
+        }
+        if (token.valueType !== 'ref-chain') {
+            throw new TypeError(`Unresolved props value type: ${token.valueType}`);
+        }
+
+        const chainInfo = token.value;
+        let value = contextMap.get(chainInfo.context);
+
+        for (const chainMember of chainInfo.chain) {
+            value = value[chainMember];
+        }
+        return value;
+    }
+
+    // contextMap.set('card', {price: {currency: 23}})
+    //
+    // console.log(retrieveProps({type: 'props', name: 'price', valueType: 'ref-chain', value: {
+    //         context: 'card',
+    //         chain: ['price', 'currency']
+    //     }}));
 
     const walkCustomTag = () => {
         let token = tokens[current];
@@ -17,12 +46,12 @@ export function parseNode({template, imports, attach}) {
 
         token = tokens[++current];
 
-        while (token.type !== 'tag' && token.body !== 'end') {
+        while (token.type !== 'tag-body-end') {
             if (token.type !== 'props') {
-                throw new TypeError(`Invalid token with type "${token.type}" found inside custom tag body`);
+                throw new TypeError(`Props expected, got "${token.type}" inside custom tag body`);
             }
 
-            props[token.name] = token.valueType === 'serial' ? attachMap.get(token.value) : token.value;
+            props[token.name] = retrieveProps(token);
             token = tokens[++current];
         }
 
@@ -93,12 +122,8 @@ export function parseNode({template, imports, attach}) {
             return {type: 'TextNode', value: token.value};
         }
 
-        if (token.type !== 'tag') {
-            throw new TypeError(`Invalid node type: "${token.type}"`);
-        }
-
-        if (token.body !== 'start') {
-            throw new TypeError(`A start body tag expected`)
+        if (token.type !== 'tag-body-start') {
+            throw new TypeError(`Expected an opening tag, got "${token.type}"`);
         }
 
         return token.isCustom
