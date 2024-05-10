@@ -150,13 +150,7 @@ export function tokenize(input) {
         return value;
     }
 
-    // TODO skip $ before
     const processCommandToken = () => {
-        if (input[current] !== '$') {
-            throw new TypeError(`Invalid command. "$" expected at ${current}, not "${input[current]}"`);
-        }
-
-        current++;
         const cmdName = readPropsName();
 
         if (input[current] !== '=') {
@@ -393,6 +387,7 @@ export function tokenize(input) {
 
         while (!STOP_CHARS.includes(char)) {
             if (char === '$') {
+                current++;
                 processCommandToken();
             } else if (char + input[current + 1] === 'on') {
                 current += 2;
