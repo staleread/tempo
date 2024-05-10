@@ -8,428 +8,75 @@ import {
     processCommandTagBodyStart,
     processCommandTagChildrenEnd
 } from "./tokenize-utils/command-tag.js";
+import {
+    processRegularTagBody,
+    processRegularTagBodyStart,
+    processRegularTagChildrenEnd
+} from "./tokenize-utils/regular-tag.js";
+import {
+    processMonoTagBodyEnd,
+    processSplitTagBodyEnd,
+    processTextToken,
+    skipSpaces
+} from "./tokenize-utils/shared.js";
 
-export function tokenize(input) {
+export const tokenize = (input) => {
     let current = 0;
     const tokens = [];
     const UPPER = /[A-Z]/;
 
-    //region Shared
-    const skipSpaces = () => {
-        const SPACE_REG = /\s/;
-
-        while (SPACE_REG.test(input[current])) {
-            current++;
-        }
-    }
-
-    const readReferenceValue = () => {
-        const VALID_WORD = /^[a-z][a-zA-Z0-9]+$/;
-
-        let value = input[++current];
-
-        while (input[++current] !== '}') {
-            value += input[current];
-        }
-
-        if (!VALID_WORD.test(value)) {
-            throw new TypeError(`Invalid reference value: ${value}`)
-        }
-
-        current++;
-        skipSpaces();
-
-        return value;
-    }
-
-    const readReferenceChain = () => {
-        const VALID_WORD = /^([a-z][a-zA-Z0-9]+)(\.[a-z][a-zA-Z0-9]+)+$/;
-
-        let value = input[++current];
-
-        while (input[++current] !== '}') {
-            value += input[current];
-        }
-
-        if (!VALID_WORD.test(value)) {
-            throw new TypeError(`Invalid reference chain: ${value}`)
-        }
-
-        const arr = value.split('.');
-        const context = arr[0];
-        const chainMatches = arr.slice(1);
-
-        current++;
-        skipSpaces();
-
-        return {context, chain: chainMatches};
-    }
-
-    const readStringValue = () => {
-        let value = '';
-        current++;
-
-        while (input[current] !== '"') {
-            value += input[current++];
-        }
-
-        current++;
-        skipSpaces();
-
-        return value;
-    }
-
-    const processSplitTagBodyEnd = () => {
-        current++;
-        skipSpaces();
-
-        tokens.push({
-            type: 'tag-body-end',
-            isChildStart: true
-        });
-    }
-    const processMonoTagBodyEnd = () => {
-        current++;
-        skipSpaces();
-
-        tokens.push({
-            type: 'tag-body-end',
-            isChildStart: false
-        });
-    }
-    //endregion
-
-    //region Regular Tag
-    const readBubblingEventName = () => {
-        const VALID_CHAR = /[^=\s]/;
-        const VALID_WORD = /^[A-Z][a-zA-Z0-9]+$/;   // UpperCamelCase
-
-        let value = input[current];
-
-        while (VALID_CHAR.test(input[++current])) {
-            value += input[current];
-        }
-
-        if (!VALID_WORD.test(value)) {
-            throw new TypeError(`Invalid bubbling event name "on${value}"`)
-        }
-        return value.toLowerCase();
-    }
-
-    const processBubblingEventToken = () => {
-        const eventName = readBubblingEventName();
-        let char = input[current];
-
-        if (char !== '=') {
-            throw new TypeError(`Invalid bubbling event "on${name}": Empty events are not allowed`)
-        }
-
-        current++;
-        skipSpaces();
-        char = input[current];
-
-        if (char !== '{') {
-            throw new TypeError(`Unresolved bubbling event value at ${current}. '{' expected, got '${char}'`);
-        }
-
-        const tmpCurrent = current;
-
-        current++;
-        skipSpaces();
-        char = input[current];
-
-        if (char === '$') {
-            const refChainInfo = readReferenceChain();
-
-            tokens.push({
-                type: 'bubbling-event',
-                name: eventName,
-                valueType: 'ref-chain',
-                value: refChainInfo
-            });
-            return
-        }
-
-        current = tmpCurrent;
-        const ref = readReferenceValue();
-
-        tokens.push({
-            type: 'bubbling-event',
-            name: eventName,
-            valueType: 'ref',
-            value: ref});
-    }
-
-    const readImplicitEventName = () => {
-        const VALID_CHAR = /[^=\s]/;
-        const VALID_WORD = /^[a-z]+$/;   // lowercase
-
-        let value = input[current];
-
-        while (VALID_CHAR.test(input[++current])) {
-            value += input[current];
-        }
-
-        if (!VALID_WORD.test(value)) {
-            throw new TypeError(`Invalid implicit event name "on${value}"`)
-        }
-        return value;
-    }
-
-    const processImplicitEventToken = () => {
-        const eventName = readImplicitEventName();
-
-        let char = input[current];
-
-        if (char !== '=') {
-            throw new TypeError(`Invalid implicit event "on${name}": Empty events are not allowed`)
-        }
-
-        current++;
-        skipSpaces();
-        char = input[current];
-
-        if (char !== '{') {
-            throw new TypeError(`Unresolved implicit event value at ${current}. '{' expected, got '${char}'`);
-        }
-
-        const tmpCurrent = current;
-
-        current++;
-        skipSpaces();
-        char = input[current];
-
-        if (char === '$') {
-            const refChainInfo = readReferenceChain();
-
-            tokens.push({
-                type: 'implicit-event',
-                name: eventName,
-                valueType: 'ref-chain',
-                value: refChainInfo
-            });
-            return
-        }
-
-        current = tmpCurrent;
-        const ref = readReferenceValue();
-
-        tokens.push({
-            type: 'implicit-event',
-            name: eventName,
-            valueType: 'ref',
-            value: ref});
-    }
-
-    const readRegularTagName = () => {
-        const VALID_CHAR = /[^/>\s]/;
-        const VALID_WORD = /^([a-z][a-z0-9]*)(-[a-z0-9]+)*$/;   // kebab-case
-
-        let value = input[current];
-
-        while (VALID_CHAR.test(input[++current])) {
-            value += input[current];
-        }
-
-        if (!VALID_WORD.test(value)) {
-            throw new TypeError(`Invalid regular tag name "${value}"`)
-        }
-
-        return value
-    }
-
-    const readAttributeName = () => {
-        const VALID_CHAR = /[^/>\s]/;
-        const VALID_WORD = /^(([a-z][a-z0-9]*)(-[a-z0-9]+)*|[a-z][a-zA-Z0-9]+)$/;   // kebab-case or lowerCamelCase
-
-        let value = input[current];
-
-        while (VALID_CHAR.test(input[++current])) {
-            value += input[current];
-        }
-
-        if (!VALID_WORD.test(value)) {
-            throw new TypeError(`Invalid attribute name "${value}"`)
-        }
-
-        return value
-    }
-
-    const processAttributeToken = () => {
-        const attrName = readAttributeName();
-
-        let char = input[current];
-
-        if (char !== '=') {
-            skipSpaces();
-
-            tokens.push({
-                type: 'attr',
-                name: attrName,
-                valueType: 'empty'
-            });
-            return;
-        }
-
-        current++;
-        skipSpaces();
-        char = input[current];
-
-        if (char !== '"' && char !== '{') {
-            throw new TypeError(`Unresolved attribute value at ${current}. '{' or '"' expected, got '${char}'`);
-        }
-
-        if (char === '"') {
-            const string = readStringValue()
-
-            tokens.push({
-                type: 'attr',
-                name: attrName,
-                valueType: 'string',
-                value: string
-            });
-            return;
-        }
-
-        const tmpCurrent = current;
-
-        current++;
-        skipSpaces();
-        char = input[current];
-
-        if (char === '$') {
-            const refChainInfo = readReferenceChain();
-
-            tokens.push({
-                type: 'attr',
-                name: attrName,
-                valueType: 'ref-chain',
-                value: refChainInfo
-            });
-            return
-        }
-
-        current = tmpCurrent;
-        const ref = readReferenceValue();
-
-        tokens.push({
-            type: 'attr',
-            name: attrName,
-            valueType: 'ref',
-            value: ref});
-    }
-
-    const processRegularTagBodyStart = () => {
-        const tagName = readRegularTagName();
-
-        tokens.push({
-            type: 'tag-body-start',
-            name: tagName,
-            isCommand: false,
-            isCustom: false
-        });
-
-        skipSpaces();
-    }
-
-    const processRegularTagBody = () => {
-        const STOP_CHARS = '/>';
-        let char = input[current];
-
-        while (!STOP_CHARS.includes(char)) {
-            if (char + input[current + 1] === 'on' && input[current + 2] === input[current + 2].toUpperCase()) {
-                current += 2;
-                processBubblingEventToken();
-            } else if (char + input[current + 1] === 'on') {
-                current += 2;
-                processImplicitEventToken();
-            } else {
-                processAttributeToken();
-            }
-            char = input[current];
-        }
-    }
-
-    const processRegularTagChildrenEnd = () => {
-        const tagName = readRegularTagName();
-
-        // skip the upcoming ">"
-        current++;
-        skipSpaces()
-
-        tokens.push({
-            type: 'tag-child-end',
-            name: tagName
-        });
-    }
-    //endregion
-
-    const processTextToken = () => {
-        const TEXT_CHUNK_REG = /[^<>]/;
-
-        let value = input[current];
-
-        while (TEXT_CHUNK_REG.test(input[++current])) {
-            value += input[current];
-        }
-
-        tokens.push({type: 'text', value: value.trim()});
-    }
-
-    skipSpaces();
+    current = skipSpaces(input, current);
 
     while (current < input.length) {
         let char = input[current];
 
         if (char === '<') {
-            current++;
-
-            skipSpaces();
+            current = skipSpaces(input, ++current)
             char = input[current];
 
             if (char === '/') {
                 continue;
             }
 
+            let startToken, bodyTokens;
+
             if (char === '$') {
-                let startToken, paramTokens;
-
                 [startToken, current] = processCommandTagBodyStart(input, ++current);
-                [paramTokens, current] = processCommandTagBody(input, current);
+                [bodyTokens, current] = processCommandTagBody(input, current);
 
-                tokens.push(startToken, ...paramTokens);
+                tokens.push(startToken, ...bodyTokens);
                 continue;
             }
 
-            const isCustom = UPPER.test(char);
+            const isCustom = char === char.toUpperCase();
 
             if (isCustom) {
-                let startToken, propsTokens;
-
                 [startToken, current] = processCustomTagBodyStart(input, current);
-                [propsTokens, current] = processCustomTagBody(input, current);
+                [bodyTokens, current] = processCustomTagBody(input, current);
 
-                tokens.push(startToken, ...propsTokens);
+                tokens.push(startToken, ...bodyTokens);
                 continue;
             }
-            processRegularTagBodyStart();
-            processRegularTagBody();
+            [startToken, current] = processRegularTagBodyStart(input, current);
+            [bodyTokens, current] = processRegularTagBody(input, current);
+
+            tokens.push(startToken, ...bodyTokens);
             continue;
         }
 
-        if (char === '/') {
-            current++;
+        let token;
 
-            skipSpaces();
+        if (char === '/') {
+            current = skipSpaces(input, ++current)
             char = input[current];
 
             if (char === '>') {
-                processMonoTagBodyEnd();
+                [token, current] = processMonoTagBodyEnd(input, current);
+                tokens.push(token);
                 continue;
             }
 
             if (char === '$') {
-                let token;
                 [token, current] = processCommandTagChildrenEnd(input, ++current);
                 tokens.push(token);
                 continue
@@ -438,22 +85,25 @@ export function tokenize(input) {
             const isCustom = UPPER.test(char);
 
             if (isCustom) {
-                let token;
                 [token, current] = processCustomTagChildrenEnd(input, current);
                 tokens.push(token);
                 continue;
             }
 
-            processRegularTagChildrenEnd();
+            [token, current] = processRegularTagChildrenEnd(input, current);
+            tokens.push(token);
             continue;
         }
 
         if (char === '>') {
-            processSplitTagBodyEnd();
+            [token, current] = processSplitTagBodyEnd(input, current);
+
+            tokens.push(token);
             continue;
         }
 
-        processTextToken();
+        [token, current] = processTextToken(input, current);
+        tokens.push(token);
     }
     return tokens;
 }
