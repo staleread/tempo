@@ -1,30 +1,16 @@
-import {Card} from "./components/Card.js";
 import {parseNode} from "./internal/serianilla/parser.js";
+import {Counter} from "./components/Counter.js";
 
 export const App = () => {
     const name = 'Nicolas';
-    const cards = [
-        {name: 'Apple', price: {amount: 2, currency: '$'}},
-        {name: 'Carrot', price: {amount: 20, currency: 'грн'}}
-    ]
 
     return parseNode({
-        imports: {Card},
+        imports: {Counter},
         template: `
         <div onclick={handleDivClick} onClick={handleClick}>
-            <ul class="my-ul">
-                <$map items={cards} context="card">
-                    <Card
-                        name={$card.name}
-                        price={$card.price.amount}
-                        currency={$card.price.currency}
-                    ></Card>
-                </$map>
-            </ul>
-            <button>Hello, ${name}!</button>
+            <Counter/>
         </div>`,
         attach: {
-            cards: cards,
             handleDivClick: () => console.log('Clicked implicitly!'),
             handleClick: () => console.log(name + ' clicked me!')
         }
