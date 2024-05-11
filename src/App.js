@@ -3,16 +3,16 @@ import {Counter} from "./components/Counter.js";
 
 export const App = () => {
     const name = 'Nicolas';
+    let times = 1;
 
     return parseNode({
         imports: {Counter},
         template: `
-        <div onclick={handleDivClick} onClick={handleClick}>
+        <div class="container" onClick={handleClick}>
             <Counter/>
         </div>`,
         attach: {
-            handleDivClick: () => console.log('Clicked implicitly!'),
-            handleClick: () => console.log(name + ' clicked me!')
+            handleClick: () => console.log(`${name} clicked me ${times++} times!`)
         }
     })
 }

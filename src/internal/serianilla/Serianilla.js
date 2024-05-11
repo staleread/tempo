@@ -1,20 +1,42 @@
-import {printTree, renderTree} from "./traverser.js";
+import {renderDiff, renderTree} from "./traverser.js";
 
 export const Serianilla = (function () {
-    let virtualDOM;
+    let _virtualDOM;
+    let _rootComponent;
+    let _val;
+
+    const update = () => {
+        const node = _rootComponent();
+
+        const candidateDOM = {
+            type: 'RootNode',
+            children: [node]
+        };
+        node.parent = candidateDOM;
+        renderDiff(_virtualDOM, candidateDOM);
+    }
 
     return {
-        createRoot(root) {
-            virtualDOM = {
+        render(rootElement, rootComponent) {
+            _rootComponent = rootComponent;
+            const node = rootComponent();
+
+            _virtualDOM = {
                 type: 'RootNode',
-                ref: root,
-                children: []
+                ref: rootElement,
+                children: [node]
             }
+            node.parent = _virtualDOM;
+            renderTree(_virtualDOM);
         },
 
-        render(node) {
-            virtualDOM.children.push(node.ast);
-            renderTree(virtualDOM)
+        useState(initialValue) {
+            _val = _val || initialValue;
+            const setValue = (newValue) => {
+                _val = newValue;
+                update();
+            };
+            return [_val, setValue];
         }
     }
 })();
