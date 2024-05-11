@@ -6,7 +6,6 @@ export function parseNode({template, imports, attach}) {
     const contextMap = new Map();
 
     const tokens = tokenize(template);
-    const bubblingEvents = [];
     let current = 0;
 
     const retrieveProps = (token) => {
@@ -186,13 +185,14 @@ export function parseNode({template, imports, attach}) {
                 const attrValue = retrieveAttributeValue(token);
                 node.attrs.set(token.name, attrValue);
             }
-            else if (token.type === 'bubbling-event') {
+            else if (token.type === 'event') {
                 const handler = retrieveEventHandler(token);
-                bubblingEvents.push({name: token.name, handler});
-            }
-            else if (token.type === 'implicit-event') {
-                const handler = retrieveEventHandler(token);
-                node.events.push({name: token.name, handler});
+                const event = {
+                    eventName: token.name,
+                    isBubbling: token.isBubbling,
+                    handler
+                };
+                node.events.push(event);
             }
             else {
                 throw new TypeError(`Invalid token "${token.type}" found inside tag body`);
@@ -247,5 +247,5 @@ export function parseNode({template, imports, attach}) {
     if (current < tokens.length) {
         throw new TypeError(`${tokens.length - current} extra tokens found after root. Only 1 node expected`)
     }
-    return {ast, bubblingEvents};
+    return ast;
 }

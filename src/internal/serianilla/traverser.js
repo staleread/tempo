@@ -62,6 +62,10 @@ export const renderTree = (ast) => traverseTree(ast, {
                 elem.setAttribute(k, v);
             })
 
+            node.events.forEach(e => {
+                elem.addEventListener(e.eventName, e.handler);
+            })
+
             parent.ref.appendChild(elem)
             node.ref = elem;
         }

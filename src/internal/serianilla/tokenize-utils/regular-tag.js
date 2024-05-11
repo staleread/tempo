@@ -1,24 +1,34 @@
 import {readReferenceChain, readReferenceValue, readStringValue, skipSpaces} from "./shared.js";
 
-export const readBubblingEventName = (input, current) => {
-    const VALID_CHAR = /[^=\s]/;
-    const VALID_WORD = /^[A-Z][a-zA-Z0-9]+$/;   // UpperCamelCase
+export const readEventName = (input, current) => {
+    const STOP_CHARS = '= ';
+    const IMPLICIT = /^[a-z]+$/;            // lowercase
+    const BUBBLING = /^[A-Z][a-zA-Z]+$/;    // UpperCamelCase
 
     let value = input[current];
+    let char = input[++current];
 
-    while (VALID_CHAR.test(input[++current])) {
-        value += input[current];
+    while (!STOP_CHARS.includes(char)) {
+        value += char;
+        char = input[++current];
     }
 
-    if (!VALID_WORD.test(value)) {
-        throw new TypeError(`Invalid bubbling event name "on${value}"`)
+    let isBubbling;
+
+    if (IMPLICIT.test(value)) {
+        isBubbling = false;
+    } else if (BUBBLING.test(value)) {
+        isBubbling = true;
+    } else {
+        throw new TypeError(`Invalid event name "on${value}"`)
     }
-    return [value.toLowerCase(), current];
+    return [value.toLowerCase(), isBubbling, current];
 }
 
-export const processBubblingEventToken = (input, current) => {
-    let eventName;
-    [eventName, current] = readBubblingEventName(input, current);
+export const processEventToken = (input, current) => {
+    let eventName, isBubbling;
+    [eventName, isBubbling, current] = readEventName(input, current);
+
     let char = input[current];
 
     if (char !== '=') {
@@ -42,8 +52,9 @@ export const processBubblingEventToken = (input, current) => {
         [refChainInfo, current] = readReferenceChain(input, current);
 
         const token = {
-            type: 'bubbling-event',
+            type: 'event',
             name: eventName,
+            isBubbling,
             valueType: 'ref-chain',
             value: refChainInfo
         };
@@ -55,72 +66,9 @@ export const processBubblingEventToken = (input, current) => {
     [ref, current] = readReferenceValue(input, current);
 
     const token = {
-        type: 'bubbling-event',
+        type: 'event',
         name: eventName,
-        valueType: 'ref',
-        value: ref
-    };
-    return [token, current];
-}
-
-export const readImplicitEventName = (input, current) => {
-    const VALID_CHAR = /[^=\s]/;
-    const VALID_WORD = /^[a-z]+$/;   // lowercase
-
-    let value = input[current];
-
-    while (VALID_CHAR.test(input[++current])) {
-        value += input[current];
-    }
-
-    if (!VALID_WORD.test(value)) {
-        throw new TypeError(`Invalid implicit event name "on${value}"`)
-    }
-    return [value, current];
-}
-
-export const processImplicitEventToken = (input, current) => {
-    let eventName;
-    [eventName, current] = readImplicitEventName(input, current);
-
-    let char = input[current];
-
-    if (char !== '=') {
-        throw new TypeError(`Invalid implicit event "on${eventName}": Empty events are not allowed`)
-    }
-
-    current = skipSpaces(input, ++current);
-    char = input[current];
-
-    if (char !== '{') {
-        throw new TypeError(`Unresolved implicit event value at ${current}. '{' expected, got '${char}'`);
-    }
-
-    const tmpCurrent = current;
-
-    current = skipSpaces(input, ++current);
-    char = input[current];
-
-    if (char === '$') {
-        let refChainInfo;
-        [refChainInfo, current] = readReferenceChain(input, current);
-
-        const token = {
-            type: 'implicit-event',
-            name: eventName,
-            valueType: 'ref-chain',
-            value: refChainInfo
-        };
-        return [token, current];
-    }
-    current = tmpCurrent;
-
-    let ref;
-    [ref, current] = readReferenceValue(input, current);
-
-    const token = {
-        type: 'implicit-event',
-        name: eventName,
+        isBubbling,
         valueType: 'ref',
         value: ref
     };
@@ -253,15 +201,10 @@ export const processRegularTagBody = (input, current) => {
     while (!STOP_CHARS.includes(char)) {
         let token;
 
-        if (char + input[current + 1] === 'on' && input[current + 2] === input[current + 2].toUpperCase()) {
+        if (char + input[current + 1] === 'on') {
             current += 2;
 
-            [token, current] = processBubblingEventToken(input, current);
-            tokens.push(token);
-        } else if (char + input[current + 1] === 'on') {
-            current += 2;
-
-            [token, current] = processImplicitEventToken(input, current);
+            [token, current] = processEventToken(input, current);
             tokens.push(token);
         } else {
             [token, current] = processAttributeToken(input, current);
