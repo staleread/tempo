@@ -122,7 +122,7 @@ export function parseNode({template, imports, attach}) {
     const walkCustomTag = (parent) => {
         let token = tokens[current];
 
-        const node = {
+        const nodeWrapper = {
             type: 'CustomNode',
             parent,
             children: []
@@ -143,17 +143,14 @@ export function parseNode({template, imports, attach}) {
         }
 
         const component = importsMap.get(componentName);
-        const nodeInfo = component(props);
-        nodeInfo.ast.parent = node;
+        const node = component(props);
+        node.parent = nodeWrapper;
 
-        node.children.push(nodeInfo.ast);
-
-        if (nodeInfo.bubblingEvents) {
-            bubblingEvents.push(...nodeInfo.bubblingEvents);
-        }
+        nodeWrapper.children.push(node);
 
         if (!token.isChildStart) {
-            return node;
+            current++;
+            return nodeWrapper;
         }
 
         token = tokens[++current];
@@ -163,7 +160,7 @@ export function parseNode({template, imports, attach}) {
         }
 
         current++;
-        return node;
+        return nodeWrapper;
     }
 
     const walkNotCustomTag = (parent) => {
