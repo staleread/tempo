@@ -69,51 +69,6 @@ export function parseNode({template, imports, attach}) {
         return value;
     }
 
-    const walkCustomTag = () => {
-        let token = tokens[current];
-
-        const node = {
-            type: 'CustomNode',
-            children: []
-        }
-
-        const componentName = token.name
-        const props = {}
-
-        token = tokens[++current];
-
-        while (token.type !== 'tag-body-end') {
-            if (token.type !== 'props') {
-                throw new TypeError(`Props expected, got "${token.type}" inside custom tag body`);
-            }
-
-            props[token.name] = retrieveProps(token);
-            token = tokens[++current];
-        }
-
-        const component = importsMap.get(componentName);
-        const nodeInfo = component(props);
-
-        node.children.push(nodeInfo.ast);
-
-        if (nodeInfo.bubblingEvents) {
-            bubblingEvents.push(...nodeInfo.bubblingEvents);
-        }
-
-        if (!token.isChildStart) {
-            return node;
-        }
-
-        token = tokens[++current];
-
-        if (token.type !== 'tag-child-end') {
-            throw new TypeError('Custom tags must be without child nodes');
-        }
-
-        current++;
-        return node;
-    }
-
     const handleCommand = (cmdName, node) => {
         if (cmdName !== 'map') {
             throw new TypeError(`Unknown command "${cmdName}"`);
@@ -165,14 +120,62 @@ export function parseNode({template, imports, attach}) {
         current++;
     }
 
-    const walkNotCustomTag = () => {
+    const walkCustomTag = (parent) => {
+        let token = tokens[current];
+
+        const node = {
+            type: 'CustomNode',
+            parent,
+            children: []
+        }
+
+        const componentName = token.name
+        const props = {}
+
+        token = tokens[++current];
+
+        while (token.type !== 'tag-body-end') {
+            if (token.type !== 'props') {
+                throw new TypeError(`Props expected, got "${token.type}" inside custom tag body`);
+            }
+
+            props[token.name] = retrieveProps(token);
+            token = tokens[++current];
+        }
+
+        const component = importsMap.get(componentName);
+        const nodeInfo = component(props);
+        nodeInfo.ast.parent = node;
+
+        node.children.push(nodeInfo.ast);
+
+        if (nodeInfo.bubblingEvents) {
+            bubblingEvents.push(...nodeInfo.bubblingEvents);
+        }
+
+        if (!token.isChildStart) {
+            return node;
+        }
+
+        token = tokens[++current];
+
+        if (token.type !== 'tag-child-end') {
+            throw new TypeError('Custom tags must be without child nodes');
+        }
+
+        current++;
+        return node;
+    }
+
+    const walkNotCustomTag = (parent) => {
         let token = tokens[current];
 
         const node = {
             type: 'TagNode',
             tag: token.name,
-            attrs: [],
+            attrs: new Map(),
             events: [],
+            parent,
             children: []
         }
 
@@ -181,7 +184,7 @@ export function parseNode({template, imports, attach}) {
         while (token.type !== 'tag-body-end') {
             if (token.type === 'attr') {
                 const attrValue = retrieveAttributeValue(token);
-                node.attrs.push({name: token.name, value: attrValue});
+                node.attrs.set(token.name, attrValue);
             }
             else if (token.type === 'bubbling-event') {
                 const handler = retrieveEventHandler(token);
@@ -206,7 +209,7 @@ export function parseNode({template, imports, attach}) {
 
         while (token.type !== 'tag-child-end') {
             if (!token.isCommand) {
-                node.children.push(walkChildNode());
+                node.children.push(walkChildNode(node));
                 token = tokens[current];
                 continue;
             }
@@ -218,7 +221,7 @@ export function parseNode({template, imports, attach}) {
         return node;
     }
 
-    const walkChildNode = () => {
+    const walkChildNode = (parent) => {
         let token = tokens[current];
 
         if (token.type === 'text') {
@@ -235,11 +238,11 @@ export function parseNode({template, imports, attach}) {
         }
 
         return token.isCustom
-            ? walkCustomTag()
-            : walkNotCustomTag();
+            ? walkCustomTag(parent)
+            : walkNotCustomTag(parent);
     }
 
-    const ast = walkChildNode();
+    const ast = walkChildNode(null);
 
     if (current < tokens.length) {
         throw new TypeError(`${tokens.length - current} extra tokens found after root. Only 1 node expected`)

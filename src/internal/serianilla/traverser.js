@@ -20,10 +20,10 @@ export function traverseTree(ast, visitor) {
 
 export const printTree = (ast) => traverseTree(ast, {
     RootNode: {
-        onEnter: (node) => {
+        onEnter: () => {
             console.log(`-> ROOT`)
         },
-        onExit: (node) => {
+        onExit: () => {
             console.log(`<- ROOT`)
         },
     },
@@ -58,8 +58,8 @@ export const renderTree = (ast) => traverseTree(ast, {
         onEnter: (node, parent) => {
             const elem = node.ref ?? document.createElement(node.tag);
 
-            node.attrs.forEach(a => {
-                elem.setAttribute(a.name, a.value);
+            node.attrs.forEach((v, k) => {
+                elem.setAttribute(k, v);
             })
 
             parent.ref.appendChild(elem)
