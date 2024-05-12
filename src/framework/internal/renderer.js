@@ -8,6 +8,7 @@ const renderNode = (node) => {
 
         node.parent.ref.appendChild(elem)
         node.ref = elem;
+        elem._ref = node;
         return;
     }
     if (node.type === 'TextNode') {
