@@ -1,32 +1,25 @@
-import {readValue, skipSpaces} from "./shared.js";
-
-export const readEventName = (input, current) => {
-    const STOP_CHARS = '= ';
-    const VALID_WORD = /^[A-Z][a-zA-Z]+$/;    // UpperCamelCase
-
-    let value = input[current];
-    let char = input[++current];
-
-    while (!STOP_CHARS.includes(char)) {
-        value += char;
-        char = input[++current];
-    }
-
-    if (!VALID_WORD.test(value)) {
-        throw new TypeError(`Invalid event name "on${value}"`)
-    }
-    return [value, current];
-}
+import {
+    KEBAB_CASE,
+    KEBAB_OR_LOWER_CAMEL_CASE,
+    UPPER_CAMEL_CASE,
+    readValue,
+    readWord,
+    skipSpaces
+} from "./shared.js";
 
 export const processEventToken = (input, current) => {
     let eventName, valueType, value;
 
-    [eventName, current] = readEventName(input, current);
+    [eventName, current] = readWord(input, current, UPPER_CAMEL_CASE);
     [valueType, value, current] = readValue(input, current);
 
     if (valueType === 'empty') {
-        throw new TypeError(`Invalid bubbling event "on${eventName}": Empty events are not allowed`)
+        throw new TypeError(`Invalid event "on${eventName}": Empty events are not allowed`)
     }
+    if (valueType === 'string') {
+        throw new TypeError(`Event "on${eventName}" has invalid event type: a reference value or chain expected`)
+    }
+
     const token = {
         type: 'event',
         name: eventName,
@@ -36,44 +29,10 @@ export const processEventToken = (input, current) => {
     return [token, current];
 }
 
-export const readRegularTagName = (input, current) => {
-    const VALID_CHAR = /[^/>\s]/;
-    const VALID_WORD = /^([a-z][a-z0-9]*)(-[a-z0-9]+)*$/;   // kebab-case
-
-    let value = input[current];
-
-    while (VALID_CHAR.test(input[++current])) {
-        value += input[current];
-    }
-
-    if (!VALID_WORD.test(value)) {
-        throw new TypeError(`Invalid regular tag name "${value}"`)
-    }
-
-    return [value, current]
-}
-
-export const readAttributeName = (input, current) => {
-    const VALID_CHAR = /[^=/>\s]/;
-    const VALID_WORD = /^(([a-z][a-z0-9]*)(-[a-z0-9]+)*|[a-z][a-zA-Z0-9]+)$/;   // kebab-case or lowerCamelCase
-
-    let value = input[current];
-
-    while (VALID_CHAR.test(input[++current])) {
-        value += input[current];
-    }
-
-    if (!VALID_WORD.test(value)) {
-        throw new TypeError(`Invalid attribute name "${value}"`)
-    }
-
-    return [value, current];
-}
-
 export const processAttributeToken = (input, current) => {
     let attrName, valueType, value;
 
-    [attrName, current] = readAttributeName(input, current);
+    [attrName, current] = readWord(input, current, KEBAB_OR_LOWER_CAMEL_CASE);
     [valueType, value, current] = readValue(input, current);
 
     const token = {
@@ -87,7 +46,7 @@ export const processAttributeToken = (input, current) => {
 
 export const processRegularTagBodyStart = (input, current) => {
     let tagName;
-    [tagName, current] = readRegularTagName(input, current);
+    [tagName, current] = readWord(input, current, KEBAB_CASE);
 
     const token = {
         type: 'tag-body-start',
@@ -126,7 +85,7 @@ export const processRegularTagBody = (input, current) => {
 
 export const processRegularTagChildrenEnd = (input, current) => {
     let tagName;
-    [tagName, current] = readRegularTagName(input, current);
+    [tagName, current] = readWord(input, current, KEBAB_CASE);
 
     // skip the upcoming ">"
     current = skipSpaces(input, ++current);

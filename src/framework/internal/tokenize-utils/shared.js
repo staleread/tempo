@@ -1,3 +1,9 @@
+const VALID_CHAR = /[^</>=\s]/;
+export const UPPER_CAMEL_CASE = /^[A-Z][a-zA-Z0-9]+$/;
+export const LOWER_CAMEL_CASE = /^[a-z][a-zA-Z0-9]+$/;
+export const KEBAB_CASE = /^([a-z][a-z0-9]*)(-[a-z0-9]+)*$/;
+export const KEBAB_OR_LOWER_CAMEL_CASE = /^(([a-z][a-z0-9]*)(-[a-z0-9]+)*|[a-z][a-zA-Z0-9]+)$/;
+
 export const skipSpaces = (input, current) => {
     const SPACE_REG = /\s/;
 
@@ -57,6 +63,22 @@ const readStringValue = (input, current) => {
     return [value, current];
 }
 
+export const readWord = (input, current, validWordReg) => {
+    let value = '';
+    let char = input[current];
+
+    while (VALID_CHAR.test(char)) {
+        value += char;
+        char = input[++current];
+    }
+
+    if (!validWordReg.test(value)) {
+        throw new TypeError(`Invalid word "${value}". Should follow a regex ${validWordReg}`)
+    }
+
+    return [value, current]
+}
+
 export const readValue = (input, current) => {
     let char = input[current];
 
@@ -106,6 +128,7 @@ export const processSplitTagBodyEnd = (input, current) => {
 
     return [token, current];
 }
+
 export const processMonoTagBodyEnd = (input, current) => {
     current++;
     current = skipSpaces(input, current);

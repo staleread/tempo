@@ -1,43 +1,15 @@
-import {readValue, skipSpaces} from "./shared.js";
-
-export const readPropsName = (input, current) => {
-    const VALID_CHAR = /[^=\s]/;
-    const VALID_WORD = /^[a-z][a-zA-Z0-9]+$/;   // lowerCamelCase
-
-    let value = input[current];
-
-    while (VALID_CHAR.test(input[++current])) {
-        value += input[current];
-    }
-
-    if (!VALID_WORD.test(value)) {
-        throw new TypeError(`Invalid props name "${value}"`)
-    }
-
-    return [value, current];
-}
-
-export const readCustomTagName = (input, current) => {
-    const VALID_CHAR = /[^/>\s]/;
-    const VALID_WORD = /^[A-Z][a-zA-Z0-9]+$/;   // UpperCamelCase
-
-    let value = input[current];
-
-    while (VALID_CHAR.test(input[++current])) {
-        value += input[current];
-    }
-
-    if (!VALID_WORD.test(value)) {
-        throw new TypeError(`Invalid regular tag name "${value}"`)
-    }
-
-    return [value, current];
-}
+import {
+    LOWER_CAMEL_CASE,
+    UPPER_CAMEL_CASE,
+    readValue,
+    readWord,
+    skipSpaces
+} from "./shared.js";
 
 export const processPropsToken = (input, current) => {
     let propsName, valueType, value;
 
-    [propsName, current] = readPropsName(input, current);
+    [propsName, current] = readWord(input, current, LOWER_CAMEL_CASE);
     [valueType, value, current] = readValue(input, current);
 
     if (valueType === 'empty') {
@@ -55,7 +27,7 @@ export const processPropsToken = (input, current) => {
 
 export const processCustomTagBodyStart = (input, current) => {
     let tagName;
-    [tagName, current] = readCustomTagName(input, current);
+    [tagName, current] = readWord(input, current, UPPER_CAMEL_CASE);
 
     const token = {
         type: 'tag-body-start',
@@ -87,7 +59,7 @@ export const processCustomTagBody = (input, current) => {
 
 export const processCustomTagChildrenEnd = (input, current) => {
     let tagName;
-    [tagName, current] = readCustomTagName(input, current);
+    [tagName, current] = readWord(input, current, UPPER_CAMEL_CASE);
 
     // skip the upcoming ">"
     current++;
