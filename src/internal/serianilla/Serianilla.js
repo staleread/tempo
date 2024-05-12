@@ -5,7 +5,7 @@ export const Serianilla = (function () {
     let _rootComponent;
     let _val;
 
-    const update = () => {
+    const _updateVirtualDOM = () => {
         const node = _rootComponent();
 
         const candidateDOM = {
@@ -34,7 +34,7 @@ export const Serianilla = (function () {
             _val = _val ?? initialValue;
             const setValue = (newValue) => {
                 _val = newValue;
-                update();
+                _updateVirtualDOM();
             };
             return [_val, setValue];
         }
