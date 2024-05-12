@@ -157,7 +157,6 @@ export const renderDiff = (oldTree, newTree) => {
         }
     }
 
-    // TODO fix bug with events snow ball
     const syncEvents = (oldPtr, newPtr) => {
         if (!oldPtr.events) {
             return;
@@ -167,7 +166,9 @@ export const renderDiff = (oldTree, newTree) => {
             oldPtr.ref.removeEventListener(eventName, handler);
         })
 
-        newPtr.events.forEach(({eventName, handler}) => {
+        oldPtr.events = [...newPtr.events];
+
+        oldPtr.events.forEach(({eventName, handler}) => {
             oldPtr.ref.addEventListener(eventName, handler);
         })
     }

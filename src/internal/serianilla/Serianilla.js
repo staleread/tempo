@@ -31,7 +31,7 @@ export const Serianilla = (function () {
         },
 
         useState(initialValue) {
-            _val = _val || initialValue;
+            _val = _val ?? initialValue;
             const setValue = (newValue) => {
                 _val = newValue;
                 update();
