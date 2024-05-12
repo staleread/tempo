@@ -1,4 +1,4 @@
-import {readReferenceChain, readReferenceValue, readStringValue, skipSpaces} from "./shared.js";
+import {readReference, readStringValue, skipSpaces} from "./shared.js";
 
 export const readPropsName = (input, current) => {
     const VALID_CHAR = /[^=\s]/;
@@ -44,8 +44,7 @@ export const processPropsToken = (input, current) => {
         throw new TypeError(`Invalid prop "${propsName}" at ${current}: Empty props are not allowed`)
     }
 
-    current++;
-    current = skipSpaces(input, current);
+    current = skipSpaces(input, ++current);
     char = input[current];
 
     if (char !== '"' && char !== '{') {
@@ -65,38 +64,15 @@ export const processPropsToken = (input, current) => {
         return [token, current];
     }
 
-    const tmpCurrent = current;
-
-    current++;
-    current = skipSpaces(input, current);
-    char = input[current];
-
-    if (char === '$') {
-        let context, chain;
-        [context, chain, current] = readReferenceChain(input, current);
-
-        const token = {
-            type: 'props',
-            name: propsName,
-            valueType: 'ref-chain',
-            value: {context, chain}
-        };
-
-        return [token, current];
-    }
-
-    current = tmpCurrent;
-
-    let ref;
-    [ref, current] = readReferenceValue(input, current);
+    let refType, refValue;
+    [refType, refValue, current] = readReference(input, current);
 
     const token = {
         type: 'props',
         name: propsName,
-        valueType: 'ref',
-        value: ref
+        valueType: refType,
+        value: refValue
     };
-
     return [token, current];
 }
 

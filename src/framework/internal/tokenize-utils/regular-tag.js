@@ -1,4 +1,4 @@
-import {readReferenceChain, readReferenceValue, readStringValue, skipSpaces} from "./shared.js";
+import {readReference, readStringValue, skipSpaces} from "./shared.js";
 
 export const readEventName = (input, current) => {
     const STOP_CHARS = '= ';
@@ -29,39 +29,15 @@ export const processEventToken = (input, current) => {
     }
 
     current = skipSpaces(input, ++current);
-    char = input[current];
 
-    if (char !== '{') {
-        throw new TypeError(`Unresolved bubbling event value at ${current}. '{' expected, got '${char}'`);
-    }
-
-    const tmpCurrent = current;
-
-    current = skipSpaces(input, ++current);
-    char = input[current];
-
-    if (char === '$') {
-        let refChainInfo;
-        [refChainInfo, current] = readReferenceChain(input, current);
-
-        const token = {
-            type: 'event',
-            name: eventName,
-            valueType: 'ref-chain',
-            value: refChainInfo
-        };
-        return [token, current];
-    }
-
-    current = tmpCurrent;
-    let ref;
-    [ref, current] = readReferenceValue(input, current);
+    let refType, refValue;
+    [refType, refValue, current] = readReference(input, current);
 
     const token = {
         type: 'event',
         name: eventName,
-        valueType: 'ref',
-        value: ref
+        valueType: refType,
+        value: refValue
     };
     return [token, current];
 }
@@ -137,33 +113,14 @@ export const processAttributeToken = (input, current) => {
         return [token, current];
     }
 
-    const tmpCurrent = current;
-
-    current = skipSpaces(input, ++current);
-    char = input[current];
-
-    if (char === '$') {
-        let refChainInfo;
-        [refChainInfo, current] = readReferenceChain(input, current);
-
-        const token = {
-            type: 'attr',
-            name: attrName,
-            valueType: 'ref-chain',
-            value: refChainInfo
-        };
-        return [token, current];
-    }
-    current = tmpCurrent;
-
-    let ref;
-    [ref, current] = readReferenceValue(input, current);
+    let refType, refValue;
+    [refType, refValue, current] = readReference(input, current);
 
     const token = {
         type: 'attr',
         name: attrName,
-        valueType: 'ref',
-        value: ref
+        valueType: refType,
+        value: refValue
     };
     return [token, current];
 }

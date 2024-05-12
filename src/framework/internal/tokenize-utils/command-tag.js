@@ -1,4 +1,4 @@
-import {readReferenceChain, readReferenceValue, readStringValue, skipSpaces} from "./shared.js";
+import {readReference, readStringValue, skipSpaces} from "./shared.js";
 
 export const readCommandParamName = (input, current) => {
     const VALID_CHAR = /[^=\s]/;
@@ -44,8 +44,7 @@ export const processCommandParamsToken = (input, current) => {
         throw new TypeError(`Invalid command parameter "${paramName}" at ${current}: Empty parameters are not allowed`)
     }
 
-    current++;
-    current = skipSpaces(input, current);
+    current = skipSpaces(input, ++current);
     char = input[current];
 
     if (char !== '"' && char !== '{') {
@@ -65,34 +64,14 @@ export const processCommandParamsToken = (input, current) => {
         return [token, current];
     }
 
-    const tmpCurrent = current;
-
-    current++;
-    current = skipSpaces(input, current);
-    char = input[current];
-
-    if (char === '$') {
-        let refChainInfo;
-        [refChainInfo, current] = readReferenceChain(input, current);
-
-        const token = {
-            type: 'param',
-            name: paramName,
-            valueType: 'ref-chain',
-            value: refChainInfo
-        };
-        return [token, current];
-    }
-
-    current = tmpCurrent;
-    let ref;
-    [ref, current] = readReferenceValue(input, current);
+    let refType, refValue;
+    [refType, refValue, current] = readReference(input, current);
 
     const token = {
         type: 'param',
         name: paramName,
-        valueType: 'ref',
-        value: ref
+        valueType: refType,
+        value: refValue
     };
     return [token, current];
 }

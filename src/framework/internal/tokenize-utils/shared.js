@@ -7,7 +7,7 @@ export const skipSpaces = (input, current) => {
     return current
 }
 
-export const readReferenceValue = (input, current) => {
+const readReferenceValue = (input, current) => {
     const VALID_WORD = /^[a-z][a-zA-Z0-9]+$/;
 
     let value = input[++current];
@@ -24,7 +24,7 @@ export const readReferenceValue = (input, current) => {
     return [value, current];
 }
 
-export const readReferenceChain = (input, current) => {
+const readReferenceChain = (input, current) => {
     const VALID_WORD = /^([a-z][a-zA-Z0-9]+)(\.[a-z][a-zA-Z0-9]+)+$/;
 
     let value = input[++current];
@@ -44,6 +44,31 @@ export const readReferenceChain = (input, current) => {
     current = skipSpaces(input, ++current);
     return [context, chainMatches, current];
 }
+
+export const readReference = (input, current) => {
+    let char = input[current];
+
+    if (char !== '{') {
+        throw new TypeError(`Unresolved reference at ${current}. '{' expected, got '${char}'`);
+    }
+
+    const tmpCurrent = current;
+
+    current = skipSpaces(input, ++current);
+    char = input[current];
+
+    if (char === '$') {
+        let refChainInfo;
+        [refChainInfo, current] = readReferenceChain(input, current);
+        return ['ref-chain', refChainInfo, current];
+    }
+
+    current = tmpCurrent;
+    let ref;
+    [ref, current] = readReferenceValue(input, current);
+    return ['ref', ref, current];
+}
+
 
 export const readStringValue = (input, current) => {
     let value = '';
