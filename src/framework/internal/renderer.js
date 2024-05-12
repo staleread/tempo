@@ -1,59 +1,6 @@
-export function traverseTree(ast, parent, visitor) {
-    const traverse = (node, parent) => {
-        if (visitor[node.type]?.onEnter) {
-            visitor[node.type].onEnter(node, parent);
-        }
+import {traverseTree} from "./traverser.js";
 
-        if (node.children) {
-            traverseMany(node.children, node);
-        }
-
-        if (visitor[node.type]?.onExit) {
-            visitor[node.type].onExit(node, parent);
-        }
-    }
-
-    const traverseMany = (children, parent) => children.forEach(child => traverse(child, parent))
-
-    traverse(ast, parent);
-}
-
-export const printTree = (ast) => traverseTree(ast, null, {
-    RootNode: {
-        onEnter: () => {
-            console.log(`-> ROOT`)
-        },
-        onExit: () => {
-            console.log(`<- ROOT`)
-        },
-    },
-    TagNode: {
-        onEnter: (node) => {
-            console.log(`-> <${node.tag}>`)
-        },
-        onExit: (node) => {
-            console.log(`<- <${node.tag}>`)
-        },
-    },
-    TextNode: {
-        onEnter: (node) => {
-            console.log(`-> "${node.value}"`)
-        },
-        onExit: (node) => {
-            console.log(`<- "${node.value}"`)
-        }
-    },
-    CustomNode: {
-        onEnter: () => {
-            console.log(`-> CUSTOM`)
-        },
-        onExit: () => {
-            console.log(`<- CUSTOM`)
-        },
-    },
-})
-
-export const renderTree = (ast, parent) => traverseTree(ast, parent, {
+const renderVisitor = {
     TagNode: {
         onEnter: (node, parent) => {
             const elem = node.ref ?? document.createElement(node.tag);
@@ -80,7 +27,7 @@ export const renderTree = (ast, parent) => traverseTree(ast, parent, {
             node.ref = parent.ref;
         }
     },
-})
+}
 
 const nodeComparator = {
     RootNode: {
@@ -117,6 +64,8 @@ const nodeComparator = {
         }
     },
 }
+
+export const renderTree = (ast, parent) => traverseTree(ast, parent, renderVisitor);
 
 export const renderDiff = (oldTree, newTree) => {
     let oldPtr = oldTree;

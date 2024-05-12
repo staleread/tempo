@@ -1,10 +1,9 @@
-import {parseNode} from "../internal/serianilla/parser.js";
-import {Serianilla} from "../internal/serianilla/Serianilla.js";
+import {Serianilla} from "../framework/Serianilla.js";
 
 export const Counter = () => {
     const [count, setCount] = Serianilla.useState(1);
 
-    return parseNode({
+    return Serianilla.createComponent({
         template: `
         <div class="counter">
             <h2>Count: ${count}</h2>

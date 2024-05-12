@@ -1,4 +1,5 @@
-import {renderDiff, renderTree} from "./traverser.js";
+import {renderDiff, renderTree} from "./internal/renderer.js";
+import {parseNode} from "./internal/parser.js";
 
 export const Serianilla = (function () {
     let _virtualDOM;
@@ -28,6 +29,10 @@ export const Serianilla = (function () {
             }
             node.parent = _virtualDOM;
             renderTree(_virtualDOM);
+        },
+
+        createComponent(componentData) {
+            return parseNode(componentData);
         },
 
         useState(initialValue) {

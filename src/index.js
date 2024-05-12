@@ -1,4 +1,4 @@
-import {Serianilla} from "./internal/serianilla/Serianilla.js";
+import {Serianilla} from "./framework/Serianilla.js";
 import {App} from "./App.js";
 
 const root = document.getElementById('root');
