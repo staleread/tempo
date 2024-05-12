@@ -1,4 +1,4 @@
-import {renderDiff, renderTree} from "./internal/renderer.js";
+import {renderAST, renderDiff} from "./internal/renderer.js";
 import {parseNode} from "./internal/parser.js";
 
 export const Serianilla = (function () {
@@ -28,7 +28,7 @@ export const Serianilla = (function () {
                 children: [node]
             }
             node.parent = _virtualDOM;
-            renderTree(_virtualDOM);
+            renderAST(_virtualDOM);
         },
 
         createComponent(componentData) {

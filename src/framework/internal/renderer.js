@@ -1,32 +1,60 @@
-import {traverseTree} from "./traverser.js";
+const renderNode = (node) => {
+    if (node.type === 'TagNode') {
+        const elem = node.ref ?? document.createElement(node.tag);
 
-const renderVisitor = {
-    TagNode: {
-        onEnter: (node, parent) => {
-            const elem = node.ref ?? document.createElement(node.tag);
+        node.attrs.forEach(({key, value}) => {
+            elem.setAttribute(key, value);
+        })
 
-            node.attrs.forEach(({key, value}) => {
-                elem.setAttribute(key, value);
-            })
+        node.parent.ref.appendChild(elem)
+        node.ref = elem;
+        return;
+    }
+    if (node.type === 'TextNode') {
+        node.parent.ref.innerText = node.value;
+        return;
+    }
+    if (node.type === 'CustomNode') {
+        node.ref = node.parent.ref;
+    }
+}
 
-            node.events.forEach(e => {
-                elem.addEventListener(e.eventName, e.handler);
-            })
 
-            parent.ref.appendChild(elem)
-            node.ref = elem;
+export const renderAST = (ast) => {
+    let ptr = ast;
+    let isRespect = false;
+
+    const letUp = () => {
+        ptr = ptr.parent;
+        isRespect = true;
+    }
+
+    const goToNextChild = () => {
+        ptr = ptr.children.at(-ptr._nodesLeft);
+    }
+
+    while (ptr) {
+        if (isRespect) {
+            ptr._nodesLeft--;
+
+            if (ptr._nodesLeft === 0) {
+                letUp();
+                continue;
+            }
+            goToNextChild();
+            isRespect = false;
         }
-    },
-    TextNode: {
-        onEnter: (node, parent) => {
-            parent.ref.innerText = node.value;
+
+        renderNode(ptr);
+
+        if (!ptr.children || ptr.children.length === 0) {
+            letUp();
+            continue;
         }
-    },
-    CustomNode: {
-        onEnter: (node, parent) => {
-            node.ref = parent.ref;
-        }
-    },
+
+        ptr._nodesLeft = ptr.children.length;
+        goToNextChild();
+    }
 }
 
 const nodeComparator = {
@@ -65,8 +93,6 @@ const nodeComparator = {
     },
 }
 
-export const renderTree = (ast, parent) => traverseTree(ast, parent, renderVisitor);
-
 export const renderDiff = (oldTree, newTree) => {
     let oldPtr = oldTree;
     let newPtr = newTree;
@@ -87,7 +113,7 @@ export const renderDiff = (oldTree, newTree) => {
 
             oldPtr.children.forEach(c => {
                 c.parent = oldPtr;
-                renderTree(c, oldPtr);
+                renderAST(c);
             })
 
             newPtr._nodesLeft = 0;
@@ -106,20 +132,11 @@ export const renderDiff = (oldTree, newTree) => {
         }
     }
 
-    const syncEvents = (oldPtr, newPtr) => {
-        // if (!oldPtr.events) {
-        //     return;
-        // }
-        //
-        // oldPtr.events.forEach(({eventName, handler}) => {
-        //     oldPtr.ref.removeEventListener(eventName, handler);
-        // })
-        //
-        // oldPtr.events = [...newPtr.events];
-        //
-        // oldPtr.events.forEach(({eventName, handler}) => {
-        //     oldPtr.ref.addEventListener(eventName, handler);
-        // })
+    const syncEvents = () => {
+        if (!oldPtr.events) {
+            return;
+        }
+        oldPtr.events = [...newPtr.events];
     }
 
     const rerenderChildren = () => {
@@ -136,7 +153,7 @@ export const renderDiff = (oldTree, newTree) => {
         // render the nodes with changes
         for (let i = firstWithChanges; i < oldPtr.children.length; i++) {
             oldPtr.children[i].parent = oldPtr;
-            renderTree(oldPtr.children[i], oldPtr);
+            renderAST(oldPtr.children[i]);
         }
     }
 
@@ -166,7 +183,7 @@ export const renderDiff = (oldTree, newTree) => {
             continue;
         }
 
-        syncEvents(oldPtr, newPtr);
+        syncEvents();
 
         if (!oldPtr.children ||
             oldPtr.children.length === 0 && newPtr.children.length === 0) {
