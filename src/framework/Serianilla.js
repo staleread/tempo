@@ -38,6 +38,9 @@ export const Serianilla = (function () {
         useState(initialValue) {
             _val = _val ?? initialValue;
             const setValue = (newValue) => {
+                if (newValue === _val)
+                    return;
+
                 _val = newValue;
                 _updateVirtualDOM();
             };
