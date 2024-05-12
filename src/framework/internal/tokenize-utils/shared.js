@@ -106,9 +106,9 @@ export const readValue = (input, current) => {
     char = input[current];
 
     if (char === '$') {
-        let refChainInfo;
-        [refChainInfo, current] = readReferenceChain(input, current);
-        return ['ref-chain', refChainInfo, current];
+        let context, chainMatches;
+        [context, chainMatches, current] = readReferenceChain(input, current);
+        return ['ref-chain', {context, chain: chainMatches}, current];
     }
 
     current = tmpCurrent;
