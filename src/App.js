@@ -12,7 +12,7 @@ export const App = () => {
             <Counter/>
         </div>`,
         attach: {
-            handleClick: () => console.log(`${name} clicked me ${times++} times!`)
+            handleClick: () => console.log(`The container is triggered`)
         }
     })
 }
