@@ -170,7 +170,7 @@ export function parseNode({template, imports, attach}) {
             type: 'TagNode',
             tag: token.name,
             attrs: [],
-            events: [],
+            eventsMap: new Map(),
             parent,
             children: []
         }
@@ -184,12 +184,7 @@ export function parseNode({template, imports, attach}) {
             }
             else if (token.type === 'event') {
                 const handler = retrieveEventHandler(token);
-                const event = {
-                    eventName: token.name,
-                    isBubbling: token.isBubbling,
-                    handler
-                };
-                node.events.push(event);
+                node.eventsMap.set(token.name, handler);
             }
             else {
                 throw new TypeError(`Invalid token "${token.type}" found inside tag body`);

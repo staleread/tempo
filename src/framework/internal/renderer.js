@@ -19,7 +19,6 @@ const renderNode = (node) => {
     }
 }
 
-
 export const renderAST = (ast) => {
     let ptr = ast;
     let isRespect = false;
@@ -59,7 +58,7 @@ export const renderAST = (ast) => {
 
 const nodeComparator = {
     RootNode: {
-        compare: (a, b) => true
+        compare: () => true
     },
     TagNode: {
         compare: (a, b) => {
