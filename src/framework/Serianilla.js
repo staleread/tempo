@@ -1,10 +1,17 @@
 import {renderAST, renderDiff} from "./internal/renderer.js";
 import {parseNode} from "./internal/parser.js";
+import {eventHandlers} from "./internal/events.js";
 
 export const Serianilla = (function () {
     let _virtualDOM;
     let _rootComponent;
     let _val;
+
+    const _attachEvents = () => {
+        eventHandlers.forEach(({nativeEventName, handler}) => {
+            _virtualDOM.ref.addEventListener(nativeEventName, handler);
+        })
+    }
 
     const _updateVirtualDOM = () => {
         const node = _rootComponent();
@@ -29,6 +36,7 @@ export const Serianilla = (function () {
             }
             node.parent = _virtualDOM;
             renderAST(_virtualDOM);
+            _attachEvents();
         },
 
         createComponent(componentData) {
