@@ -133,10 +133,10 @@ export const renderDiff = (oldTree, newTree) => {
     }
 
     const syncEvents = () => {
-        if (!oldPtr.events) {
+        if (!oldPtr.eventsMap) {
             return;
         }
-        oldPtr.events = [...newPtr.events];
+        oldPtr.eventsMap = newPtr.eventsMap;
     }
 
     const rerenderChildren = () => {
