@@ -33,7 +33,7 @@ export const renderAST = (ast) => {
         ptr = ptr.children.at(-ptr._nodesLeft);
     }
 
-    while (ptr) {
+    while (ptr !== ast.parent) {
         if (isRespect) {
             ptr._nodesLeft--;
 
