@@ -107,19 +107,19 @@ export const renderDiff = (oldTree, newTree) => {
     }
 
     const syncEvents = (oldPtr, newPtr) => {
-        if (!oldPtr.events) {
-            return;
-        }
-
-        oldPtr.events.forEach(({eventName, handler}) => {
-            oldPtr.ref.removeEventListener(eventName, handler);
-        })
-
-        oldPtr.events = [...newPtr.events];
-
-        oldPtr.events.forEach(({eventName, handler}) => {
-            oldPtr.ref.addEventListener(eventName, handler);
-        })
+        // if (!oldPtr.events) {
+        //     return;
+        // }
+        //
+        // oldPtr.events.forEach(({eventName, handler}) => {
+        //     oldPtr.ref.removeEventListener(eventName, handler);
+        // })
+        //
+        // oldPtr.events = [...newPtr.events];
+        //
+        // oldPtr.events.forEach(({eventName, handler}) => {
+        //     oldPtr.ref.addEventListener(eventName, handler);
+        // })
     }
 
     const rerenderChildren = () => {

@@ -2,8 +2,7 @@ import {readReferenceChain, readReferenceValue, readStringValue, skipSpaces} fro
 
 export const readEventName = (input, current) => {
     const STOP_CHARS = '= ';
-    const IMPLICIT = /^[a-z]+$/;            // lowercase
-    const BUBBLING = /^[A-Z][a-zA-Z]+$/;    // UpperCamelCase
+    const VALID_WORD = /^[A-Z][a-zA-Z]+$/;    // UpperCamelCase
 
     let value = input[current];
     let char = input[++current];
@@ -13,21 +12,15 @@ export const readEventName = (input, current) => {
         char = input[++current];
     }
 
-    let isBubbling;
-
-    if (IMPLICIT.test(value)) {
-        isBubbling = false;
-    } else if (BUBBLING.test(value)) {
-        isBubbling = true;
-    } else {
+    if (!VALID_WORD.test(value)) {
         throw new TypeError(`Invalid event name "on${value}"`)
     }
-    return [value.toLowerCase(), isBubbling, current];
+    return [value, current];
 }
 
 export const processEventToken = (input, current) => {
-    let eventName, isBubbling;
-    [eventName, isBubbling, current] = readEventName(input, current);
+    let eventName;
+    [eventName, current] = readEventName(input, current);
 
     let char = input[current];
 
@@ -54,7 +47,6 @@ export const processEventToken = (input, current) => {
         const token = {
             type: 'event',
             name: eventName,
-            isBubbling,
             valueType: 'ref-chain',
             value: refChainInfo
         };
@@ -68,7 +60,6 @@ export const processEventToken = (input, current) => {
     const token = {
         type: 'event',
         name: eventName,
-        isBubbling,
         valueType: 'ref',
         value: ref
     };

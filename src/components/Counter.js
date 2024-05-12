@@ -7,8 +7,8 @@ export const Counter = () => {
         template: `
         <div class="counter">
             <h2>Count: ${count}</h2>
-            <button onclick={decrement}>Decrement</button>
-            <button onclick={increment}>Increment</button>
+            <button onClick={decrement}>Decrement</button>
+            <button onClick={increment}>Increment</button>
         </div>`,
         attach: {
             decrement: () => setCount(count - 1),
