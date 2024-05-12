@@ -1,5 +1,5 @@
-export const _eventHandlers = {
-    Click: {
+export const eventHandlers = [
+    {
         nativeEventName: 'click',
         handler(event) {
             let node = event.target._ref;
@@ -15,7 +15,22 @@ export const _eventHandlers = {
                 node = node.parent;
             }
         }
-    }
-}
+    },
+    {
+        nativeEventName: 'submit',
+        handler(event) {
+            let node = event.target._ref;
 
-export const eventHandlers = Object.values(_eventHandlers);
+            while (node && !event.defaultPrevented) {
+                if (node.type !== 'TagNode' || node.tag !== 'form') {
+                    node = node.parent;
+                    continue;
+                }
+                const handler = node.eventsMap.get('Submit');
+
+                if (handler) handler(event);
+                node = node.parent;
+            }
+        }
+    },
+]
