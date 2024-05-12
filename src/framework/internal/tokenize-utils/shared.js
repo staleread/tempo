@@ -12,17 +12,31 @@ export const skipSpaces = (input, current) => {
     return current
 }
 
-const readReferenceValue = (input, current) => {
-    const VALID_WORD = /^[a-z][a-zA-Z0-9]+$/;
+export const readWord = (input, current, validWordReg) => {
+    const VALID_CHAR = /[^</>{=}\s]/;
+    const startIndex = current;
 
-    let value = input[++current];
+    let value = '';
+    let char = input[current];
 
-    while (input[++current] !== '}') {
-        value += input[current];
+    while (VALID_CHAR.test(char)) {
+        value += char;
+        char = input[++current];
     }
 
-    if (!VALID_WORD.test(value)) {
-        throw new TypeError(`Invalid reference value: ${value}`)
+    if (!validWordReg.test(value)) {
+        throw new TypeError(`Word "${value}" starting at ${startIndex} must follow a regex ${validWordReg}`)
+    }
+
+    return [value, current]
+}
+
+const readReferenceValue = (input, current) => {
+    let value;
+    [value, current] = readWord(input, current, LOWER_CAMEL_CASE);
+
+    if (input[current] !== '}') {
+        throw new TypeError(`Invalid reference value at ${current}. "}" expected at the end, got ${input[current]}`)
     }
 
     current = skipSpaces(input, ++current);
@@ -32,14 +46,11 @@ const readReferenceValue = (input, current) => {
 const readReferenceChain = (input, current) => {
     const VALID_WORD = /^([a-z][a-zA-Z0-9]+)(\.[a-z][a-zA-Z0-9]+)+$/;
 
-    let value = input[++current];
+    let value;
+    [value, current] = readWord(input, current, VALID_WORD);
 
-    while (input[++current] !== '}') {
-        value += input[current];
-    }
-
-    if (!VALID_WORD.test(value)) {
-        throw new TypeError(`Invalid reference chain: ${value}`)
+    if (input[current] !== '}') {
+        throw new TypeError(`Invalid reference chain at ${current}. "}" expected at the end, got ${input[current]}`)
     }
 
     const arr = value.split('.');
@@ -60,23 +71,6 @@ const readStringValue = (input, current) => {
 
     current = skipSpaces(input, ++current);
     return [value, current];
-}
-
-export const readWord = (input, current, validWordReg) => {
-    const VALID_CHAR = /[^</>=\s]/;
-    let value = '';
-    let char = input[current];
-
-    while (VALID_CHAR.test(char)) {
-        value += char;
-        char = input[++current];
-    }
-
-    if (!validWordReg.test(value)) {
-        throw new TypeError(`Invalid word "${value}". Should follow a regex ${validWordReg}`)
-    }
-
-    return [value, current]
 }
 
 export const readValue = (input, current) => {
@@ -106,6 +100,8 @@ export const readValue = (input, current) => {
     char = input[current];
 
     if (char === '$') {
+        current++;
+
         let context, chainMatches;
         [context, chainMatches, current] = readReferenceChain(input, current);
         return ['ref-chain', {context, chain: chainMatches}, current];
