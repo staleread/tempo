@@ -107,7 +107,7 @@ export const readValue = (input, current) => {
         return ['ref-chain', {context, chain: chainMatches}, current];
     }
 
-    current = tmpCurrent;
+    current = tmpCurrent + 1;
     let ref;
     [ref, current] = readReferenceValue(input, current);
     return ['ref', ref, current];
