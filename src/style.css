@@ -1,8 +1,14 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+}
+
 .container {
-    padding: 20px;
-    background-color: aquamarine;
+    padding: 40px;
+    background-color: blueviolet;
 }
 
 .counter {
+    padding: 20px;
     background-color: aqua;
 }
