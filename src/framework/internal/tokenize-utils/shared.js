@@ -63,7 +63,6 @@ const readReferenceChain = (input, current) => {
 
 const readStringValue = (input, current) => {
     let value = '';
-    current++;
 
     while (input[current] !== '"') {
         value += input[current++];
@@ -89,6 +88,8 @@ export const readValue = (input, current) => {
     }
 
     if (char === '"') {
+        current++;
+
         let string;
         [string, current] = readStringValue(input, current)
         return ['string', string, current];
