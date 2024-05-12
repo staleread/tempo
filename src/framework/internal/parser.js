@@ -174,7 +174,7 @@ export function parseNode({template, imports, attach}) {
         const node = {
             type: 'TagNode',
             tag: token.name,
-            attrs: [],
+            attrsMap: new Map(),
             eventsMap: new Map(),
             parent,
             children: []
@@ -185,7 +185,7 @@ export function parseNode({template, imports, attach}) {
         while (token.type !== 'tag-body-end') {
             if (token.type === 'attr') {
                 const attrValue = retrieveAttributeValue(token);
-                node.attrs.push({key: token.name, value: attrValue});
+                node.attrsMap.set(token.name, attrValue);
             }
             else if (token.type === 'event') {
                 const handler = retrieveEventHandler(token);

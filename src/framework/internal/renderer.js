@@ -2,7 +2,7 @@ const renderNode = (node) => {
     if (node.type === 'TagNode') {
         const elem = node.ref ?? document.createElement(node.tag);
 
-        node.attrs.forEach(({key, value}) => {
+        node.attrsMap.forEach((value, key) => {
             elem.setAttribute(key, value);
         })
 
@@ -66,15 +66,15 @@ const nodeComparator = {
             if (a.name !== b.name)
                 return false;
 
-            if (a.attrs.length !== b.attrs.length)
+            if (a.attrsMap.size !== b.attrsMap.size)
                 return false
 
-            const aSortedAttrs = [...a.attrs].sort((x, y) => x.key - y.key);
-            const bSortedAttrs = [...b.attrs].sort((x, y) => x.key - y.key);
+            const aSortedAttrs = [...a.attrsMap.entries()].sort((x, y) => x[0] - y[0]);
+            const bSortedAttrs = [...b.attrsMap.entries()].sort((x, y) => x[0] - y[0]);
 
             for (let i = 0; i < aSortedAttrs.length; i++) {
-                if (aSortedAttrs[i].key !== bSortedAttrs[i].key ||
-                    aSortedAttrs[i].value !== bSortedAttrs[i].value) {
+                if (aSortedAttrs[i][0] !== bSortedAttrs[i][0] ||
+                    aSortedAttrs[i][1] !== bSortedAttrs[i][1]) {
                     return false;
                 }
             }
