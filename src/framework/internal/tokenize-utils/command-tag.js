@@ -1,4 +1,4 @@
-import {readReference, readStringValue, skipSpaces} from "./shared.js";
+import {readValue, skipSpaces} from "./shared.js";
 
 export const readCommandParamName = (input, current) => {
     const VALID_CHAR = /[^=\s]/;
@@ -35,43 +35,20 @@ export const readCommandTagName = (input, current) => {
 }
 
 export const processCommandParamsToken = (input, current) => {
-    let paramName;
+    let paramName, valueType, value;
+
     [paramName, current] = readCommandParamName(input, current);
+    [valueType, value, current] = readValue(input, current);
 
-    let char = input[current];
-
-    if (char !== '=') {
-        throw new TypeError(`Invalid command parameter "${paramName}" at ${current}: Empty parameters are not allowed`)
+    if (valueType === 'empty') {
+        throw new TypeError(`Invalid command parameter "${paramName}": Empty parameters are not allowed`)
     }
-
-    current = skipSpaces(input, ++current);
-    char = input[current];
-
-    if (char !== '"' && char !== '{') {
-        throw new TypeError(`Unresolved command parameter value at ${current}. '{' or '"' expected, got '${char}'`);
-    }
-
-    if (char === '"') {
-        let string;
-        [string, current] = readStringValue(input, current);
-
-        const token = {
-            type: 'param',
-            name: paramName,
-            valueType: 'string',
-            value: string
-        };
-        return [token, current];
-    }
-
-    let refType, refValue;
-    [refType, refValue, current] = readReference(input, current);
 
     const token = {
         type: 'param',
         name: paramName,
-        valueType: refType,
-        value: refValue
+        valueType,
+        value
     };
     return [token, current];
 }

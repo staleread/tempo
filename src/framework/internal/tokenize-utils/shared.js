@@ -45,11 +45,37 @@ const readReferenceChain = (input, current) => {
     return [context, chainMatches, current];
 }
 
-export const readReference = (input, current) => {
+const readStringValue = (input, current) => {
+    let value = '';
+    current++;
+
+    while (input[current] !== '"') {
+        value += input[current++];
+    }
+
+    current = skipSpaces(input, ++current);
+    return [value, current];
+}
+
+export const readValue = (input, current) => {
     let char = input[current];
 
-    if (char !== '{') {
-        throw new TypeError(`Unresolved reference at ${current}. '{' expected, got '${char}'`);
+    if (char !== '=') {
+        current = skipSpaces(input, current);
+        return ['empty', null, current];
+    }
+
+    current = skipSpaces(input, ++current);
+    char = input[current];
+
+    if (char !== '"' && char !== '{') {
+        throw new TypeError(`Unresolved value at ${current}. '{' or '"' expected, got '${char}'`);
+    }
+
+    if (char === '"') {
+        let string;
+        [string, current] = readStringValue(input, current)
+        return ['string', string, current];
     }
 
     const tmpCurrent = current;
@@ -67,19 +93,6 @@ export const readReference = (input, current) => {
     let ref;
     [ref, current] = readReferenceValue(input, current);
     return ['ref', ref, current];
-}
-
-
-export const readStringValue = (input, current) => {
-    let value = '';
-    current++;
-
-    while (input[current] !== '"') {
-        value += input[current++];
-    }
-
-    current = skipSpaces(input, ++current);
-    return [value, current];
 }
 
 export const processSplitTagBodyEnd = (input, current) => {

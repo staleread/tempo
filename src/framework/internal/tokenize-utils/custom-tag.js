@@ -1,4 +1,4 @@
-import {readReference, readStringValue, skipSpaces} from "./shared.js";
+import {readValue, skipSpaces} from "./shared.js";
 
 export const readPropsName = (input, current) => {
     const VALID_CHAR = /[^=\s]/;
@@ -35,43 +35,20 @@ export const readCustomTagName = (input, current) => {
 }
 
 export const processPropsToken = (input, current) => {
-    let propsName;
+    let propsName, valueType, value;
+
     [propsName, current] = readPropsName(input, current);
+    [valueType, value, current] = readValue(input, current);
 
-    let char = input[current];
-
-    if (char !== '=') {
+    if (valueType === 'empty') {
         throw new TypeError(`Invalid prop "${propsName}" at ${current}: Empty props are not allowed`)
     }
-
-    current = skipSpaces(input, ++current);
-    char = input[current];
-
-    if (char !== '"' && char !== '{') {
-        throw new TypeError(`Unresolved props value at ${current}. '{' or '"' expected, got '${char}'`);
-    }
-
-    if (char === '"') {
-        let string;
-        [string, current] = readStringValue(input, current);
-
-        const token = {
-            type: 'props',
-            name: propsName,
-            valueType: 'string',
-            value: string
-        };
-        return [token, current];
-    }
-
-    let refType, refValue;
-    [refType, refValue, current] = readReference(input, current);
 
     const token = {
         type: 'props',
         name: propsName,
-        valueType: refType,
-        value: refValue
+        valueType,
+        value
     };
     return [token, current];
 }
