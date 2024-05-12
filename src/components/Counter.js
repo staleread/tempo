@@ -12,12 +12,8 @@ export const Counter = () => {
             <button onclick={increment}>Increment</button>
         </div>`,
         attach: {
-            decrement: () => {
-                setCount(count - 1);
-            },
-            increment: () => {
-                setCount(count + 1);
-            }
+            decrement: () => setCount(count - 1),
+            increment: () => setCount(count + 1)
         }
     });
 }
