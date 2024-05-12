@@ -1,4 +1,3 @@
-const VALID_CHAR = /[^</>=\s]/;
 export const UPPER_CAMEL_CASE = /^[A-Z][a-zA-Z0-9]+$/;
 export const LOWER_CAMEL_CASE = /^[a-z][a-zA-Z0-9]+$/;
 export const KEBAB_CASE = /^([a-z][a-z0-9]*)(-[a-z0-9]+)*$/;
@@ -64,6 +63,7 @@ const readStringValue = (input, current) => {
 }
 
 export const readWord = (input, current, validWordReg) => {
+    const VALID_CHAR = /[^</>=\s]/;
     let value = '';
     let char = input[current];
 
@@ -115,44 +115,4 @@ export const readValue = (input, current) => {
     let ref;
     [ref, current] = readReferenceValue(input, current);
     return ['ref', ref, current];
-}
-
-export const processSplitTagBodyEnd = (input, current) => {
-    current++;
-    current = skipSpaces(input, current);
-
-    const token = {
-        type: 'tag-body-end',
-        isChildStart: true
-    };
-
-    return [token, current];
-}
-
-export const processMonoTagBodyEnd = (input, current) => {
-    current++;
-    current = skipSpaces(input, current);
-
-    const token = {
-        type: 'tag-body-end',
-        isChildStart: false
-    };
-
-    return [token, current];
-}
-
-export const processTextToken = (input, current) => {
-    const TEXT_CHUNK_REG = /[^<>]/;
-
-    let value = input[current];
-
-    while (TEXT_CHUNK_REG.test(input[++current])) {
-        value += input[current];
-    }
-
-    const token = {
-        type: 'text',
-        value: value.trim()
-    };
-    return [token, current];
 }

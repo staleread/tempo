@@ -7,7 +7,7 @@ import {
     skipSpaces
 } from "./shared.js";
 
-export const processEventToken = (input, current) => {
+const processEventToken = (input, current) => {
     let eventName, valueType, value;
 
     [eventName, current] = readWord(input, current, UPPER_CAMEL_CASE);
@@ -29,7 +29,7 @@ export const processEventToken = (input, current) => {
     return [token, current];
 }
 
-export const processAttributeToken = (input, current) => {
+const processAttributeToken = (input, current) => {
     let attrName, valueType, value;
 
     [attrName, current] = readWord(input, current, KEBAB_OR_LOWER_CAMEL_CASE);

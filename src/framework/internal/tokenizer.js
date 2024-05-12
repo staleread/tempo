@@ -1,3 +1,4 @@
+import {skipSpaces} from "./tokenize-utils/shared.js";
 import {
     processCustomTagBody,
     processCustomTagBodyStart,
@@ -13,12 +14,46 @@ import {
     processRegularTagBodyStart,
     processRegularTagChildrenEnd
 } from "./tokenize-utils/regular-tag.js";
-import {
-    processMonoTagBodyEnd,
-    processSplitTagBodyEnd,
-    processTextToken,
-    skipSpaces
-} from "./tokenize-utils/shared.js";
+
+const processSplitTagBodyEnd = (input, current) => {
+    current++;
+    current = skipSpaces(input, current);
+
+    const token = {
+        type: 'tag-body-end',
+        isChildStart: true
+    };
+
+    return [token, current];
+}
+
+const processMonoTagBodyEnd = (input, current) => {
+    current++;
+    current = skipSpaces(input, current);
+
+    const token = {
+        type: 'tag-body-end',
+        isChildStart: false
+    };
+
+    return [token, current];
+}
+
+const processTextToken = (input, current) => {
+    const TEXT_CHUNK_REG = /[^<>]/;
+
+    let value = input[current];
+
+    while (TEXT_CHUNK_REG.test(input[++current])) {
+        value += input[current];
+    }
+
+    const token = {
+        type: 'text',
+        value: value.trim()
+    };
+    return [token, current];
+}
 
 export const tokenize = (input) => {
     let current = 0;

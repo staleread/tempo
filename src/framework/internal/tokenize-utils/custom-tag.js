@@ -6,7 +6,7 @@ import {
     skipSpaces
 } from "./shared.js";
 
-export const processPropsToken = (input, current) => {
+const processPropsToken = (input, current) => {
     let propsName, valueType, value;
 
     [propsName, current] = readWord(input, current, LOWER_CAMEL_CASE);

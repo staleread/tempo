@@ -1,6 +1,6 @@
 import {LOWER_CAMEL_CASE, readValue, readWord, skipSpaces} from "./shared.js";
 
-export const processCommandParamsToken = (input, current) => {
+const processCommandParamsToken = (input, current) => {
     let paramName, valueType, value;
 
     [paramName, current] = readWord(input, current, LOWER_CAMEL_CASE);
