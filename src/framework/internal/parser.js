@@ -143,6 +143,11 @@ export function parseNode({template, imports, attach}) {
         }
 
         const component = importsMap.get(componentName);
+
+        if (!component) {
+            throw new TypeError(`Please import ${componentName} component`)
+        }
+
         const node = component(props);
         node.parent = nodeWrapper;
 
@@ -207,6 +212,10 @@ export function parseNode({template, imports, attach}) {
             }
             handleCommand(token.name, node);
             token = tokens[current];
+        }
+
+        if (token.name !== node.tag) {
+            throw new TypeError(`</${node.tag}> tag expected, got </${token.name}>. \nMaybe you forgot to put "/" at the end of the opening tag?`)
         }
 
         current++;
