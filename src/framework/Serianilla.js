@@ -5,7 +5,8 @@ import {eventHandlers} from "./internal/events.js";
 export const Serianilla = (function () {
     let _virtualDOM;
     let _rootComponent;
-    let _val;
+    let _currentStateIndex = 0;
+    let _states = [];
 
     const _attachEvents = () => {
         eventHandlers.forEach(({nativeEventName, handler}) => {
@@ -14,6 +15,7 @@ export const Serianilla = (function () {
     }
 
     const _updateVirtualDOM = () => {
+        _currentStateIndex = 0;
         const node = _rootComponent();
 
         const candidateDOM = {
@@ -26,7 +28,10 @@ export const Serianilla = (function () {
 
     return {
         render(rootElement, rootComponent) {
+            _currentStateIndex = 0;
+            _states = [];
             _rootComponent = rootComponent;
+
             const node = rootComponent();
 
             _virtualDOM = {
@@ -35,6 +40,7 @@ export const Serianilla = (function () {
                 children: [node]
             }
             node.parent = _virtualDOM;
+
             renderAST(_virtualDOM);
             _attachEvents();
         },
@@ -44,15 +50,19 @@ export const Serianilla = (function () {
         },
 
         useState(initialValue) {
-            _val = _val ?? initialValue;
+            if (_states[_currentStateIndex] === undefined) {
+                _states[_currentStateIndex] = initialValue;
+            }
+            const tmpStateIndex = _currentStateIndex;
+
             const setValue = (newValue) => {
-                if (newValue === _val)
+                if (newValue === _states[tmpStateIndex])
                     return;
 
-                _val = newValue;
+                _states[tmpStateIndex] = newValue;
                 _updateVirtualDOM();
             };
-            return [_val, setValue];
+            return [_states[_currentStateIndex++], setValue];
         }
     }
 })();
