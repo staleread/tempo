@@ -4,7 +4,6 @@ import {MyForm} from "./components/MyForm.js";
 
 export const App = () => {
     const name = 'Nicolas';
-    let times = 1;
 
     return Serianilla.createComponent({
         imports: {Counter, MyForm},
