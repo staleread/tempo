@@ -4,6 +4,7 @@ export function parseNode({template, imports, attach}) {
     const attachMap = attach ? new Map(Object.entries(attach)) : new Map();
     const importsMap = imports ? new Map(Object.entries(imports)) : new Map();
     const contextMap = new Map();
+    const eventSet = new Set;
 
     const tokens = tokenize(template);
     let current = 0;
@@ -148,7 +149,12 @@ export function parseNode({template, imports, attach}) {
             throw new TypeError(`Please import ${componentName} component`)
         }
 
-        const node = component(props);
+        const componentInfo = component(props);
+
+        componentInfo.eventSet.forEach(e => eventSet.add(e));
+        componentInfo.eventSet.clear();
+
+        const node = componentInfo.ast;
         node.parent = nodeWrapper;
 
         nodeWrapper.children.push(node);
@@ -189,6 +195,7 @@ export function parseNode({template, imports, attach}) {
             }
             else if (token.type === 'event') {
                 const handler = retrieveEventHandler(token);
+                eventSet.add(token.name);
                 node.eventsMap.set(token.name, handler);
             }
             else {
@@ -252,5 +259,5 @@ export function parseNode({template, imports, attach}) {
     if (current < tokens.length) {
         throw new TypeError(`${tokens.length - current} extra tokens found after root. Only 1 node expected`)
     }
-    return ast;
+    return {ast, eventSet};
 }
