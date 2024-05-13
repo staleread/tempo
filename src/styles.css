@@ -1,0 +1,16 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.container {
+  padding: 40px;
+  background-color: green;
+}
+
+.counter {
+  padding: 20px;
+  background-color: aqua;
+}
+
+/*# sourceMappingURL=styles.css.map */
