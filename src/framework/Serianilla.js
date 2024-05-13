@@ -8,6 +8,7 @@ export const Serianilla = (function () {
     let _current = 0;
     let _hooks = [];
     let _eventSet;
+    let _stateTimeout = null;
 
     const _updateVirtualDOM = () => {
         _current = 0;
@@ -61,11 +62,20 @@ export const Serianilla = (function () {
             const tmpStateIndex = _current;
 
             const setValue = (newValue) => {
-                if (newValue === _hooks[tmpStateIndex])
+                if (newValue === _hooks[tmpStateIndex]) {
                     return;
-
+                }
                 _hooks[tmpStateIndex] = newValue;
-                _updateVirtualDOM();
+
+                if (_stateTimeout) {
+                    return;
+                }
+
+                _stateTimeout = setTimeout(() => {
+                    console.log(`It's time to update DOM`)
+                    _updateVirtualDOM()
+                    _stateTimeout = null;
+                }, 0);
             };
             return [_hooks[_current++], setValue];
         }

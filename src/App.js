@@ -10,7 +10,6 @@ export const App = () => {
         template: `
         <div class="container" onClick={handleClick}>
             <Counter/>
-            <Counter/>
             <MyForm defaultName="${name}"/>
         </div>`,
         attach: {
