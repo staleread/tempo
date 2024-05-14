@@ -1,0 +1,9 @@
+@use '../abstracts' as a;
+
+.auth-form__container {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border-radius: 15px;
+  background-color: a.$gray-light;
+}

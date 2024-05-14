@@ -1,0 +1,18 @@
+// colors
+$gray-light: hsl(0, 0%, 39%);
+$gray: hsl(0, 0%, 27%);
+$gray-dark: hsl(0, 0%, 23%);
+$gray-super-dark: hsl(0, 0%, 13%);
+$white: hsl(0, 0%, 80%);
+
+// fonts
+$main-font: "Inter", sans-serif;
+
+.root {
+  --gray-light: #{$gray-light};
+  --gray: #{$gray};
+  --gray-dark: #{$gray-dark};
+  --gray-super-dark: #{$gray-super-dark};
+  --white: #{$white};
+  --main-font: #{$main-font};
+}
