@@ -139,11 +139,19 @@ export const renderDiff = (oldTree, newTree) => {
         oldPtr.eventsMap = newPtr.eventsMap;
     }
 
+    const removeFromDOM = (node) => {
+        if (node.type !== 'CustomNode') {
+            node.ref.remove();
+            return;
+        }
+        node.children.forEach(child => removeFromDOM(child));
+    }
+
     const rerenderChildren = () => {
         const firstWithChanges = oldPtr.children.length - oldPtr._nodesLeft;
 
         for (let i = firstWithChanges; i < oldPtr.children.length; i++) {
-            oldPtr.children[i].ref?.remove();
+            removeFromDOM(oldPtr.children[i]);
         }
 
         // replace the nodes with changes

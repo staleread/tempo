@@ -125,6 +125,7 @@ export function parseNode({template, imports, attach}) {
 
         const nodeWrapper = {
             type: 'CustomNode',
+            name: token.name,
             parent,
             children: []
         }
