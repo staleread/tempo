@@ -37,7 +37,23 @@ const eventHandlingMap = new Map([
                 }
             }
         }
-    ]
+    ],
+    [
+        'Change',
+        {
+            nativeEvent: 'change',
+            handler(event) {
+                let node = event.target._ref;
+
+                if (node.tag !== 'input') {
+                    throw new TypeError(`${node.tag} doesn't support onChange event`)
+                }
+
+                const handler = node.eventsMap.get('Change');
+                if (handler) handler(event);
+            }
+        }
+    ],
 ]);
 
 const getSetDiff = (setA, setB) => {
