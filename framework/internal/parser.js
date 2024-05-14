@@ -3,7 +3,6 @@ import {tokenize} from "./tokenizer.js";
 export function parseNode({template, imports, attach}) {
     const attachMap = attach ? new Map(Object.entries(attach)) : new Map();
     const importsMap = imports ? new Map(Object.entries(imports)) : new Map();
-    const contextMap = new Map();
     const eventSet = new Set;
 
     const tokens = tokenize(template);
@@ -21,7 +20,7 @@ export function parseNode({template, imports, attach}) {
         }
 
         const chainInfo = token.value;
-        let value = contextMap.get(chainInfo.context);
+        let value = attachMap.get(chainInfo.context);
 
         for (const chainMember of chainInfo.chain) {
             value = value[chainMember];
@@ -44,7 +43,7 @@ export function parseNode({template, imports, attach}) {
         }
 
         const chainInfo = token.value;
-        let value = contextMap.get(chainInfo.context);
+        let value = attachMap.get(chainInfo.context);
 
         for (const chainMember of chainInfo.chain) {
             value = value[chainMember];
@@ -61,7 +60,7 @@ export function parseNode({template, imports, attach}) {
         }
 
         const chainInfo = token.value;
-        let value = contextMap.get(chainInfo.context);
+        let value = attachMap.get(chainInfo.context);
 
         for (const chainMember of chainInfo.chain) {
             value = value[chainMember];
@@ -69,13 +68,9 @@ export function parseNode({template, imports, attach}) {
         return value;
     }
 
-    const handleCommand = (cmdName, node) => {
-        if (cmdName !== 'map') {
-            throw new TypeError(`Unknown command "${cmdName}"`);
-        }
-
+    const handleMapCommand = (node) => {
         const PARAMS_COUNT = 2;
-        let context = '';
+        let contextName = '';
         let items = [];
 
         let token = tokens[++current];
@@ -86,7 +81,12 @@ export function parseNode({template, imports, attach}) {
             }
 
             if (token.name === 'context') {
-                context = retrieveProps(token);
+                contextName = retrieveProps(token);
+
+                if (attachMap.has(contextName)) {
+                    throw new TypeError(`The context name (${contextName}) should not overlap with attachments`);
+                }
+
                 token = tokens[++current];
                 continue;
             }
@@ -109,14 +109,14 @@ export function parseNode({template, imports, attach}) {
         items.forEach(item => {
             current = tmpCurrent;
             token = tokens[current];
-            contextMap.set(context, item);
+            attachMap.set(contextName, item);
 
             while (token.type !== 'tag-child-end') {
                 node.children.push(walkChildNode());
                 token = tokens[current];
             }
         });
-        contextMap.delete(context);
+        attachMap.delete(contextName);
         current++;
     }
 
@@ -218,8 +218,12 @@ export function parseNode({template, imports, attach}) {
                 token = tokens[current];
                 continue;
             }
-            handleCommand(token.name, node);
-            token = tokens[current];
+            if (token.name === 'map') {
+                handleMapCommand(node);
+                token = tokens[current];
+                continue;
+            }
+            throw new TypeError(`Unknown command "${token.name}"`);
         }
 
         if (token.name !== node.tag) {
