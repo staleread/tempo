@@ -1,6 +1,6 @@
 import {tokenize} from "./tokenizer.js";
 
-export function parseNode({template, imports, attach}) {
+export function parseComponent({template, imports, attach}, currentNesting, updateHooksCallback) {
     const attachMap = attach ? new Map(Object.entries(attach)) : new Map();
     const importsMap = imports ? new Map(Object.entries(imports)) : new Map();
     const eventSet = new Set;
@@ -119,19 +119,20 @@ export function parseNode({template, imports, attach}) {
         attachMap.delete(contextName);
         current++;
     }
-
     const walkCustomTag = (parent) => {
         let token = tokens[current];
+        const componentName = token.name
+        const props = {};
 
         const nodeWrapper = {
             type: 'CustomNode',
             name: token.name,
+            hooks: [],
             parent,
             children: []
         }
 
-        const componentName = token.name
-        const props = {}
+        nodeWrapper.hooks = updateHooksCallback(nodeWrapper.name, currentNesting);
 
         token = tokens[++current];
 
@@ -150,7 +151,7 @@ export function parseNode({template, imports, attach}) {
             throw new TypeError(`Please import ${componentName} component`)
         }
 
-        const componentInfo = component(props);
+        const componentInfo = parseComponent(component(props), currentNesting + 1, updateHooksCallback);
 
         componentInfo.eventSet.forEach(e => eventSet.add(e));
         componentInfo.eventSet.clear();

@@ -1,15 +1,17 @@
-import {Serianilla} from "../../framework/Serianilla.js";
-
 export const SignUpForm = () => {
 
-    return Serianilla.createComponent({
+    return {
         imports: {},
-        attach: {
-
-        },
+        attach: {},
         template: `
-        <div style="height: 100px; width: 100px; background-color: green">
+        <form style="height: 200px; width: 200px; background-color: yellow">
+            <label for="login_username">Enter Username</label>
+            <input type="text" name="name" id="login_username" required/>
             
-        </div>`
-    })
+            <label for="login_password">Enter your password</label>
+            <input type="password" name="password" id="login_password" required/>
+            
+            <button type="submit">Submit</button>
+        </form>`
+    }
 }

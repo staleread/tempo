@@ -3,23 +3,28 @@ import {SignUpForm} from "../components/SignUpForm.js";
 import {LoginForm} from "../components/LoginForm.js";
 
 export const Auth = () => {
+    const [activeTab, setActiveTab] = Serianilla.useState('login');
 
-    return Serianilla.createComponent({
-        imports: {SignUpForm, LoginForm},
+    console.log(activeTab)
+
+    return {
         attach: {
-            onSignUp: () => {},
-            onLogin: () => {},
+            setLogin: () => setActiveTab('login'),
+            setSignUp: () => setActiveTab('signup')
         },
+        imports: {LoginForm, SignUpForm},
         template: `
-        <div class="overlay">
-            <app-tab>
-                <section data-tabname="Sign Up">
-                    <SignUpForm onValidSubmit={onSignUp}/>        
-                </section>
-                <section data-tabname="Log In">
-                    <LoginForm onValidSubmit={onLogin}/>     
-                </section>
-            </app-tab>
+        <div class="auth__tabs-container">
+            <div class="auth__nav">
+                <button class="${activeTab === 'login' ? 'active' : ''}" onClick={setLogin}>Log In</button>
+                <button class="${activeTab === 'signup' ? 'active' : ''}" onClick={setSignUp}>Sign Up</button>
+            </div>
+            <div class="auth__outlet">
+            ${activeTab === 'login'
+                ? '<LoginForm/>'
+                : '<SignUpForm/>'
+            }
+            </div>
         </div>`
-    })
+    }
 }
