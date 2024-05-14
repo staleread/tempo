@@ -5,26 +5,26 @@ import {LoginForm} from "../components/LoginForm.js";
 export const Auth = () => {
     const [activeTab, setActiveTab] = Serianilla.useState('login');
 
-    console.log(activeTab)
+    const imports = {LoginForm, SignUpForm};
 
-    return {
-        attach: {
-            setLogin: () => setActiveTab('login'),
-            setSignUp: () => setActiveTab('signup')
-        },
-        imports: {LoginForm, SignUpForm},
-        template: `
-        <div class="auth__tabs-container">
-            <div class="auth__nav">
-                <button class="${activeTab === 'login' ? 'active' : ''}" onClick={setLogin}>Log In</button>
-                <button class="${activeTab === 'signup' ? 'active' : ''}" onClick={setSignUp}>Sign Up</button>
-            </div>
-            <div class="auth__outlet">
+    const template = `
+    <div class="auth__tabs-container">
+        <div class="auth__nav">
+            <button class="${activeTab === 'login' ? 'active' : ''}" onClick={setLogin}>Log In</button>
+            <button class="${activeTab === 'signup' ? 'active' : ''}" onClick={setSignUp}>Sign Up</button>
+        </div>
+        <div class="auth__outlet">
             ${activeTab === 'login'
                 ? '<LoginForm/>'
                 : '<SignUpForm/>'
             }
-            </div>
-        </div>`
-    }
+        </div>
+    </div>`;
+
+    const attach = {
+        setLogin: () => setActiveTab('login'),
+        setSignUp: () => setActiveTab('signup')
+    };
+
+    return {imports, template, attach};
 }
