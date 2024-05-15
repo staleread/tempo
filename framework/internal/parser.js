@@ -20,14 +20,13 @@ const acceptedCommands = {
     }
 }
 
-const walkChildNode = (tokens, current, parent) => {
+const walkChildNode = (tokens, current) => {
     let token = tokens[current];
 
     if (token.type === 'text') {
         const node = {
             type: 'TextNode',
             value: token.value,
-            parent
         }
         current++;
         return [node, current];
@@ -38,7 +37,6 @@ const walkChildNode = (tokens, current, parent) => {
             type: 'CustomNode',
             name: token.name,
             propsMap: new Map(),
-            parent,
             children: []
         }
 
@@ -82,7 +80,6 @@ const walkChildNode = (tokens, current, parent) => {
             tag: token.name,
             attrsMap: new Map(),
             eventsMap: new Map(),
-            parent,
             children: []
         }
 
@@ -149,7 +146,6 @@ const walkChildNode = (tokens, current, parent) => {
         type: 'CommandNode',
         name: token.name,
         paramsMap: new Map(),
-        parent,
         children: []
     }
 
@@ -201,7 +197,7 @@ const walkChildNode = (tokens, current, parent) => {
 
 export const parseComponentChild = (tokens) => {
     let ast, current = 0;
-    [ast, current] = walkChildNode(tokens, current, null);
+    [ast, current] = walkChildNode(tokens, current);
 
     if (current < tokens.length) {
         throw new TypeError(`${tokens.length - current} extra tokens found after root. Only 1 node expected`);
