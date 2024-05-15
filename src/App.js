@@ -5,7 +5,9 @@ export const App = () => {
 
     const template = `
     <div>
-        <Auth/>   
+        <$if true={hello}>
+            <Auth/>   
+        </$if>
     </div>`;
 
     const attach = {};

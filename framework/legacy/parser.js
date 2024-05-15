@@ -1,9 +1,4 @@
-import {tokenize} from "./tokenizer.js";
-
-export function parseComponent({template, imports, attach}, currentNesting, updateHooksCallback) {
-    const attachMap = attach ? new Map(Object.entries(attach)) : new Map();
-    const importsMap = imports ? new Map(Object.entries(imports)) : new Map();
-    const eventSet = new Set;
+import {tokenize} from "../internal/tokenizer.js";
 
     const tokens = tokenize(template);
     let current = 0;
