@@ -1,4 +1,7 @@
 const renderNode = (node) => {
+    if (!node.shouldRender) {
+        return;
+    }
     if (node.type === 'TagNode') {
         const elem = node.ref ?? document.createElement(node.tag);
 
@@ -88,7 +91,7 @@ const nodeComparator = {
     },
     CustomNode: {
         compare: (a, b) => {
-            return a.name === b.name;
+            return a.name === b.name && a.shouldRender === b.shouldRender;
         }
     },
 }
