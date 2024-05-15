@@ -46,11 +46,11 @@ const walkChildNode = (tokens, current, parent) => {
 
         while (token.type !== 'tag-body-end') {
             if (token.type !== 'props') {
-                throw new TypeError(`Props expected, got "${token.type}" inside custom tag body`);
+                throw new TypeError(`PARSER: Props expected, got "${token.type}" inside custom tag body`);
             }
 
             if (!['string', 'ref', 'ref-chain'].includes(token.valueType)) {
-                throw new TypeError(`Unresolved props value type: ${token.valueType}`);
+                throw new TypeError(`PARSER: Unresolved props value type: ${token.valueType}`);
             }
 
             const propsValueInfo = {
@@ -69,7 +69,7 @@ const walkChildNode = (tokens, current, parent) => {
         token = tokens[++current];
 
         if (token.type !== 'tag-child-end') {
-            throw new TypeError('By the way custom tags don\'t support child nodes');
+            throw new TypeError('PARSER: By the way custom tags don\'t support child nodes');
         }
 
         current++;
@@ -91,7 +91,7 @@ const walkChildNode = (tokens, current, parent) => {
         while (token.type !== 'tag-body-end') {
             if (token.type === 'attr') {
                 if (!['empty', 'string', 'ref', 'ref-chain'].includes(token.valueType)) {
-                    throw new TypeError(`Unresolved event value type: ${token.valueType}`)
+                    throw new TypeError(`PARSER: Unresolved event value type: ${token.valueType}`)
                 }
                 const valueInfo = {
                     valueType: token.valueType,
@@ -103,7 +103,7 @@ const walkChildNode = (tokens, current, parent) => {
             }
             if (token.type === 'event') {
                 if (!['ref', 'ref-chain'].includes(token.valueType)) {
-                    throw new TypeError(`Unresolved event value type: ${token.valueType}`)
+                    throw new TypeError(`PARSER: Unresolved event value type: ${token.valueType}`)
                 }
                 const valueInfo = {
                     valueType: token.valueType,
@@ -113,7 +113,7 @@ const walkChildNode = (tokens, current, parent) => {
                 token = tokens[++current];
                 continue;
             }
-            throw new TypeError(`Invalid token "${token.type}" found inside tag body`);
+            throw new TypeError(`PARSER: Invalid token "${token.type}" found inside tag body`);
         }
 
         if (!token.isChildStart) {
@@ -132,7 +132,7 @@ const walkChildNode = (tokens, current, parent) => {
         }
 
         if (token.name !== node.tag) {
-            throw new TypeError(`</${node.tag}> tag expected, got </${token.name}>. \nMaybe you forgot to put "/" at the end of the opening tag?`)
+            throw new TypeError(`PARSER: </${node.tag}> tag expected, got </${token.name}>. \nMaybe you forgot to put "/" at the end of the opening tag?`)
         }
 
         current++;
@@ -142,7 +142,7 @@ const walkChildNode = (tokens, current, parent) => {
     const cmdInfo = acceptedCommands[token.name];
 
     if (!cmdInfo) {
-        throw new TypeError(`Unknown command "${token.name}"`);
+        throw new TypeError(`PARSER: Unknown command "${token.name}"`);
     }
 
     const node = {
@@ -157,15 +157,15 @@ const walkChildNode = (tokens, current, parent) => {
 
     for (let i = 0; i < cmdInfo.paramsCount; i++) {
         if (token.type !== 'param') {
-            throw new TypeError(`A command parameter expected, got "${token.type}"`);
+            throw new TypeError(`PARSER: A command parameter expected, got "${token.type}"`);
         }
         const paramInfo = cmdInfo.expectedParams[token.name];
 
         if (!paramInfo) {
-            throw new TypeError(`Invalid command parameter "${token.name}"`)
+            throw new TypeError(`PARSER: Invalid command parameter "${token.name}"`)
         }
         if (!paramInfo.expectedValueTypes.includes(token.valueType)) {
-            throw new TypeError(`Invalid command parameter value type "${token.valueType}"`)
+            throw new TypeError(`PARSER: Invalid command parameter value type "${token.valueType}"`)
         }
 
         const valueInfo = {
@@ -178,7 +178,7 @@ const walkChildNode = (tokens, current, parent) => {
     token = tokens[++current];
 
     if (token.type !== 'tag-body-end') {
-        throw new TypeError(`${node.name} command only allows ${cmdInfo.paramsCount} parameters`)
+        throw new TypeError(`PARSER: ${node.name} command only allows ${cmdInfo.paramsCount} parameters`)
     }
 
     token = tokens[++current];
@@ -192,7 +192,7 @@ const walkChildNode = (tokens, current, parent) => {
     }
 
     if (token.name !== node.name) {
-        throw new TypeError(`</${node.name}> tag expected, got </${token.name}>. \nMaybe you forgot to put "/" at the end of the opening tag?`)
+        throw new TypeError(`PARSER: </${node.name}> tag expected, got </${token.name}>. \nMaybe you forgot to put "/" at the end of the opening tag?`)
     }
     current++
 
