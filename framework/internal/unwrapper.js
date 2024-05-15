@@ -4,7 +4,7 @@ import {applyComponentAttachments, findCustomNodes} from "./traversers.js";
 
 export const unwrapComponentTree = (component, stateManager) => {
     const unwrapComponent = (component, parentNode, level) => {
-        const {imports, template, attach} = component();
+        const {imports, template, attach} = component(parentNode.props);
 
         const importsMap = imports ? new Map(Object.entries(imports)) : new Map();
         const attachMap = attach ? new Map(Object.entries(attach)) : new Map();
@@ -30,6 +30,8 @@ export const unwrapComponentTree = (component, stateManager) => {
     const ast = {
         type: 'CustomNode',
         name: component.name,
+        shouldRender: true,
+        props: {},
         children: []
     }
 
