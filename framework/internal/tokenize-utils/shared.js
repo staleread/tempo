@@ -1,5 +1,5 @@
-export const UPPER_CAMEL_CASE = /^[A-Z][a-zA-Z0-9]+$/;
-export const LOWER_CAMEL_CASE = /^[a-z][a-zA-Z0-9]+$/;
+export const UPPER_CAMEL_CASE = /^[A-Z][a-zA-Z0-9]*$/;
+export const LOWER_CAMEL_CASE = /^[a-z][a-zA-Z0-9]*$/;
 export const KEBAB_CASE = /^([a-z][a-z0-9]*)(-[a-z0-9]+)*$/;
 export const KEBAB_OR_LOWER_CAMEL_CASE = /^(([a-z][a-z0-9]*)(-[a-z0-9]+)*|[a-z][a-zA-Z0-9]+)$/;
 
