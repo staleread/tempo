@@ -76,7 +76,10 @@ export const applyComponentAttachments = (node, attachMap, parentNode) => {
             return;
         }
         if (node.type === 'CommandNode' && node.name === 'if') {
-            const shouldRenderChildren = retrieveValue(node.params.true, attachMap);
+            const shouldRenderChildren = node.params.true
+                ? retrieveValue(node.params.true, attachMap)
+                : !retrieveValue(node.params.false, attachMap);
+
             const index = parent.children.indexOf(node);
 
             const wrapper = {

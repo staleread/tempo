@@ -15,7 +15,10 @@ const acceptedCommands = {
         expectedParams: {
             true: {
                 expectedValueTypes: ['ref', 'ref-chain']
-            }
+            },
+            false: {
+                expectedValueTypes: ['ref', 'ref-chain']
+            },
         }
     }
 }
