@@ -27,23 +27,20 @@ export const applyComponentAttachments = (node, attachMap, parentNode) => {
         node.shouldRender = shouldRender;
 
         if (node.type === 'TagNode') {
-            node.attrsMap.forEach((v, k) => {
-                node.attrsMap.set(k, retrieveValue(v, attachMap));
-            })
-            node.eventsMap.forEach((v, k) => {
-                node.eventsMap.set(k, retrieveValue(v, attachMap));
-            })
+            for (const [key, value] of Object.entries(node.attrs)) {
+                node.attrs[key] = retrieveValue(value, attachMap)
+            }
+            for (const [key, value] of Object.entries(node.events)) {
+                node.events[key] = retrieveValue(value, attachMap)
+            }
 
             node.children.forEach(child => processNode(child, node, shouldRender));
             return;
         }
         if (node.type === 'CustomNode') {
-            node.props = {};
-
-            node.propsMap.forEach((v, k) => {
-                node.props[k] = retrieveValue(v, attachMap);
-            })
-            delete node.propsMap;
+            for (const [key, value] of Object.entries(node.props)) {
+                node.props[key] = retrieveValue(value, attachMap)
+            }
             return;
         }
         if (node.type === 'TextNode') {
@@ -53,8 +50,8 @@ export const applyComponentAttachments = (node, attachMap, parentNode) => {
             if (!node.children) {
                 return;
             }
-            const context = retrieveValue(node.paramsMap.get('context'), attachMap);
-            const items = retrieveValue(node.paramsMap.get('items'), attachMap);
+            const context = retrieveValue(node.params.context, attachMap);
+            const items = retrieveValue(node.params.items, attachMap);
 
             items.forEach((item, i) => {
                 attachMap.set(context, item);
@@ -70,7 +67,7 @@ export const applyComponentAttachments = (node, attachMap, parentNode) => {
             return;
         }
         if (node.type === 'CommandNode' && node.name === 'if') {
-            const shouldRenderChildren = retrieveValue(node.paramsMap.get('true'), attachMap);
+            const shouldRenderChildren = retrieveValue(node.params.true, attachMap);
             const index = parent.children.indexOf(node);
 
             const wrapper = {
@@ -98,8 +95,8 @@ export const findUsedEvents = (node) => {
         if (!node.shouldRender) {
             return;
         }
-        if (node.eventsMap) {
-            [...node.eventsMap.keys()].forEach(event => eventSet.add(event));
+        if (node.events) {
+            Object.keys(node.events).forEach(event => eventSet.add(event));
         }
         if (node.children) {
             node.children.forEach(child => processNode(child));
@@ -113,13 +110,13 @@ export const findCustomNodes = (node, importsMap) => {
     const nodes = [];
     const processNode = (node, index) => {
         if (node.type === 'CustomNode') {
-            const constructor = importsMap.get(node.name);
+            const ctr = importsMap.get(node.name);
 
-            if (!constructor) {
+            if (!ctr) {
                 throw new TypeError(`Please, import ${node.name}`);
             }
 
-            nodes.push({node, constructor, index});
+            nodes.push({node, constructor: ctr, index});
             return;
         }
         if (node.children) {

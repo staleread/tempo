@@ -11,9 +11,7 @@ const eventHandlingMap = new Map([
                         node = node.parent;
                         continue;
                     }
-                    const handler = node.eventsMap.get('Click');
-
-                    if (handler) handler(event);
+                    node.events['Click']?.(event);
                     node = node.parent;
                 }
             }
@@ -30,9 +28,7 @@ const eventHandlingMap = new Map([
                         node = node.parent;
                         continue;
                     }
-                    const handler = node.eventsMap.get('Submit');
-
-                    if (handler) handler(event);
+                    node.events['Submit']?.(event);
                     node = node.parent;
                 }
             }
@@ -49,8 +45,7 @@ const eventHandlingMap = new Map([
                     throw new TypeError(`${node.tag} doesn't support onChange event`)
                 }
 
-                const handler = node.eventsMap.get('Change');
-                if (handler) handler(event);
+                node.events['Change']?.(event);
             }
         }
     ],

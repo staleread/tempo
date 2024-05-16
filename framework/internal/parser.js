@@ -36,7 +36,7 @@ const walkChildNode = (tokens, current) => {
         const node = {
             type: 'CustomNode',
             name: token.name,
-            propsMap: new Map(),
+            props: {},
             children: []
         }
 
@@ -51,11 +51,10 @@ const walkChildNode = (tokens, current) => {
                 throw new TypeError(`PARSER: Unresolved props value type: ${token.valueType}`);
             }
 
-            const propsValueInfo = {
+            node.props[token.name] = {
                 valueType: token.valueType,
                 value: token.value
-            }
-            node.propsMap.set(token.name, propsValueInfo);
+            };
             token = tokens[++current];
         }
 
@@ -78,8 +77,8 @@ const walkChildNode = (tokens, current) => {
         const node = {
             type: 'TagNode',
             tag: token.name,
-            attrsMap: new Map(),
-            eventsMap: new Map(),
+            attrs: {},
+            events: {},
             children: []
         }
 
@@ -90,11 +89,10 @@ const walkChildNode = (tokens, current) => {
                 if (!['empty', 'string', 'ref', 'ref-chain'].includes(token.valueType)) {
                     throw new TypeError(`PARSER: Unresolved event value type: ${token.valueType}`)
                 }
-                const valueInfo = {
+                node.attrs[token.name] = {
                     valueType: token.valueType,
                     value: token.value
-                }
-                node.attrsMap.set(token.name, valueInfo);
+                };
                 token = tokens[++current];
                 continue;
             }
@@ -102,11 +100,10 @@ const walkChildNode = (tokens, current) => {
                 if (!['ref', 'ref-chain'].includes(token.valueType)) {
                     throw new TypeError(`PARSER: Unresolved event value type: ${token.valueType}`)
                 }
-                const valueInfo = {
+                node.events[token.name] = {
                     valueType: token.valueType,
                     value: token.value
-                }
-                node.eventsMap.set(token.name, valueInfo);
+                };
                 token = tokens[++current];
                 continue;
             }
@@ -145,7 +142,7 @@ const walkChildNode = (tokens, current) => {
     const node = {
         type: 'CommandNode',
         name: token.name,
-        paramsMap: new Map(),
+        params: {},
         children: []
     }
 
@@ -164,11 +161,10 @@ const walkChildNode = (tokens, current) => {
             throw new TypeError(`PARSER: Invalid command parameter value type "${token.valueType}"`)
         }
 
-        const valueInfo = {
+        node.params[token.name] = {
             valueType: token.valueType,
             value: token.value
-        }
-        node.paramsMap.set(token.name, valueInfo);
+        };
     }
 
     token = tokens[++current];
