@@ -147,7 +147,7 @@ export const renderDiff = (oldTree, newTree) => {
 
     const removeFromDOM = (node) => {
         if (node.type !== 'FragmentNode') {
-            node.ref.remove();
+            node.ref?.remove();
             return;
         }
         node.children.forEach(child => removeFromDOM(child));
