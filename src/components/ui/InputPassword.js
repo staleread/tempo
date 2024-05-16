@@ -1,39 +1,34 @@
 import {Serianilla} from "../../../framework/Serianilla.js";
 
-export const InputPassword = ({data}) => {
-    const [showPassword, setShowPassword] = Serianilla.useState(false)
+export const InputPassword = ({data, id, placeholder, label, onChange}) => {
+    const [type, setType] = Serianilla.useState('password')
     const imports = {};
 
     const template = `
-    <div>
-        <label for={id}>${data.label}</label>
+    <div class="auth__form-div">
+        <label class="auth__label" for="${id}">${label ?? ''}</label>
         <div>
             <input
-                type={type}
-                name={name}
-                id={id}
-                placeholder={placeholder}
+                id="${id}"
+                type="${type}"
+                name="password"
+                placeholder="${placeholder ?? ''}"
                 ${data.required ? 'required' : ''}
-                value={value}
-                autocomplete={autocomplete}
+                value="${data.value}"
+                autocomplete="new-password"
                 onChange={onChange}
             />
-            <button type="button" onClick={handleClick}>Eye</button>
+            <button type="button" onClick={switchMode}>Eye</button>
         </div>
-        <$if true={isError}>
-            <div class="error-message">${data.errorMessage}</div>
-        </$if>
+        <div class="error-message">${data.errorMessage}</div>
     </div>`;
 
     const attach = {
-        ...data,
         onChange: (e) => {
             const text = e.target.value;
-            data.onChange(text);
+            onChange(text);
         },
-        isError: !data.errorMessage && data.errorMessage !== '',
-        type: showPassword ? 'text' : 'password',
-        handleClick: () => setShowPassword(!showPassword),
+        switchMode: () => setType(type === 'password' ? 'text' : 'password'),
     };
 
     return {imports, template, attach, hasDynamicInterpolation: true};
