@@ -1,31 +1,31 @@
-export const InputText = (props) => {
+export const InputText = ({data}) => {
     const imports = {};
 
     const template = `
     <div>
-        <label for={id}>${props.label}</label>
+        <label for={id}>${data.label}</label>
         <input
             type="text"
             name={name}
             id={id}
             placeholder={placeholder}
-            ${props.required ? 'required' : ''}
+            ${data.required ? 'required' : ''}
             value={value}
             autocomplete={autocomplete}
             onChange={onChange}
         />
         <$if true={isError}>
-            <div class="error-message">${props.errorMessage}</div>
+            <div class="error-message">${data.errorMessage}</div>
         </$if>
     </div>`;
 
     const attach = {
-        ...props,
+        ...data,
         onChange: (e) => {
             const text = e.target.value;
-            props.onChange(text);
+            data.onChange(text);
         },
-        isError: !props.errorMessage && props.errorMessage !== '',
+        isError: !data.errorMessage && data.errorMessage !== '',
     };
 
     return {imports, template, attach, hasDynamicInterpolation: true};

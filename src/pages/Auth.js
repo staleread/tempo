@@ -10,8 +10,8 @@ export const Auth = () => {
     const template = `
     <div class="auth__tabs-container">
         <div class="auth__nav">
-            <button class="${activeTab === 'login' ? 'active' : ''}" onClick={setLogin}>Log In</button>
-            <button class="${activeTab === 'signup' ? 'active' : ''}" onClick={setSignUp}>Sign Up</button>
+            <button ${activeTab === 'login' ? `class="active"` : ''} onClick={setLogin}>Log In</button>
+            <button ${activeTab === 'signup' ? `class="active"` : ''} onClick={setSignUp}>Sign Up</button>
         </div>
         <div class="auth__outlet">
             ${activeTab === 'login' ? `<LoginForm/>` : `<SignUpForm/>`}
