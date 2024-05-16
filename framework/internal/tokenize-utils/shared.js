@@ -68,6 +68,10 @@ const readStringValue = (input, current) => {
         value += input[current++];
     }
 
+    if (value === '') {
+        throw new TypeError('The string value should not be empty')
+    }
+
     current = skipSpaces(input, ++current);
     return [value, current];
 }

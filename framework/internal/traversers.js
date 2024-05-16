@@ -1,6 +1,6 @@
 const retrieveValue = ({valueType, value}, attachMap) => {
     if (valueType === 'empty') {
-        return null;
+        return '';
     }
     if (valueType === 'string') {
         return value.toString();
