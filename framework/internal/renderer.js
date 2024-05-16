@@ -139,10 +139,10 @@ export const renderDiff = (oldTree, newTree) => {
     }
 
     const syncEvents = () => {
-        if (!oldPtr.eventsMap) {
+        if (!oldPtr.events) {
             return;
         }
-        oldPtr.eventsMap = newPtr.eventsMap;
+        oldPtr.events = newPtr.events;
     }
 
     const removeFromDOM = (node) => {
