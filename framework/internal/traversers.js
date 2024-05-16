@@ -108,6 +108,7 @@ export const findUsedEvents = (node) => {
     processNode(node);
     return eventSet;
 }
+
 export const findCustomNodes = (node, importsMap) => {
     const nodes = [];
     const processNode = (node, index) => {
