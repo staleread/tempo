@@ -1,0 +1,42 @@
+@use '../abstracts' as a;
+
+input[type='month'],
+input[type='datetime-local'],
+input[type='text'],
+input[type='number'],
+input[type='password'],{
+  display:block;
+  outline: none;
+  border: solid 2px a.$gray-light;
+  background-color: transparent;
+  color: a.$gray-light;
+  padding: 4px 4px 4px 12px;
+  border-radius: 10px;
+  font-size: 20px;
+
+  &:focus {
+    color: a.$white;
+    border-color: a.$white;
+  }
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-calendar-picker-indicator {
+    background-color: a.$gray-light;
+    padding: 5px;
+    border-radius: 5px;
+    transition: background-color 0.5s;
+
+    &:hover {
+      background-color: a.$white;
+    }
+  }
+}
+
+input[type='text'],
+input[type='password'], {
+  padding: 10px;
+}
+
+input[type="file"] {
+  display: none;
+}

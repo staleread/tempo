@@ -21,12 +21,140 @@ a {
   text-decoration: none;
 }
 
-.auth-form__container {
+.button-base {
+  background-color: hsl(0, 0%, 23%);
+  border: none;
+  opacity: 1;
+  color: hsl(0, 0%, 39%);
+  cursor: pointer;
+}
+.button-base:hover {
+  background-color: hsl(0, 0%, 27%);
+}
+.button-base:disabled, .button-base[disabled] {
+  background-color: hsl(0, 0%, 27%);
+  opacity: 0.5;
+}
+
+input[type=month],
+input[type=datetime-local],
+input[type=text],
+input[type=number],
+input[type=password] {
+  display: block;
+  outline: none;
+  border: solid 2px hsl(0, 0%, 39%);
+  background-color: transparent;
+  color: hsl(0, 0%, 39%);
+  padding: 4px 4px 4px 12px;
+  border-radius: 10px;
+  font-size: 20px;
+}
+input[type=month]:focus,
+input[type=datetime-local]:focus,
+input[type=text]:focus,
+input[type=number]:focus,
+input[type=password]:focus {
+  color: hsl(0, 0%, 80%);
+  border-color: hsl(0, 0%, 80%);
+}
+input[type=month]::-webkit-inner-spin-button, input[type=month]::-webkit-calendar-picker-indicator,
+input[type=datetime-local]::-webkit-inner-spin-button,
+input[type=datetime-local]::-webkit-calendar-picker-indicator,
+input[type=text]::-webkit-inner-spin-button,
+input[type=text]::-webkit-calendar-picker-indicator,
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-calendar-picker-indicator,
+input[type=password]::-webkit-inner-spin-button,
+input[type=password]::-webkit-calendar-picker-indicator {
+  background-color: hsl(0, 0%, 39%);
+  padding: 5px;
+  border-radius: 5px;
+  transition: background-color 0.5s;
+}
+input[type=month]::-webkit-inner-spin-button:hover, input[type=month]::-webkit-calendar-picker-indicator:hover,
+input[type=datetime-local]::-webkit-inner-spin-button:hover,
+input[type=datetime-local]::-webkit-calendar-picker-indicator:hover,
+input[type=text]::-webkit-inner-spin-button:hover,
+input[type=text]::-webkit-calendar-picker-indicator:hover,
+input[type=number]::-webkit-inner-spin-button:hover,
+input[type=number]::-webkit-calendar-picker-indicator:hover,
+input[type=password]::-webkit-inner-spin-button:hover,
+input[type=password]::-webkit-calendar-picker-indicator:hover {
+  background-color: hsl(0, 0%, 80%);
+}
+
+input[type=text],
+input[type=password] {
+  padding: 10px;
+}
+
+input[type=file] {
+  display: none;
+}
+
+.auth__container {
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  gap: 14px;
+  position: fixed;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: hsl(0, 0%, 13%);
+  border: solid 3px hsl(0, 0%, 39%);
   border-radius: 15px;
-  background-color: hsl(0, 0%, 39%);
+  padding: 20px;
+  color: hsl(0, 0%, 80%);
+}
+
+.auth__tabs {
+  display: flex;
+  flex-direction: row;
+  justify-content: stretch;
+}
+
+.auth__tab {
+  flex-grow: 1;
+  padding: 14px 0;
+  font-size: 18px;
+  background-color: hsl(0, 0%, 23%);
+  color: hsl(0, 0%, 80%);
+}
+.auth__tab.active {
+  background-color: hsl(0, 0%, 80%);
+  color: hsl(0, 0%, 13%);
+}
+.auth__tab:first-child {
+  border-radius: 5px 0 0 5px;
+}
+.auth__tab:last-child {
+  border-radius: 0 5px 5px 0;
+}
+
+.auth__submit-btn {
+  padding: 8px 16px;
+  font-size: 22px;
+  border-radius: 10px;
+  min-width: 100%;
+  font-weight: 400;
+  color: hsl(0, 0%, 80%);
+  background-color: hsl(120, 58%, 29%);
+}
+.auth__submit-btn:hover {
+  background-color: hsl(120, 47%, 29%);
+}
+
+.auth__form-div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.auth__label {
+  font-size: 18px;
+  font-weight: 300;
 }
 
 /*# sourceMappingURL=styles.css.map */

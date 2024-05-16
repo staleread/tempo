@@ -1,0 +1,68 @@
+@use '../abstracts' as a;
+
+.auth__container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: fixed;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: a.$gray-super-dark;
+  border: solid 3px a.$gray-light;
+  border-radius: 15px;
+  padding: 20px;
+  color: a.$white;
+}
+
+.auth__tabs {
+  display: flex;
+  flex-direction: row;
+  justify-content: stretch;
+}
+
+.auth__tab {
+  flex-grow: 1;
+  padding: 14px 0;
+  font-size: 18px;
+  background-color: a.$gray-dark;
+  color: a.$white;
+
+  &.active {
+    background-color: a.$white;
+    color: a.$gray-super-dark;
+  }
+
+  &:first-child {
+    border-radius: 5px 0 0 5px;
+  }
+  &:last-child {
+    border-radius: 0 5px 5px 0;
+  }
+}
+
+.auth__submit-btn {
+  padding: 8px 16px;
+  font-size: 22px;
+  border-radius: 10px;
+  min-width: 100%;
+  font-weight: 400;
+  color: a.$white;
+  background-color: hsl(120, 58%, 29%);
+
+  &:hover {
+    background-color: hsl(120, 47%, 29%);
+  }
+}
+
+.auth__form-div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.auth__label {
+  font-size: 18px;
+  font-weight: 300;
+}

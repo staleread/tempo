@@ -1,0 +1,20 @@
+@use '../abstracts' as a;
+
+.button-base {
+  $not-pressed-color: a.$gray-dark;
+  $pressed-color: a.$gray;
+
+  background-color: $not-pressed-color;
+  border: none;
+  opacity: 1;
+  color: a.$gray-light;
+  cursor: pointer;
+
+  &:hover {
+    background-color: $pressed-color;
+  }
+  &:disabled, &[disabled] {
+    background-color: $pressed-color;
+    opacity: 0.5;
+  }
+}
