@@ -66,6 +66,9 @@ const nodeComparator = {
     },
     TagNode: {
         compare: (a, b) => {
+            if (a.shouldRender !== b.shouldRender)
+                return false;
+
             if (a.name !== b.name)
                 return false;
 
@@ -86,12 +89,12 @@ const nodeComparator = {
     },
     TextNode: {
         compare: (a, b) => {
-            return a.value === b.value;
+            return a.shouldRender === b.shouldRender && a.value === b.value;
         }
     },
-    CustomNode: {
+    FragmentNode: {
         compare: (a, b) => {
-            return a.name === b.name && a.shouldRender === b.shouldRender;
+            return a.key === b.key;
         }
     },
 }
