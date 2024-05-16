@@ -5,6 +5,8 @@ import {unwrapComponentTree} from "./internal/unwrapper.js";
 import {findUsedEvents} from "./internal/traversers.js";
 
 export const Serianilla = (function () {
+    const _templateMap = new Map();
+
     let _virtualDOM;
     let _rootComponent;
     let _eventSet;
@@ -14,7 +16,7 @@ export const Serianilla = (function () {
     const _updateVirtualDOM = () => {
         _stateManager.reset();
 
-        const node = unwrapComponentTree(_rootComponent, _stateManager);
+        const node = unwrapComponentTree(_rootComponent, _stateManager, _templateMap);
         const newEventSet = findUsedEvents(node);
 
         const candidateDOM = {
@@ -35,7 +37,7 @@ export const Serianilla = (function () {
 
             _stateManager = new StateManager();
 
-            const node = unwrapComponentTree(_rootComponent, _stateManager);
+            const node = unwrapComponentTree(_rootComponent, _stateManager, _templateMap);
             const newEventSet = findUsedEvents(node);
 
             _virtualDOM = {

@@ -2,15 +2,37 @@ import {tokenize} from "./tokenizer.js";
 import {parseComponentChild} from "./parser.js";
 import {applyComponentAttachments, findCustomNodes} from "./traversers.js";
 
-export const unwrapComponentTree = (component, stateManager) => {
+export const unwrapComponentTree = (component, stateManager, parsedTemplatesMap) => {
+    const getAST = (componentName, template, hasDynamicInterpolation) => {
+        let ast;
+
+        if (hasDynamicInterpolation) {
+            const tokens = tokenize(template);
+            ast = parseComponentChild(tokens);
+        } else {
+            const astString = parsedTemplatesMap.get(componentName);
+
+            if (!astString) {
+                console.log(componentName +  ': Cache MISS')
+                const tokens = tokenize(template);
+                ast = parseComponentChild(tokens);
+                parsedTemplatesMap.set(componentName, JSON.stringify(ast));
+            } else {
+                console.log(componentName +  ': Cache HIT')
+                ast = JSON.parse(astString);
+            }
+        }
+        return ast;
+    }
+
     const unwrapComponent = (componentCtr, props, parentNode, level) => {
-        const {imports, template, attach} = componentCtr(props);
+        const {imports, template, attach, hasDynamicInterpolation} = componentCtr(props);
 
         const importsMap = imports ? new Map(Object.entries(imports)) : new Map();
         const attachMap = attach ? new Map(Object.entries(attach)) : new Map();
 
-        const tokens = tokenize(template);
-        const ast = parseComponentChild(tokens);
+        const ast = getAST(componentCtr.name, template, hasDynamicInterpolation);
+
         parentNode.children.push(ast);
         applyComponentAttachments(ast, attachMap, parentNode);
 

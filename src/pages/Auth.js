@@ -28,5 +28,5 @@ export const Auth = () => {
         login: activeTab === 'login'
     };
 
-    return {imports, template, attach};
+    return {imports, template, attach, hasDynamicInterpolation: true};
 }
