@@ -1,12 +1,16 @@
 import {TextInput} from "./ui/TextInput.js";
+import {Serianilla} from "../../framework/Serianilla.js";
 
 export const LoginForm = () => {
+    const [login, setLogin] = Serianilla.useState('');
+
     const imports = {TextInput};
 
     const template = `
     <form style="height: 200px; width: 200px; background-color: yellow">
         <TextInput 
             id="login_username"
+            value={login}
             name="name"
             placeholder="Username"
             label="Create a username"
@@ -30,8 +34,10 @@ export const LoginForm = () => {
     const attach = {
         isRequired: true,
         handleUsernameChanged: (text) => {
-            console.log('Username is ' + text)
-        }
+            console.log('Setting login to ' + login)
+            setLogin(text);
+        },
+        login
     };
 
     return {imports, template, attach};

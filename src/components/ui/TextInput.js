@@ -10,6 +10,7 @@ export const TextInput = (props) => {
             id={id}
             placeholder={placeholder}
             ${props.required ? 'required' : ''}
+            value={value}
             onChange={onChange}
         />
         ${props.errorMessage ? `<div class="error-message">${props.errorMessage}</div>` : ''}

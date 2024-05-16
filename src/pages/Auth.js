@@ -18,9 +18,6 @@ export const Auth = () => {
                 <SignUpForm/>   
             </$if>
             <p>Hello!</p>
-            <$if true={login}>
-               
-            </$if>
            <LoginForm/>
         </div>
     </div>`;
