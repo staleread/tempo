@@ -13,12 +13,10 @@ export const unwrapComponentTree = (component, stateManager, parsedTemplatesMap)
             const astString = parsedTemplatesMap.get(componentName);
 
             if (!astString) {
-                console.log(componentName +  ': Cache MISS')
                 const tokens = tokenize(template);
                 ast = parseComponentChild(tokens);
                 parsedTemplatesMap.set(componentName, JSON.stringify(ast));
             } else {
-                console.log(componentName +  ': Cache HIT')
                 ast = JSON.parse(astString);
             }
         }

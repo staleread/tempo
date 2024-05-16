@@ -70,7 +70,6 @@ export const Serianilla = (function () {
                     return;
                 }
                 _stateTimeout = setTimeout(() => {
-                    console.log(`It's time to update DOM`)
                     _updateVirtualDOM()
                     _stateTimeout = null;
                 }, 0);
