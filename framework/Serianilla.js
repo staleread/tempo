@@ -61,7 +61,7 @@ export const Serianilla = (function () {
             }
 
             const setValue = (newValue) => {
-                if (newValue === states[index]) {
+                if (Object.is(newValue, states[index])) {
                     return;
                 }
                 states[index] = newValue;
@@ -70,7 +70,7 @@ export const Serianilla = (function () {
                     return;
                 }
                 _stateTimeout = setTimeout(() => {
-                    _updateVirtualDOM()
+                    _updateVirtualDOM();
                     _stateTimeout = null;
                 }, 0);
             };
