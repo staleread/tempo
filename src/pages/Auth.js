@@ -14,16 +14,21 @@ export const Auth = () => {
             <button class="${activeTab === 'signup' ? 'active' : ''}" onClick={setSignUp}>Sign Up</button>
         </div>
         <div class="auth__outlet">
-            ${activeTab === 'login'
-                ? '<LoginForm/>'
-                : '<SignUpForm/>'
-            }
+            <$if true={login}>
+                <SignUpForm/>   
+            </$if>
+            <p>Hello!</p>
+            <$if true={login}>
+               
+            </$if>
+           <LoginForm/>
         </div>
     </div>`;
 
     const attach = {
         setLogin: () => setActiveTab('login'),
-        setSignUp: () => setActiveTab('signup')
+        setSignUp: () => setActiveTab('signup'),
+        login: activeTab === 'login'
     };
 
     return {imports, template, attach};
