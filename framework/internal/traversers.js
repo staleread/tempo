@@ -6,7 +6,12 @@ const retrieveValue = ({valueType, value}, attachMap) => {
         return value.toString();
     }
     if (valueType === 'ref') {
-        return attachMap.get(value);
+        const result = attachMap.get(value);
+
+        if (result === undefined) {
+            throw new TypeError(`Please attach a reference value of "${value}"`)
+        }
+        return result;
     }
     if (valueType !== 'ref-chain') {
         throw new TypeError(`Unresolved value type: ${valueType}`);
@@ -14,6 +19,10 @@ const retrieveValue = ({valueType, value}, attachMap) => {
 
     const chainInfo = value;
     let result = attachMap.get(chainInfo.context);
+
+    if (result === undefined) {
+        throw new TypeError(`Please attach a reference value of "${value}"`)
+    }
 
     for (const chainMember of chainInfo.chain) {
         result = value[chainMember];
