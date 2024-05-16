@@ -3,8 +3,8 @@ import {parseComponentChild} from "./parser.js";
 import {applyComponentAttachments, findCustomNodes} from "./traversers.js";
 
 export const unwrapComponentTree = (component, stateManager) => {
-    const unwrapComponent = (component, parentNode, level) => {
-        const {imports, template, attach} = component(parentNode.props);
+    const unwrapComponent = (componentCtr, props, parentNode, level) => {
+        const {imports, template, attach} = componentCtr(props);
 
         const importsMap = imports ? new Map(Object.entries(imports)) : new Map();
         const attachMap = attach ? new Map(Object.entries(attach)) : new Map();
@@ -16,28 +16,40 @@ export const unwrapComponentTree = (component, stateManager) => {
 
         const customNodes = findCustomNodes(ast, importsMap);
         level++;
-        customNodes.forEach(c => {
-            if (c.node.shouldRender) {
-                stateManager.loadBucket(c.constructor.name, level);
-                unwrapComponent(c.constructor, c.node, level);
+
+        customNodes.forEach(custom => {
+            const fragment = {
+                type: 'FragmentNode',
+                key: custom.constructor.name,
+                shouldRender: custom.node.shouldRender,
+                parent: custom.node.parent,
+                children: [],
+            }
+
+            custom.node.parent.children[custom.index] = fragment;
+
+            if (fragment.shouldRender) {
+                stateManager.loadBucket(fragment.key, level);
+                unwrapComponent(custom.constructor, custom.node.props, fragment, level);
                 return;
             }
-            stateManager.loadBucket(c.constructor.name, level);
+            // reserve an empty bucket for those components that should not render
+            stateManager.loadBucket(fragment.key, level);
             stateManager.cleanBucket();
         });
     }
 
-    const ast = {
-        type: 'CustomNode',
-        name: component.name,
+    const fragment = {
+        type: 'FragmentNode',
+        key: component.name,
         shouldRender: true,
-        props: {},
-        children: []
+        children: [],
     }
 
     const level = 0;
 
     stateManager.loadBucket(component.name, level);
-    unwrapComponent(component, ast, level)
-    return ast;
+    unwrapComponent(component, {}, fragment, level);
+
+    return fragment;
 }

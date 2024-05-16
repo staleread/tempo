@@ -18,7 +18,7 @@ const renderNode = (node) => {
         node.parent.ref.innerText = node.value;
         return;
     }
-    if (node.type === 'CustomNode') {
+    if (node.type === 'FragmentNode') {
         node.ref = node.parent.ref;
     }
 }
@@ -143,7 +143,7 @@ export const renderDiff = (oldTree, newTree) => {
     }
 
     const removeFromDOM = (node) => {
-        if (node.type !== 'CustomNode') {
+        if (node.type !== 'FragmentNode') {
             node.ref.remove();
             return;
         }

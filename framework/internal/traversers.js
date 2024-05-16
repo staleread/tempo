@@ -26,6 +26,26 @@ export const applyComponentAttachments = (node, attachMap, parentNode) => {
         node.parent = parent;
         node.shouldRender = shouldRender;
 
+        if (node.type === 'TagNode') {
+            node.attrsMap.forEach((v, k) => {
+                node.attrsMap.set(k, retrieveValue(v, attachMap));
+            })
+            node.eventsMap.forEach((v, k) => {
+                node.eventsMap.set(k, retrieveValue(v, attachMap));
+            })
+
+            node.children.forEach(child => processNode(child, node, shouldRender));
+            return;
+        }
+        if (node.type === 'CustomNode') {
+            node.props = {};
+
+            node.propsMap.forEach((v, k) => {
+                node.props[k] = retrieveValue(v, attachMap);
+            })
+            delete node.propsMap;
+            return;
+        }
         if (node.type === 'TextNode') {
             return;
         }
@@ -50,37 +70,21 @@ export const applyComponentAttachments = (node, attachMap, parentNode) => {
             return;
         }
         if (node.type === 'CommandNode' && node.name === 'if') {
-            if (!node.children) {
-                parent.children = [];   // if command node shouldn't go into output ast
-                return;
-            }
-
+            const shouldRenderChildren = retrieveValue(node.paramsMap.get('true'), attachMap);
             const index = parent.children.indexOf(node);
 
-            const shouldRenderChildren = retrieveValue(node.paramsMap.get('true'), attachMap);
-            node.children.forEach(child => processNode(child, parent, shouldRenderChildren));
+            const wrapper = {
+                type: 'FragmentNode',
+                key: node.name,
+                shouldRender: shouldRenderChildren,
+                children: node.children,
+                parent,
+            }
 
-            parent.children.splice(index, 1, ...node.children);
-            return;
-        }
-        if (node.type === 'CustomNode') {
-            node.props = {};
+            // replace command node with a fragment node wrapper
+            parent.children[index] = wrapper;
 
-            node.propsMap.forEach((v, k) => {
-                node.props[k] = retrieveValue(v, attachMap);
-            })
-            delete node.propsMap;
-            return;
-        }
-        if (node.type === 'TagNode') {
-            node.attrsMap.forEach((v, k) => {
-                node.attrsMap.set(k, retrieveValue(v, attachMap));
-            })
-            node.eventsMap.forEach((v, k) => {
-                node.eventsMap.set(k, retrieveValue(v, attachMap));
-            })
-
-            node.children.forEach(child => processNode(child, node, shouldRender));
+            wrapper.children.forEach(child => processNode(child, wrapper, shouldRenderChildren));
             return;
         }
         throw new TypeError(`ATTACH: Unknown node type found: "${node.type}"`)
@@ -106,7 +110,7 @@ export const findUsedEvents = (node) => {
 }
 export const findCustomNodes = (node, importsMap) => {
     const nodes = [];
-    const processNode = (node) => {
+    const processNode = (node, index) => {
         if (node.type === 'CustomNode') {
             const constructor = importsMap.get(node.name);
 
@@ -114,13 +118,13 @@ export const findCustomNodes = (node, importsMap) => {
                 throw new TypeError(`Please, import ${node.name}`);
             }
 
-            nodes.push({node, constructor});
+            nodes.push({node, constructor, index});
             return;
         }
         if (node.children) {
-            node.children.forEach(child => processNode(child));
+            node.children.forEach((child, i) => processNode(child, i));
         }
     }
-    processNode(node);
+    processNode(node, 0);
     return nodes;
 }
