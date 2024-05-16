@@ -1,8 +1,9 @@
 import {InputText} from "./ui/InputText.js";
 import {Serianilla} from "../../framework/Serianilla.js";
 import {InputPassword} from "./ui/InputPassword.js";
+import {Button} from "./ui/Button.js";
 
-export const LoginForm = () => {
+export const LoginForm = ({onValidSubmit}) => {
     const [formInfo, setFormInfo] = Serianilla.useState({
         username: '',
         email: '',
@@ -14,82 +15,81 @@ export const LoginForm = () => {
         e.preventDefault();
 
         const formData = new FormData();
-        console.log(Object.entries(formInfo))
 
         for (const [key, value] of Object.entries(formInfo)) {
             formData.append(key, value.toString());
         }
-        console.log(formData);
+
+        // some logic...
+
+        onValidSubmit();
     }
 
-    const imports = {InputText, InputPassword};
+    const imports = {Button, InputText, InputPassword};
 
     const template = `
-    <form onSubmit={handleSubmit} style="height: 250px; width: 200px; background-color: yellow">
-        <InputText data={usernameInputData} />
-        <InputText data={emailInputData} />
-        <InputPassword data={passwordInputData} />
-        <InputPassword data={repeatPasswordInputData} />
+    <form onSubmit={handleSubmit}>
+        <InputText 
+            id="login_username"
+            name="name"
+            placeholder="Username"
+            label="Create a username"
+            autocomplete="username"
+            onChange={onUsernameChanged}
+            data={usernameInputData} />
         
-        <button type="submit">Submit</button>
+        <InputText 
+            id="login_email"
+            name="email"
+            placeholder="Email"
+            label="Enter your email address"
+            autocomplete="email"
+            onChange={onEmailChanged}
+            data={emailInputData} />   
+        
+        <InputPassword 
+            id="login_password"
+            placeholder="Password"
+            label="Create a strong password"
+            onChange={onPasswordChanged}
+            data={passwordInputData} />
+        
+        <InputPassword 
+            id="login_repeat-password"
+            placeholder="Password"
+            label="Repeat the password"
+            onChange={onRepeatPasswordChanged}
+            data={repeatPasswordInputData} /> 
+        
+        <Button classes="auth__submit-btn" type="submit" content="Submit"/>
     </form>`;
 
     const attach = {
-        handleSubmit: e => {
-            e.preventDefault();
-
-            const formData = new FormData();
-            console.log(Object.entries(formInfo))
-
-            for (const [key, value] of Object.entries(formInfo)) {
-                formData.append(key, value.toString());
-            }
-            console.log(formData);
-        },
+        handleSubmit,
+        onUsernameChanged: (username) => setFormInfo({...formInfo, username}),
+        onEmailChanged: (email) => setFormInfo({...formInfo, email}),
+        onPasswordChanged: (password) => setFormInfo({...formInfo, password}),
+        onRepeatPasswordChanged: (repeatPassword) => setFormInfo({...formInfo, repeatPassword}),
         usernameInputData: {
-            id: 'login_username',
-            name: 'name',
-            placeholder: 'Username',
-            label: 'Create a username',
-            autocomplete: 'username',
             errorMessage: '',
             required: true,
             value: formInfo.username,
-            onChange: (username) => setFormInfo({...formInfo, username}),
         },
         emailInputData: {
-            id: 'login_email',
-            name: 'email',
-            placeholder: 'Email',
-            label: "Enter your email",
-            autocomplete: "email",
             errorMessage: '',
             required: true,
             value: formInfo.email,
-            onChange: (email) => setFormInfo({...formInfo, email})
         },
         passwordInputData: {
-            id: 'login_password',
-            name: 'password',
-            placeholder: 'Password',
-            label: 'Create a strong password',
             errorMessage: '',
-            autocomplete: 'new-password',
             required: true,
             value: formInfo.password,
-            onChange: (password) => setFormInfo({...formInfo, password})
         },
         repeatPasswordInputData: {
-            id: 'login_repeat-password',
-            name: 'password',
-            placeholder: 'Password',
-            label: 'Repeat the password',
             errorMessage: '',
-            autocomplete: 'new-password',
             required: true,
             value: formInfo.repeatPassword,
-            onChange: (repeatPassword) => setFormInfo({...formInfo, repeatPassword})
-        }
+        },
     };
 
     return {imports, template, attach};
