@@ -14,11 +14,7 @@ export const Auth = () => {
             <button class="${activeTab === 'signup' ? 'active' : ''}" onClick={setSignUp}>Sign Up</button>
         </div>
         <div class="auth__outlet">
-            <$if true={login}>
-                <SignUpForm/>   
-            </$if>
-            <p>Hello!</p>
-           <LoginForm/>
+            ${activeTab === 'login' ? `<LoginForm/>` : `<SignUpForm/>`}
         </div>
     </div>`;
 

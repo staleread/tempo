@@ -4,15 +4,11 @@ export const App = () => {
     const imports = {Auth};
 
     const template = `
-    <div number={number}>
-        <Auth onClick={handle} prop={a}/>
+    <div>
+        <Auth/>
     </div>`;
 
-    const attach = {
-        a: 'hello',
-        number: 12,
-        handle: e => console.log('Hello!'),
-    };
+    const attach = {};
 
     return {imports, template, attach};
 }
