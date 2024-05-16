@@ -25,7 +25,7 @@ const retrieveValue = ({valueType, value}, attachMap) => {
     }
 
     for (const chainMember of chainInfo.chain) {
-        result = value[chainMember];
+        result = result[chainMember];
     }
     return result;
 }
