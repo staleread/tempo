@@ -94,7 +94,7 @@ const nodeComparator = {
     },
     FragmentNode: {
         compare: (a, b) => {
-            return a.key === b.key;
+            return a.shouldRender === b.shouldRender && a.key === b.key;
         }
     },
 }
