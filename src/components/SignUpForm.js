@@ -4,23 +4,20 @@ import {InputPassword} from "./ui/InputPassword.js";
 import {Button} from "./ui/Button.js";
 
 export const SignUpForm = ({onValidSubmit}) => {
-    const [formInfo, setFormInfo] = Serianilla.useState({
-        username: '',
-        password: '',
-    });
+    const [usernameInfo, setUsernameInfo] = Serianilla.useState({value: '', errorMessage: ''});
+    const [passwordInfo, setPasswordInfo] = Serianilla.useState({value: '', errorMessage: ''});
 
     const handleSubmit = e => {
         e.preventDefault();
 
         const formData = new FormData();
 
-        for (const [key, value] of Object.entries(formInfo)) {
-            formData.append(key, value.toString());
-        }
+        formData.append('username', usernameInfo.value);
+        formData.append('password', passwordInfo.value);
 
         // some logic...
 
-        onValidSubmit();
+        onValidSubmit(formData);
     }
 
     const imports = {Button, InputText, InputPassword};
@@ -28,13 +25,14 @@ export const SignUpForm = ({onValidSubmit}) => {
     const template = `
     <form onSubmit={handleSubmit}>
         <InputText 
-            id="signup_username"
+            id="login_username"
             name="name"
             placeholder="Username"
-            label="Enter your username"
+            label="Create a username"
             autocomplete="username"
             onChange={onUsernameChanged}
-            data={usernameInputData} />
+            value={usernameInfo.value}
+            errorMessage={usernameInfo.errorMessage} />
         
         <InputPassword 
             id="signup_password"
@@ -42,25 +40,18 @@ export const SignUpForm = ({onValidSubmit}) => {
             label="Enter your password"
             autocomplete="curent-password"
             onChange={onPasswordChanged}
-            data={passwordInputData} />
+            value={passwordInfo.value}
+            errorMessage={passwordInfo.errorMessage}  />
         
         <Button classes="auth__submit-btn" type="submit" content="Submit"/>
     </form>`;
 
     const attach = {
         handleSubmit,
-        onUsernameChanged: (username) => setFormInfo({...formInfo, username}),
-        onPasswordChanged: (password) => setFormInfo({...formInfo, password}),
-        usernameInputData: {
-            errorMessage: '',
-            required: true,
-            value: formInfo.username,
-        },
-        passwordInputData: {
-            errorMessage: '',
-            required: true,
-            value: formInfo.password,
-        },
+        usernameInfo,
+        passwordInfo,
+        onUsernameChanged: value => setUsernameInfo({...usernameInfo, value}),
+        onPasswordChanged: value => setPasswordInfo({...passwordInfo, value}),
     };
 
     return {imports, template, attach};
