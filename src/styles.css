@@ -135,17 +135,29 @@ input[type=file] {
   border-radius: 15px;
   background-color: hsl(120, 100%, 23%);
   color: hsl(0, 0%, 80%);
-  opacity: 1;
-  transition: opacity 2s;
+  opacity: 0;
 }
 
 .app__message-error {
   background-color: hsl(0, 100%, 35%);
 }
 
-.app__message-success.app__hidden,
-.app__message-error.app__hidden {
+.app__message_enter {
   opacity: 0;
+}
+
+.app__message_enter-active {
+  opacity: 1;
+  transition: opacity 0.3s;
+}
+
+.app__message_exit {
+  opacity: 1;
+}
+
+.app__message_exit-active {
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 
 .auth__container, .auth__container-loading {

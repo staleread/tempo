@@ -1,27 +1,27 @@
 import {Auth} from "./pages/Auth.js";
 import {Serianilla} from "../framework/Serianilla.js";
-import {MessageBox} from "./components/ui/MessageBox.js";
+import {cssTransitionInOut} from "./utils/transition.js";
 
 export const App = () => {
-    const [messageInfo, setMessageInfo] = Serianilla.useState(null);
+    const [messageInfo, setMessageInfo] = Serianilla.useState({title: '', success: true});
+    const messageRef = Serianilla.useRef(null);
 
-    const imports = {Auth, MessageBox};
+    const imports = {Auth};
 
     const template = `
     <div>
         <Auth onMessage={onMessage}/>
-        <MessageBox isVisible={hasMassage} title={title} isSuccess={success}/>
+        <div ref={messageRef} class="${messageInfo.success ? 'app__message-success' : 'app__message-error'}">
+            <h3>${messageInfo.title}</h3>
+        </div>
     </div>`;
 
     const attach = {
-        hasMassage: messageInfo !== null,
-        title: messageInfo?.title ?? '',
-        success: messageInfo?.success ?? false,
+        messageRef,
         onMessage: ({title, success}) => {
             setMessageInfo({title, success});
-            setTimeout(() => setMessageInfo(null), 3000);
+            cssTransitionInOut(messageRef, 3000, 'app__message');
         }
     };
-
-    return {imports, template, attach};
+    return {imports, template, attach, hasDynamicInterpolation: true};
 }
