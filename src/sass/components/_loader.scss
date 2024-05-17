@@ -1,0 +1,25 @@
+@use '../abstracts' as a;
+
+
+.app__loader {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: 70px;
+  height: 70px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 8px solid;
+  border-color: a.$white transparent;
+  animation: rotate 1s infinite;
+  opacity: 1;
+}
+
+@keyframes rotate {
+  from {
+    transform: translate(-50%, -50%) rotate(0turn)
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(.5turn)
+  }
+}

@@ -15,6 +15,16 @@
   color: a.$white;
 }
 
+.auth__container-loading {
+  @extend .auth__container;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.auth__form-container {
+  position: relative;
+}
+
 .auth__tabs {
   display: flex;
   flex-direction: row;

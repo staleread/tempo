@@ -102,7 +102,29 @@ input[type=file] {
   display: none;
 }
 
-.auth__container {
+.app__loader {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: 70px;
+  height: 70px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 8px solid;
+  border-color: hsl(0, 0%, 80%) transparent;
+  animation: rotate 1s infinite;
+  opacity: 1;
+}
+
+@keyframes rotate {
+  from {
+    transform: translate(-50%, -50%) rotate(0turn);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(0.5turn);
+  }
+}
+.auth__container, .auth__container-loading {
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -115,6 +137,15 @@ input[type=file] {
   border-radius: 15px;
   padding: 20px;
   color: hsl(0, 0%, 80%);
+}
+
+.auth__container-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.auth__form-container {
+  position: relative;
 }
 
 .auth__tabs {
