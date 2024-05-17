@@ -36,11 +36,17 @@ export const Auth = () => {
         setLogin: () => setActiveTab('login'),
         setSignUp: () => setActiveTab('signup'),
         login: activeTab === 'login',
-        onLogin: () => {
-            // some logic...
+        onLogin: formData => {
+            console.log('Thiinking...')
+            setTimeout(() => {
+                console.log('OK')
+            }, 2000)
         },
-        onSignup: () => {
-            // some logic...
+        onSignup: formData => {
+            console.log('Thiinking...')
+            setTimeout(() => {
+                console.log('OK')
+            }, 2000)
         },
     };
 

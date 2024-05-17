@@ -2,20 +2,33 @@ import {InputText} from "./ui/InputText.js";
 import {Serianilla} from "../../framework/Serianilla.js";
 import {InputPassword} from "./ui/InputPassword.js";
 import {Button} from "./ui/Button.js";
+import {validatePassword, validateUsername} from "../validation/auth.js";
 
 export const SignUpForm = ({onValidSubmit}) => {
-    const [usernameInfo, setUsernameInfo] = Serianilla.useState({value: '', errorMessage: ''});
-    const [passwordInfo, setPasswordInfo] = Serianilla.useState({value: '', errorMessage: ''});
+    const [usernameInfo, setUsernameInfo] = Serianilla.useState({value: '', validated: false, errorMessage: ''});
+    const [passwordInfo, setPasswordInfo] = Serianilla.useState({value: '', validated: false, errorMessage: ''});
 
     const handleSubmit = e => {
         e.preventDefault();
+
+        let errorMessage, allValid = true;
+
+        errorMessage = validateUsername(usernameInfo.value);
+        allValid = allValid ? errorMessage === '' : false;
+        setUsernameInfo({...usernameInfo, validated: true, errorMessage})
+
+        errorMessage = validatePassword(passwordInfo.value);
+        allValid = allValid ? errorMessage === '' : false;
+        setPasswordInfo({...passwordInfo, validated: true, errorMessage})
+
+        if (!allValid) {
+            return;
+        }
 
         const formData = new FormData();
 
         formData.append('username', usernameInfo.value);
         formData.append('password', passwordInfo.value);
-
-        // some logic...
 
         onValidSubmit(formData);
     }
@@ -32,6 +45,7 @@ export const SignUpForm = ({onValidSubmit}) => {
             autocomplete="username"
             onChange={onUsernameChanged}
             value={usernameInfo.value}
+            isValidated={usernameInfo.validated}
             errorMessage={usernameInfo.errorMessage} />
         
         <InputPassword 
@@ -41,6 +55,7 @@ export const SignUpForm = ({onValidSubmit}) => {
             autocomplete="curent-password"
             onChange={onPasswordChanged}
             value={passwordInfo.value}
+            isValidated={passwordInfo.validated}
             errorMessage={passwordInfo.errorMessage}  />
         
         <Button classes="auth__submit-btn" type="submit" content="Submit"/>
@@ -50,8 +65,8 @@ export const SignUpForm = ({onValidSubmit}) => {
         handleSubmit,
         usernameInfo,
         passwordInfo,
-        onUsernameChanged: value => setUsernameInfo({...usernameInfo, value}),
-        onPasswordChanged: value => setPasswordInfo({...passwordInfo, value}),
+        onUsernameChanged: value => setUsernameInfo({value, validated: false, errorMessage: ''}),
+        onPasswordChanged: value => setPasswordInfo({value, validated: false, errorMessage: ''}),
     };
 
     return {imports, template, attach};
