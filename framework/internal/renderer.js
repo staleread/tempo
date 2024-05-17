@@ -6,6 +6,10 @@ const renderNode = (node) => {
         const elem = node.ref ?? document.createElement(node.tag);
 
         for (const [key, value] of Object.entries(node.attrs)) {
+            if (key === 'ref') {
+                value.current = elem;
+                continue;
+            }
             elem.setAttribute(key, value);
         }
 

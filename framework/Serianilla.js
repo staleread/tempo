@@ -76,6 +76,16 @@ export const Serianilla = (function () {
             };
 
             return [states[index], setValue];
+        },
+
+        useRef(initialValue) {
+            const states = _stateManager.currentBucket.states;
+            const index = _stateManager.currentStateIndex;
+
+            if (states[index] === undefined) {
+                states[index] = {current: initialValue};
+            }
+            return states[index];
         }
     }
 })();
