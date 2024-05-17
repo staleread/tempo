@@ -4,10 +4,14 @@ export const InputPassword = (props) => {
     const [type, setType] = Serianilla.useState('password')
     const imports = {};
 
+    const validationClass = props.isValidated
+        ? props.errorMessage ? 'auth__invalid_container' : 'auth__valid_container'
+        : '';
+
     const template = `
     <div class="auth__form-div">
         <label class="auth__label" for="${props.id}">${props.label ?? ''}</label>
-        <div class="input-container auth__input-container">
+        <div class="input-container auth__input-container ${validationClass}">
             <input
                 class="input-base auth__password"
                 id="${props.id}"
@@ -25,7 +29,7 @@ export const InputPassword = (props) => {
                 onClick={switchMode}
             ></button>
         </div>
-        <div class="error-message">${props.errorMessage ?? ''}</div>
+        <small class="auth__error-message">${props.errorMessage ?? ''}</small>
     </div>`;
 
     const attach = {

@@ -90,3 +90,43 @@
   height: 35px;
   border-radius: 10px;
 }
+
+.auth__error-message {
+  color: hsl(0, 100%, 50%);
+}
+
+.auth__invalid {
+  border-color: hsl(0, 100%, 50%);
+
+  &:focus {
+    border-color: hsl(0, 100%, 50%);
+    box-shadow: 0 0 0 4px hsla(0, 100%, 50%, 0.3);
+  }
+}
+
+.auth__valid {
+  border-color: hsl(120, 100%, 25%);
+
+  &:focus {
+    border-color: hsl(120, 100%, 25%);
+    box-shadow: 0 0 0 4px hsla(120, 100%, 25%, 0.3);
+  }
+}
+
+.auth__invalid_container {
+  border-color: hsl(0, 100%, 50%);
+
+  &:focus-within {
+    border-color: hsl(0, 100%, 50%);
+    box-shadow: 0 0 0 4px hsla(0, 100%, 50%, 0.3);
+  }
+}
+
+.auth__valid_container {
+  border-color: hsl(120, 100%, 25%);
+
+  &:focus-within {
+    border-color: hsl(120, 100%, 25%);
+    box-shadow: 0 0 0 4px hsla(120, 100%, 25%, 0.3);
+  }
+}
