@@ -40,6 +40,7 @@ export const SignUpForm = ({onValidSubmit}) => {
             id="signup_password"
             placeholder="Password"
             label="Enter your password"
+            autocomplete="curent-password"
             onChange={onPasswordChanged}
             data={passwordInputData} />
         

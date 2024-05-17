@@ -1,4 +1,4 @@
-export const InputText = ({data, id, name, placeholder, label, autocomplete, onChange}) => {
+export const InputText = ({data, id, name, placeholder, label, autocomplete, onChange, onInput}) => {
     const imports = {};
 
     const template = `
@@ -13,16 +13,21 @@ export const InputText = ({data, id, name, placeholder, label, autocomplete, onC
             ${data.required ? 'required' : ''}
             value="${data.value}"
             autocomplete="${autocomplete ?? ''}"
-            onChange={onChange}
+            ${onChange ? 'onChange={handleChange}' : ''}
+            ${onInput ? 'onInput={handleInput}' : ''} />
         />
         <div class="error-message">${data.errorMessage ?? ''}</div>
     </div>`;
 
     const attach = {
-        onChange: (e) => {
+        handleChange: e => {
             const text = e.target.value;
             onChange?.(text);
-        }
+        },
+        handleInput: e => {
+            const text = e.target.value;
+            onInput?.(text);
+        },
     };
 
     return {imports, template, attach, hasDynamicInterpolation: true};

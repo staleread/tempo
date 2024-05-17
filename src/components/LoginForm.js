@@ -51,6 +51,7 @@ export const LoginForm = ({onValidSubmit}) => {
             id="login_password"
             placeholder="Password"
             label="Create a strong password"
+            autocomplete="new-password"
             onChange={onPasswordChanged}
             data={passwordInputData} />
         
@@ -58,6 +59,7 @@ export const LoginForm = ({onValidSubmit}) => {
             id="login_repeat-password"
             placeholder="Password"
             label="Repeat the password"
+            autocomplete="new-password"
             onChange={onRepeatPasswordChanged}
             data={repeatPasswordInputData} /> 
         
