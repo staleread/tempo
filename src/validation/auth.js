@@ -21,7 +21,7 @@ export const validateEmail = (email) => {
         return 'Email is required';
     }
     if (!EMAIL_REG.test(email)) {
-        return 'Email must follow the format "****@****.***" and should only contain letters, digits, or dots';
+        return 'Email must follow the format "___@___.___"';
     }
     return '';
 }
