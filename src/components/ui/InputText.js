@@ -5,6 +5,7 @@ export const InputText = ({data, id, name, placeholder, label, autocomplete, onC
     <div class="auth__form-div">
         <label class="auth__label" for="${id}">${label ?? ''}</label>
         <input
+            class="input-base auth__input"
             type="text"
             name="${name}"
             id="${id}"

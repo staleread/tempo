@@ -18,3 +18,19 @@
     opacity: 0.5;
   }
 }
+
+%button-with-bg-img {
+  background-position: center;
+  background-size: auto 70%;
+  background-repeat: no-repeat;
+}
+
+.opened-eye {
+  @extend %button-with-bg-img;
+  background-image: url("/src/assets/opened-eye.png");
+}
+
+.closed-eye {
+  @extend %button-with-bg-img;
+  background-image: url("/src/assets/closed-eye.png");
+}

@@ -36,57 +36,66 @@ a {
   opacity: 0.5;
 }
 
-input[type=month],
-input[type=datetime-local],
-input[type=text],
-input[type=number],
-input[type=password] {
+.closed-eye, .opened-eye {
+  background-position: center;
+  background-size: auto 70%;
+  background-repeat: no-repeat;
+}
+
+.opened-eye {
+  background-image: url("/src/assets/opened-eye.png");
+}
+
+.closed-eye {
+  background-image: url("/src/assets/closed-eye.png");
+}
+
+.input-base {
   display: block;
   outline: none;
   border: solid 2px hsl(0, 0%, 39%);
-  background-color: transparent;
-  color: hsl(0, 0%, 39%);
-  padding: 4px 4px 4px 12px;
-  border-radius: 10px;
+  background-color: hsl(0, 0%, 13%);
+  color: hsl(0, 0%, 80%);
   font-size: 20px;
 }
-input[type=month]:focus,
-input[type=datetime-local]:focus,
-input[type=text]:focus,
-input[type=number]:focus,
-input[type=password]:focus {
-  color: hsl(0, 0%, 80%);
+.input-base:focus {
   border-color: hsl(0, 0%, 80%);
 }
-input[type=month]::-webkit-inner-spin-button, input[type=month]::-webkit-calendar-picker-indicator,
-input[type=datetime-local]::-webkit-inner-spin-button,
-input[type=datetime-local]::-webkit-calendar-picker-indicator,
-input[type=text]::-webkit-inner-spin-button,
-input[type=text]::-webkit-calendar-picker-indicator,
-input[type=number]::-webkit-inner-spin-button,
-input[type=number]::-webkit-calendar-picker-indicator,
-input[type=password]::-webkit-inner-spin-button,
-input[type=password]::-webkit-calendar-picker-indicator {
+.input-base:-webkit-autofill, .input-base:-webkit-autofill:hover, .input-base:-webkit-autofill:focus, .input-base:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px hsl(0, 0%, 13%) inset !important;
+  -webkit-text-fill-color: hsl(0, 0%, 80%) !important;
+}
+.input-base:-webkit-autofill::first-line {
+  font-size: 24px !important;
+}
+
+.input-container {
+  display: block;
+  border: solid 2px hsl(0, 0%, 39%);
+  background-color: hsl(0, 0%, 13%);
+}
+.input-container:focus-within {
+  border-color: hsl(0, 0%, 80%);
+}
+
+.nice-calendar::-webkit-calendar-picker-indicator {
   background-color: hsl(0, 0%, 39%);
   padding: 5px;
   border-radius: 5px;
   transition: background-color 0.5s;
 }
-input[type=month]::-webkit-inner-spin-button:hover, input[type=month]::-webkit-calendar-picker-indicator:hover,
-input[type=datetime-local]::-webkit-inner-spin-button:hover,
-input[type=datetime-local]::-webkit-calendar-picker-indicator:hover,
-input[type=text]::-webkit-inner-spin-button:hover,
-input[type=text]::-webkit-calendar-picker-indicator:hover,
-input[type=number]::-webkit-inner-spin-button:hover,
-input[type=number]::-webkit-calendar-picker-indicator:hover,
-input[type=password]::-webkit-inner-spin-button:hover,
-input[type=password]::-webkit-calendar-picker-indicator:hover {
+.nice-calendar::-webkit-calendar-picker-indicator:hover {
   background-color: hsl(0, 0%, 80%);
 }
 
-input[type=text],
-input[type=password] {
-  padding: 10px;
+.nice-spin-button::-webkit-inner-spin-button {
+  background-color: hsl(0, 0%, 39%);
+  padding: 5px;
+  border-radius: 5px;
+  transition: background-color 0.5s;
+}
+.nice-spin-button::-webkit-inner-spin-button:hover {
+  background-color: hsl(0, 0%, 80%);
 }
 
 input[type=file] {
@@ -155,6 +164,30 @@ input[type=file] {
 .auth__label {
   font-size: 18px;
   font-weight: 300;
+}
+
+.auth__input {
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.auth__password {
+  border: none;
+}
+
+.auth__input-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 8px;
+  border-radius: 10px;
+  padding: 8px;
+}
+
+.auth__switch-mode-button {
+  width: 35px;
+  height: 35px;
+  border-radius: 10px;
 }
 
 /*# sourceMappingURL=styles.css.map */
