@@ -124,6 +124,30 @@ input[type=file] {
     transform: translate(-50%, -50%) rotate(0.5turn);
   }
 }
+.app__message-success, .app__message-error {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 400px;
+  z-index: 100;
+  padding: 20px;
+  border-radius: 15px;
+  background-color: hsl(120, 100%, 23%);
+  color: hsl(0, 0%, 80%);
+  opacity: 1;
+  transition: opacity 2s;
+}
+
+.app__message-error {
+  background-color: hsl(0, 100%, 35%);
+}
+
+.app__message-success.app__hidden,
+.app__message-error.app__hidden {
+  opacity: 0;
+}
+
 .auth__container, .auth__container-loading {
   display: flex;
   flex-direction: column;

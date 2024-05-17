@@ -1,0 +1,26 @@
+@use '../abstracts' as a;
+
+.app__message-success {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 400px;
+  z-index: 100;
+  padding: 20px;
+  border-radius: 15px;
+  background-color: hsl(120, 100%, 23%);
+  color: a.$white;
+  opacity: 1;
+  transition: opacity 2s;
+}
+
+.app__message-error {
+  @extend .app__message-success;
+  background-color: hsl(0, 100%, 35%);
+}
+
+.app__message-success.app__hidden,
+.app__message-error.app__hidden{
+  opacity: 0;
+}

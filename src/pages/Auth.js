@@ -1,17 +1,17 @@
 import {Serianilla} from "../../framework/Serianilla.js";
-import {SignUpForm} from "../components/SignUpForm.js";
 import {LoginForm} from "../components/LoginForm.js";
+import {SignUpForm} from "../components/SignUpForm.js";
 import {Button} from "../components/ui/Button.js";
 import {InputText} from "../components/ui/InputText.js";
 import {InputPassword} from "../components/ui/InputPassword.js";
 import {Loader} from "../components/ui/Loader.js";
-import {login} from "../services/auth-service.js";
+import {login, signUp} from "../services/auth-service.js";
 
-export const Auth = () => {
-    const [activeTab, setActiveTab] = Serianilla.useState('login');
+export const Auth = ({onMessage}) => {
+    const [activeTab, setActiveTab] = Serianilla.useState('signup');
     const [isLoading, setIsLoading] = Serianilla.useState(false);
 
-    const imports = {LoginForm, SignUpForm, InputText, InputPassword, Button, Loader};
+    const imports = {SignUpForm, LoginForm, InputText, InputPassword, Button, Loader};
 
     const template = `
     <div class="${isLoading ? 'auth__container-loading' : 'auth__container'}">
@@ -41,17 +41,19 @@ export const Auth = () => {
         setLogin: () => setActiveTab('login'),
         setSignUp: () => setActiveTab('signup'),
         login: activeTab === 'login',
-        onLogin: formData => {
-            console.log('Thiinking...')
-            setTimeout(() => {
-                console.log('OK')
-            }, 2000)
-        },
         onSignup: formData => {
-            console.log('Thiinking...')
-            setTimeout(() => {
-                console.log('OK')
-            }, 2000)
+            setIsLoading(true);
+            signUp(formData).then(response => {
+                onMessage({title: response.message, success: response.isSuccess});
+                setIsLoading(false);
+            })
+        },
+        onLogin: formData => {
+            setIsLoading(true);
+            login(formData).then(response => {
+                onMessage({title: response.message, success: response.isSuccess});
+                setIsLoading(false);
+            })
         },
     };
 
