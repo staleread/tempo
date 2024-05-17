@@ -49,6 +49,21 @@ const eventHandlingMap = new Map([
             }
         }
     ],
+    [
+        'Input',
+        {
+            nativeEvent: 'input',
+            handler(event) {
+                let node = event.target._ref;
+
+                if (node.tag !== 'input') {
+                    throw new TypeError(`${node.tag} doesn't support onInput event`)
+                }
+
+                node.events['Input']?.(event);
+            }
+        }
+    ]
 ]);
 
 const getSetDiff = (setA, setB) => {
