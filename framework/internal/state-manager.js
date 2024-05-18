@@ -52,8 +52,8 @@ export class StateManager {
             throw new RangeError('Invalid level')
         }
 
-        const newState = {tag, level, states: []};
-        this._buckets.splice(this._currentBucketIndex, 0, newState);
+        const newBucket = {tag, level, states: []};
+        this._buckets.splice(this._currentBucketIndex, 0, newBucket);
     }
 
     _trimCurrentLevel() {
