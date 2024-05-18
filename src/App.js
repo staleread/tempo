@@ -6,7 +6,7 @@ export const App = () => {
     const [messageInfo, setMessageInfo] = Serianilla.useState({title: '', success: true});
     const messageRef = Serianilla.useRef(null);
 
-    const imports = {Auth};
+    const imports = [Auth];
 
     const template = `
     <div>

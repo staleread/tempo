@@ -11,7 +11,7 @@ export const Auth = ({onMessage}) => {
     const [activeTab, setActiveTab] = Serianilla.useState('signup');
     const [isLoading, setIsLoading] = Serianilla.useState(false);
 
-    const imports = {SignUpForm, LoginForm, InputText, InputPassword, Button, Loader};
+    const imports = [SignUpForm, LoginForm, InputText, InputPassword, Button, Loader];
 
     const template = `
     <div class="${isLoading ? 'auth__container-loading' : 'auth__container'}">

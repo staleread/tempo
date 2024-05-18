@@ -1,8 +1,7 @@
 import {Serianilla} from "../../../framework/Serianilla.js";
 
 export const InputPassword = (props) => {
-    const [type, setType] = Serianilla.useState('password')
-    const imports = {};
+    const [type, setType] = Serianilla.useState('password');
 
     const validationClass = props.isValidated
         ? props.errorMessage ? 'auth__invalid_container' : 'auth__valid_container'
@@ -44,5 +43,5 @@ export const InputPassword = (props) => {
         switchMode: () => setType(type === 'password' ? 'text' : 'password'),
     };
 
-    return {imports, template, attach, hasDynamicInterpolation: true};
+    return {template, attach, hasDynamicInterpolation: true};
 }

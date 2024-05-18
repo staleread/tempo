@@ -1,6 +1,4 @@
 export const InputText = (props) => {
-    const imports = {};
-
     const validationClass = props.isValidated
         ? props.errorMessage ? 'auth__invalid' : 'auth__valid'
         : '';
@@ -32,5 +30,5 @@ export const InputText = (props) => {
         },
     };
 
-    return {imports, template, attach, hasDynamicInterpolation: true};
+    return {template, attach, hasDynamicInterpolation: true};
 }

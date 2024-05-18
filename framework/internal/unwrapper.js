@@ -26,7 +26,7 @@ export const unwrapComponentTree = (component, stateManager, parsedTemplatesMap)
     const unwrapComponent = (componentCtr, props, parentNode, level) => {
         const {imports, template, attach, hasDynamicInterpolation} = componentCtr(props);
 
-        const importsMap = imports ? new Map(Object.entries(imports)) : new Map();
+        const importsMap = imports ? new Map(imports.map(c => [c.name, c])) : new Map();
         const attachMap = attach ? new Map(Object.entries(attach)) : new Map();
 
         const ast = getAST(componentCtr.name, template, hasDynamicInterpolation);

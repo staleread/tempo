@@ -1,6 +1,4 @@
 export const Button = ({data, classes, type, content, onClick}) => {
-    const imports = {};
-
     const template = `
     <button 
         class="button-base ${classes ? classes : ''}"
@@ -15,5 +13,5 @@ export const Button = ({data, classes, type, content, onClick}) => {
         onClick: e => onClick?.(e)
     };
 
-    return {imports, template, attach, hasDynamicInterpolation: true};
+    return {template, attach, hasDynamicInterpolation: true};
 }

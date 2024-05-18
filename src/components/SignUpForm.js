@@ -45,7 +45,7 @@ export const SignUpForm = ({onValidSubmit}) => {
         onValidSubmit(formData);
     }
 
-    const imports = {Button, InputText, InputPassword};
+    const imports = [Button, InputText, InputPassword];
 
     const template = `
     <form onSubmit={handleSubmit}>
