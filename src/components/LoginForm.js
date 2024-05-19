@@ -8,9 +8,9 @@ export const LoginForm = ({onValidSubmit}) => {
     const [usernameInfo, setUsernameInfo] = Serianilla.useState({value: '', isValidated: false, errorMessage: ''});
     const [passwordInfo, setPasswordInfo] = Serianilla.useState({value: '', isValidated: false, errorMessage: ''});
 
-    const updateValidationStatusMap = new Map([
-        ['username', errorMessage => setUsernameInfo({...usernameInfo, isValidated: true, errorMessage})],
-        ['password', errorMessage => setPasswordInfo({...passwordInfo, isValidated: true, errorMessage})],
+    const updateCallbackMap = new Map([
+        ['username', setUsernameInfo],
+        ['password', setPasswordInfo],
     ])
 
     const handleSubmit = e => {
@@ -18,13 +18,14 @@ export const LoginForm = ({onValidSubmit}) => {
 
         const form = e.target;
         const formData = new FormData(form);
-        const errorEntries = validateFormData(formData);
+        const validationEntries = validateFormData(formData);
 
-        for (const [key, errorMessage] of errorEntries) {
-            updateValidationStatusMap.get(key)(errorMessage);
+        for (const [key, value, errorMessage] of validationEntries) {
+            const updateCallback = updateCallbackMap.get(key);
+            updateCallback({value, isValidated: true, errorMessage});
         }
 
-        if (errorEntries.map(e => e[1]).some(err => err !== '')) {
+        if (validationEntries.map(e => e[1]).some(err => err !== '')) {
             return;
         }
         onValidSubmit(formData);

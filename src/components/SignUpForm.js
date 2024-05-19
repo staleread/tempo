@@ -5,16 +5,16 @@ import {Button} from "./ui/Button.js";
 import {validateFormData} from "../validation/auth.js";
 
 export const SignUpForm = ({onValidSubmit}) => {
-    const [usernameInfo, setUsernameInfo] = Serianilla.useState({value: '', validated: false, errorMessage: ''});
-    const [emailInfo, setEmailInfo] = Serianilla.useState({value: '', validated: false, errorMessage: ''});
-    const [passwordInfo, setPasswordInfo] = Serianilla.useState({value: '', validated: false, errorMessage: ''});
-    const [repeatPasswordInfo, setRepeatPasswordInfo] = Serianilla.useState({value: '', validated: false, errorMessage: ''});
+    const [usernameInfo, setUsernameInfo] = Serianilla.useState({value: '', isValidated: false, errorMessage: ''});
+    const [emailInfo, setEmailInfo] = Serianilla.useState({value: '', isValidated: false, errorMessage: ''});
+    const [passwordInfo, setPasswordInfo] = Serianilla.useState({value: '', isValidated: false, errorMessage: ''});
+    const [repeatPasswordInfo, setRepeatPasswordInfo] = Serianilla.useState({value: '', isValidated: false, errorMessage: ''});
 
-    const updateValidationStatusMap = new Map([
-        ['username', errorMessage => setUsernameInfo({...usernameInfo, isValidated: true, errorMessage})],
-        ['email', errorMessage => setEmailInfo({...emailInfo, isValidated: true, errorMessage})],
-        ['password', errorMessage => setPasswordInfo({...passwordInfo, isValidated: true, errorMessage})],
-        ['repeat-password', errorMessage => setRepeatPasswordInfo({...repeatPasswordInfo, isValidated: true, errorMessage})],
+    const updateCallbackMap = new Map([
+        ['username', setUsernameInfo],
+        ['email', setEmailInfo],
+        ['password', setPasswordInfo],
+        ['repeat-password', setRepeatPasswordInfo],
     ])
 
     const handleSubmit = e => {
@@ -22,13 +22,14 @@ export const SignUpForm = ({onValidSubmit}) => {
 
         const form = e.target;
         const formData = new FormData(form);
-        const errorEntries = validateFormData(formData);
+        const validationEntries = validateFormData(formData);
 
-        for (const [key, errorMessage] of errorEntries) {
-            updateValidationStatusMap.get(key)(errorMessage);
+        for (const [key, value, errorMessage] of validationEntries) {
+            const updateCallback = updateCallbackMap.get(key);
+            updateCallback({value, isValidated: true, errorMessage});
         }
 
-        if (errorEntries.map(e => e[1]).some(err => err !== '')) {
+        if (validationEntries.map(e => e[1]).some(err => err !== '')) {
             return;
         }
         onValidSubmit(formData);
@@ -40,13 +41,13 @@ export const SignUpForm = ({onValidSubmit}) => {
     <form onSubmit={handleSubmit}>
         <InputText 
             id="login_username"
-            name="name"
+            name="username"
             placeholder="Username"
             label="Create a username"
             autocomplete="username"
             onChange={onUsernameChanged}
             value={usernameInfo.value}
-            isValidated={usernameInfo.validated}
+            isValidated={usernameInfo.isValidated}
             errorMessage={usernameInfo.errorMessage} />
         
         <InputText 
@@ -57,27 +58,29 @@ export const SignUpForm = ({onValidSubmit}) => {
             autocomplete="email"
             onChange={onEmailChanged}
             value={emailInfo.value}
-            isValidated={emailInfo.validated}
+            isValidated={emailInfo.isValidated}
             errorMessage={emailInfo.errorMessage} />   
         
         <InputPassword 
             id="login_password"
             placeholder="Password"
+            name="password"
             label="Create a strong password"
             autocomplete="new-password"
             onChange={onPasswordChanged}
             value={passwordInfo.value}
-            isValidated={passwordInfo.validated}
+            isValidated={passwordInfo.isValidated}
             errorMessage={passwordInfo.errorMessage} />
         
         <InputPassword 
             id="login_repeat-password"
             placeholder="Password"
+            name="repeat-password"
             label="Repeat the password"
             autocomplete="new-password"
             onChange={onRepeatPasswordChanged}
             value={repeatPasswordInfo.value}
-            isValidated={repeatPasswordInfo.validated}
+            isValidated={repeatPasswordInfo.isValidated}
             errorMessage={repeatPasswordInfo.errorMessage} /> 
         
         <Button classes="auth__submit-btn" type="submit" content="Submit"/>
@@ -89,7 +92,10 @@ export const SignUpForm = ({onValidSubmit}) => {
         emailInfo,
         passwordInfo,
         repeatPasswordInfo,
-        onUsernameChanged: value => setUsernameInfo({value, isValidated: false, errorMessage: ''}),
+        onUsernameChanged: value => {
+            usernameInfo.value
+            setUsernameInfo({value, isValidated: false, errorMessage: ''})
+        },
         onEmailChanged: value => setEmailInfo({value, isValidated: false, errorMessage: ''}),
         onPasswordChanged: value => setPasswordInfo({value, isValidated: false, errorMessage: ''}),
         onRepeatPasswordChanged: value => setRepeatPasswordInfo({value, isValidated: false, errorMessage: ''}),

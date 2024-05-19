@@ -65,17 +65,17 @@ const validator = {
 }
 
 export const validateFormData = (formData) => {
-    const errorEntries = [];
+    const entries = [];
 
     for (const [key, value] of formData.entries()) {
         if (!validator[key]) {
-            errorEntries.push([key, '']);
+            entries.push([key, '']);
             continue;
         }
         const keys = validator[key].keys;
         const values = keys.map(key => formData.get(key));
 
-        errorEntries.push([key, validator[key].validate(...values)]);
+        entries.push([key, value, validator[key].validate(...values)]);
     }
-    return errorEntries;
+    return entries;
 }
