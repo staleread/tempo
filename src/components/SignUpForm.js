@@ -2,7 +2,7 @@ import {InputText} from "./ui/InputText.js";
 import {Serianilla} from "../../framework/Serianilla.js";
 import {InputPassword} from "./ui/InputPassword.js";
 import {Button} from "./ui/Button.js";
-import {validateEmail, validatePassword, validateRepeatPassword, validateUsername} from "../validation/auth.js";
+import {validateFormData} from "../validation/auth.js";
 
 export const SignUpForm = ({onValidSubmit}) => {
     const [usernameInfo, setUsernameInfo] = Serianilla.useState({value: '', validated: false, errorMessage: ''});
@@ -10,38 +10,27 @@ export const SignUpForm = ({onValidSubmit}) => {
     const [passwordInfo, setPasswordInfo] = Serianilla.useState({value: '', validated: false, errorMessage: ''});
     const [repeatPasswordInfo, setRepeatPasswordInfo] = Serianilla.useState({value: '', validated: false, errorMessage: ''});
 
+    const updateValidationStatusMap = new Map([
+        ['username', errorMessage => setUsernameInfo({...usernameInfo, isValidated: true, errorMessage})],
+        ['email', errorMessage => setEmailInfo({...emailInfo, isValidated: true, errorMessage})],
+        ['password', errorMessage => setPasswordInfo({...passwordInfo, isValidated: true, errorMessage})],
+        ['repeat-password', errorMessage => setRepeatPasswordInfo({...repeatPasswordInfo, isValidated: true, errorMessage})],
+    ])
+
     const handleSubmit = e => {
         e.preventDefault();
 
-        let errorMessage, allValid = true;
+        const form = e.target;
+        const formData = new FormData(form);
+        const errorEntries = validateFormData(formData);
 
-        errorMessage = validateUsername(usernameInfo.value);
-        allValid = allValid ? errorMessage === '' : false;
-        setUsernameInfo({...usernameInfo, validated: true, errorMessage});
-
-        errorMessage = validateEmail(emailInfo.value);
-        allValid = allValid ? errorMessage === '' : false;
-        setEmailInfo({...emailInfo, validated: true, errorMessage});
-
-        errorMessage = validatePassword(passwordInfo.value);
-        allValid = allValid ? errorMessage === '' : false;
-        setPasswordInfo({...passwordInfo, validated: true, errorMessage});
-
-        errorMessage = validateRepeatPassword(passwordInfo.value, repeatPasswordInfo.value);
-        allValid = allValid ? errorMessage === '' : false;
-        setRepeatPasswordInfo({...repeatPasswordInfo, validated: true, errorMessage});
-
-        if (!allValid) {
-            return;
+        for (const [key, errorMessage] of errorEntries) {
+            updateValidationStatusMap.get(key)(errorMessage);
         }
 
-        const formData = new FormData();
-
-        formData.append('username', usernameInfo.value);
-        formData.append('email', emailInfo.value);
-        formData.append('password', passwordInfo.value);
-        formData.append('repeat-password', repeatPasswordInfo.value);
-
+        if (errorEntries.map(e => e[1]).some(err => err !== '')) {
+            return;
+        }
         onValidSubmit(formData);
     }
 
@@ -100,10 +89,10 @@ export const SignUpForm = ({onValidSubmit}) => {
         emailInfo,
         passwordInfo,
         repeatPasswordInfo,
-        onUsernameChanged: value => setUsernameInfo({value, validated: false, errorMessage: ''}),
-        onEmailChanged: value => setEmailInfo({value, validated: false, errorMessage: ''}),
-        onPasswordChanged: value => setPasswordInfo({value, validated: false, errorMessage: ''}),
-        onRepeatPasswordChanged: value => setRepeatPasswordInfo({value, validated: false, errorMessage: ''}),
+        onUsernameChanged: value => setUsernameInfo({value, isValidated: false, errorMessage: ''}),
+        onEmailChanged: value => setEmailInfo({value, isValidated: false, errorMessage: ''}),
+        onPasswordChanged: value => setPasswordInfo({value, isValidated: false, errorMessage: ''}),
+        onRepeatPasswordChanged: value => setRepeatPasswordInfo({value, isValidated: false, errorMessage: ''}),
     };
 
     return {imports, template, attach};
