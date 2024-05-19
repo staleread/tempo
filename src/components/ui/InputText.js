@@ -16,7 +16,7 @@ export const InputText = (props) => {
             ${props.autocomplete ? `autocomplete="${props.autocomplete}"` : ''}
             ${props.onChange ? 'onChange={handleChange}' : ''}
             ${props.onInput ? 'onInput={handleInput}' : ''} />
-        <small class="auth__error-message">${props.errorMessage ?? ''}</small>
+        <small class="auth__error-message">${props.isValidated ? props.errorMessage : ''}</small>
     </div>`;
 
     const attach = {

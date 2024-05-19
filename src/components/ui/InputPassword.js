@@ -15,7 +15,7 @@ export const InputPassword = (props) => {
                 class="input-base auth__password"
                 id="${props.id}"
                 type="${type}"
-                name="password"
+                name="${props.name ?? 'password'}"
                 placeholder="${props.placeholder ?? ''}"
                 value="${props.value}"
                 ${props.autocomplete ? `autocomplete="${props.autocomplete}"` : ''}
@@ -28,7 +28,7 @@ export const InputPassword = (props) => {
                 onClick={switchMode}
             ></button>
         </div>
-        <small class="auth__error-message">${props.errorMessage ?? ''}</small>
+        <small class="auth__error-message">${props.isValidated ? props.errorMessage : ''}</small>
     </div>`;
 
     const attach = {
