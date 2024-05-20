@@ -8,12 +8,3 @@ $white: hsl(0, 0%, 80%);
 
 // fonts
 $main-font: "Inter", sans-serif;
-
-.root {
-  --gray-light: #{$gray-light};
-  --gray: #{$gray};
-  --gray-dark: #{$gray-dark};
-  --gray-super-dark: #{$gray-super-dark};
-  --white: #{$white};
-  --main-font: #{$main-font};
-}

@@ -1,0 +1,35 @@
+@use '../abstracts' as a;
+
+.fri__card-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.fri__card-container {
+  display: flex;
+  position: relative;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+  padding: 25px;
+  border-radius: 15px;
+  border: solid 2px hsl(0, 0%, 39%);
+  color: hsl(0, 0%, 80%);
+  width: 240px;
+}
+
+.fri__age-label {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-weight: 300;
+  font-size: 23px;
+}
+
+.fri__card-image {
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+}
