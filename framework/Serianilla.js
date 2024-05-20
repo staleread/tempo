@@ -78,6 +78,20 @@ export const Serianilla = (function () {
             return [states[index], setValue];
         },
 
+        useEffect(callback, deps) {
+            const stateIndex = _stateManager.currentStateIndex;
+
+            const hasDeps = deps !== null;
+
+            const _deps = _stateManager.currentBucket.states[stateIndex];
+            const hasChanges = _deps ? deps.every((d, i) => d === _deps[i]) : false;
+
+            if (hasDeps || hasChanges) {
+                setTimeout(callback, 0);
+                _stateManager.currentBucket.states[stateIndex] = deps;
+            }
+        },
+
         useRef(initialValue) {
             const states = _stateManager.currentBucket.states;
             const index = _stateManager.currentStateIndex;

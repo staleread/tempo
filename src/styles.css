@@ -124,7 +124,10 @@ input[type=file] {
     transform: translate(-50%, -50%) rotate(0.5turn);
   }
 }
-.app__message-success, .app__message-error {
+.app__notify {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   position: fixed;
   top: 20px;
   left: 50%;
@@ -133,29 +136,32 @@ input[type=file] {
   z-index: 100;
   padding: 20px;
   border-radius: 15px;
-  background-color: hsl(120, 100%, 23%);
   color: hsl(0, 0%, 80%);
   opacity: 0;
 }
 
-.app__message-error {
+.app__notify_success {
+  background-color: hsl(120, 100%, 23%);
+}
+
+.app__notify_error {
   background-color: hsl(0, 100%, 35%);
 }
 
-.app__message_enter {
+.app__notify_enter {
   opacity: 0;
 }
 
-.app__message_enter-active {
+.app__notify_enter-active {
   opacity: 1;
   transition: opacity 0.3s;
 }
 
-.app__message_exit {
+.app__notify_exit {
   opacity: 1;
 }
 
-.app__message_exit-active {
+.app__notify_exit-active {
   opacity: 0;
   transition: opacity 0.3s;
 }
@@ -165,7 +171,7 @@ input[type=file] {
   flex-direction: column;
   gap: 14px;
   position: fixed;
-  top: 15%;
+  top: 17%;
   left: 50%;
   transform: translateX(-50%);
   background-color: hsl(0, 0%, 13%);

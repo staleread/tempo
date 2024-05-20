@@ -1,4 +1,4 @@
-export function cssTransitionInOut(nodeRef, timeout, classes) {
+export function cssTransitionInOut(nodeRef, timeout, classes, onExit) {
     setTimeout(() => {
         nodeRef.current.classList.remove(classes + '_exit-active');
         nodeRef.current.classList.add(classes + '_enter');
@@ -14,5 +14,6 @@ export function cssTransitionInOut(nodeRef, timeout, classes) {
     setTimeout(() => {
         nodeRef.current.classList.remove(classes + '_exit');
         nodeRef.current.classList.add(classes + '_exit-active');
+        onExit?.();
     }, timeout + 30);
 }
