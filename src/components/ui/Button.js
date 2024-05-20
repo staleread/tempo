@@ -1,17 +1,19 @@
-export const Button = ({data, classes, type, content, onClick}) => {
+export const Button = (props) => {
     const template = `
     <button 
-        class="button-base ${classes ? classes : ''}"
-        onClick={onClick}
-        ${data && data.isDisabled ? 'disabled' : ''}
-        ${type ? `type="${type}"` : ''}
+        class="button-base {props.classes}"
+        onClick={handleClick}
+        disabled={disabled}
+        type={props.type}
     >
-        ${content}
+        {props.content}
     </button>`;
 
     const attach = {
-        onClick: e => onClick?.(e)
+        props,
+        disabled: props.isDisabled ? 'disabled' : null,
+        handleClick: props.onClick ? e => props.onClick(e) : null,
     };
 
-    return {template, attach, hasDynamicInterpolation: true};
+    return {template, attach};
 }

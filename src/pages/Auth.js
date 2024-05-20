@@ -38,14 +38,14 @@ export const Auth = ({locationContext}) => {
     const imports = [SignUpForm, LoginForm, InputText, InputPassword, Button, Loader];
 
     const template = `
-    <div class="${isLoading ? 'auth__container-loading' : 'auth__container'}">
+    <div class={containerClass}>
         <div class="auth__tabs">
             <Button 
-                classes="auth__tab ${isLogin ? 'active' : ''}" 
+                classes="auth__tab {loginTabClass}" 
                 onClick={setLogin} 
                 content="Log in" />
             <Button 
-                classes="auth__tab ${isLogin ? '' : 'active'}" 
+                classes="auth__tab {signupTabClass}" 
                 onClick={setSignUp} 
                 content="Sign up" />
         </div>
@@ -67,9 +67,12 @@ export const Auth = ({locationContext}) => {
         isLoading,
         onValidLoginFormSubmit,
         onValidSignupFormSubmit,
+        loginTabClass: isLogin ? 'active' : '',
+        signupTabClass: isLogin ? '' : 'active',
+        containerClass: isLoading ? 'auth__container-loading' : 'auth__container',
         setLogin: () => locationContext.setPathname('/login'),
         setSignUp: () => locationContext.setPathname('/signup'),
     };
 
-    return {imports, template, attach, hasDynamicInterpolation: true};
+    return {imports, template, attach};
 }

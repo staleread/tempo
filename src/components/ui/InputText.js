@@ -1,34 +1,39 @@
 export const InputText = (props) => {
-    const validationClass = props.isValidated
-        ? props.errorMessage ? 'auth__invalid' : 'auth__valid'
-        : '';
+    const handleChange = e => {
+        const text = e.target.value;
+        props.onChange(text);
+    }
+
+    const handleInput = e => {
+        const text = e.target.value;
+        props.onInput(text);
+    }
 
     const template = `
     <div class="auth__form-div">
-        <label class="auth__label" for="${props.id}">${props.label ?? ''}</label>
+        <label class="auth__label" for={props.id}>{props.label}</label>
         <input
-            class="input-base auth__input ${validationClass}"
+            class="input-base auth__input {validationClass}"
             type="text"
-            name="${props.name}"
-            id="${props.id}"
-            placeholder="${props.placeholder ?? ''}"
-            value="${props.value}"
-            ${props.autocomplete ? `autocomplete="${props.autocomplete}"` : ''}
-            ${props.onChange ? 'onChange={handleChange}' : ''}
-            ${props.onInput ? 'onInput={handleInput}' : ''} />
-        <small class="auth__error-message">${props.isValidated ? props.errorMessage : ''}</small>
+            name={props.name}
+            id={props.id}
+            placeholder={props.placeholder}
+            value={props.value}
+            autocomplete={props.autocomplete}
+            onChange={handleChange}
+            onInput={handleInput} />
+        <small class="auth__error-message">{errorMessage}</small>
     </div>`;
 
     const attach = {
-        handleChange: e => {
-            const text = e.target.value;
-            props.onChange?.(text);
-        },
-        handleInput: e => {
-            const text = e.target.value;
-            props.onInput?.(text);
-        },
+        props,
+        validationClass: props.isValidated
+            ? props.errorMessage ? 'auth__invalid' : 'auth__valid'
+            : '',
+        handleChange: props.onChange ? handleChange : null,
+        handleInput: props.onInput ? handleInput : null,
+        errorMessage: props.isValidated ? props.errorMessage : '',
     };
 
-    return {template, attach, hasDynamicInterpolation: true};
+    return {template, attach};
 }
