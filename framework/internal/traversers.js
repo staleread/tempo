@@ -7,10 +7,14 @@ const unwrapStringValue = (stringValue, refs, attachMap) => {
             valueType: r.refType,
             value: r.ref
         }
-        const chunk = retrieveValue(refInfo, attachMap).toString();
+        const chunk = retrieveValue(refInfo, attachMap);
+
+        if (chunk === undefined || chunk === null) {
+            return;
+        }
 
         resultString += stringValue.slice(lastPos, r.pos);
-        resultString += chunk;
+        resultString += chunk.toString();
         lastPos = r.pos;
     })
 
@@ -58,19 +62,37 @@ export const applyComponentAttachments = (node, attachMap, parentNode) => {
         node.shouldRender = shouldRender;
 
         if (node.type === 'TagNode') {
-            for (const [key, value] of Object.entries(node.attrs)) {
-                node.attrs[key] = retrieveValue(value, attachMap)
+            for (const [key, ref] of Object.entries(node.attrs)) {
+                const value = retrieveValue(ref, attachMap);
+
+                if (value === undefined || value === null) {
+                    delete node.attrs[key];
+                    continue
+                }
+                node.attrs[key] = value;
             }
-            for (const [key, value] of Object.entries(node.events)) {
-                node.events[key] = retrieveValue(value, attachMap)
+            for (const [key, ref] of Object.entries(node.events)) {
+                const value = retrieveValue(ref, attachMap);
+
+                if (value === undefined || value === null) {
+                    delete node.events[key];
+                    continue
+                }
+                node.events[key] = value;
             }
 
             node.children.forEach(child => processNode(child, node, shouldRender));
             return;
         }
         if (node.type === 'CustomNode') {
-            for (const [key, value] of Object.entries(node.props)) {
-                node.props[key] = retrieveValue(value, attachMap)
+            for (const [key, ref] of Object.entries(node.props)) {
+                const value = retrieveValue(ref, attachMap);
+
+                if (value === undefined || value === null) {
+                    delete node.props[key];
+                    continue
+                }
+                node.props[key] = value;
             }
             return;
         }
