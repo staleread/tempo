@@ -6,8 +6,7 @@ import {InputText} from "../components/ui/InputText.js";
 import {InputPassword} from "../components/ui/InputPassword.js";
 import {Loader} from "../components/ui/Loader.js";
 import {login, signUp} from "../services/auth-service.js";
-import {Notification} from "../components/ui/Notification.js";
-import {FRIENDS_ROUTE, LOGIN_ROUTE, SIGNUP_ROUTE} from "../routes.js";
+import {FRIENDS_ROUTE, LOGIN_ROUTE, SIGNUP_ROUTE} from "../utils/consts.js";
 
 export const Auth = ({locationContext}) => {
     const [isLoading, setIsLoading] = Serianilla.useState(false);

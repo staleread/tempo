@@ -1,11 +1,7 @@
 import {Friends} from "./pages/Friends.js";
 import {Auth} from "./pages/Auth.js";
 import {NotFound} from "./pages/NotFound.js";
-
-export const FRIENDS_ROUTE = '/friends';
-export const LOGIN_ROUTE = '/login';
-export const SIGNUP_ROUTE = '/signup';
-export const NOTFOUND_ROUTE = '/404';
+import {FRIENDS_ROUTE, LOGIN_ROUTE, NOTFOUND_ROUTE, SIGNUP_ROUTE} from "./utils/consts.js";
 
 export const publicRoutes = [
     {

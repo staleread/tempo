@@ -1,5 +1,6 @@
 import {AppRouter} from "./components/AppRouter.js";
-import {LOGIN_ROUTE, publicRoutes} from "./routes.js";
+import {publicRoutes} from "./routes.js";
+import {LOGIN_ROUTE} from "./utils/consts.js";
 
 export const App = () => {
     const imports = [AppRouter];
