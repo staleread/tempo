@@ -168,9 +168,8 @@ const walkChildNode = (tokens, current) => {
             valueType: token.valueType,
             value: token.value
         };
+        token = tokens[++current];
     }
-
-    token = tokens[++current];
 
     if (token.type !== 'tag-body-end') {
         throw new TypeError(`PARSER: ${node.name} command only allows ${cmdInfo.paramsCount} parameters`)

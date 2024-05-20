@@ -101,23 +101,39 @@ export const applyComponentAttachments = (node, attachMap, parentNode) => {
             return;
         }
         if (node.type === 'CommandNode' && node.name === 'map') {
-            if (!node.children) {
-                return;
-            }
             const context = retrieveValue(node.params.context, attachMap);
             const items = retrieveValue(node.params.items, attachMap);
+            const index = parent.children.indexOf(node);
+
+            if (items.length === 0) {
+                node.parent.children.splice(index, 1);
+                return;
+            }
+
+            const wrapper = {
+                type: 'FragmentNode',
+                key: node.name,
+                shouldRender: shouldRender,
+                children: node.children,
+                parent,
+            }
+
+            // replace command node with a fragment node wrapper
+            parent.children[index] = wrapper;
+
+            const sealedChildrenCopy = JSON.stringify(wrapper.children);
 
             items.forEach((item, i) => {
                 attachMap.set(context, item);
                 if (i === 0) {
-                    node.children.forEach(n => processNode(n, node));
-                } else {
-                    const nodesCopy = JSON.parse(JSON.stringify(node.children));
-                    nodesCopy.forEach(n => processNode(n, node, shouldRender));
-                    node.children.push(...nodesCopy);
+                    wrapper.children.forEach(n => processNode(n, wrapper, shouldRender));
+                    return;
                 }
+                const nodesCopy = JSON.parse(sealedChildrenCopy);
+                nodesCopy.forEach(n => processNode(n, wrapper, shouldRender));
+                node.children.push(...nodesCopy);
             })
-            attachMap.remove(context);
+            attachMap.delete(context);
             return;
         }
         if (node.type === 'CommandNode' && node.name === 'if') {
