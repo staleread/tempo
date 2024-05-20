@@ -1,4 +1,4 @@
-import {skipSpaces} from "./tokenize-utils/shared.js";
+import {readStringValueNoRepeatedSpaces, skipSpaces} from "./tokenize-utils/shared.js";
 import {
     processCustomTagBody,
     processCustomTagBodyStart,
@@ -40,17 +40,15 @@ const processMonoTagBodyEnd = (input, current) => {
 }
 
 const processTextToken = (input, current) => {
-    const TEXT_CHUNK_REG = /[^<>]/;
-
-    let value = input[current];
-
-    while (TEXT_CHUNK_REG.test(input[++current])) {
-        value += input[current];
-    }
+    let string, refs;
+    [string, refs, current] = readStringValueNoRepeatedSpaces(input, current, '<');
 
     const token = {
         type: 'text',
-        value: value.trim()
+        value: {
+            string: string,
+            refs
+        }
     };
     return [token, current];
 }

@@ -1,9 +1,31 @@
+const unwrapStringValue = (stringValue, refs, attachMap) => {
+    let lastPos = 0;
+    let resultString = '';
+
+    refs.forEach(r => {
+        const refInfo = {
+            valueType: r.refType,
+            value: r.ref
+        }
+        const chunk = retrieveValue(refInfo, attachMap).toString();
+
+        resultString += stringValue.slice(lastPos, r.pos);
+        resultString += chunk;
+        lastPos = r.pos;
+    })
+
+    if (lastPos < stringValue.length) {
+        resultString += stringValue.slice(lastPos);
+    }
+    return resultString.trim();
+}
+
 const retrieveValue = ({valueType, value}, attachMap) => {
     if (valueType === 'empty') {
         return '';
     }
     if (valueType === 'string') {
-        return value.toString();
+        return unwrapStringValue(value.string, value.refs, attachMap);
     }
     if (valueType === 'ref') {
         const result = attachMap.get(value);
@@ -53,6 +75,7 @@ export const applyComponentAttachments = (node, attachMap, parentNode) => {
             return;
         }
         if (node.type === 'TextNode') {
+            node.value = unwrapStringValue(node.value.string, node.value.refs, attachMap);
             return;
         }
         if (node.type === 'CommandNode' && node.name === 'map') {
