@@ -7,7 +7,7 @@ import {InputPassword} from "../components/ui/InputPassword.js";
 import {Loader} from "../components/ui/Loader.js";
 import {login, signUp} from "../services/auth-service.js";
 import {Notification} from "../components/ui/Notification.js";
-import {FRIENDS_ROUTE} from "../routes.js";
+import {FRIENDS_ROUTE, LOGIN_ROUTE, SIGNUP_ROUTE} from "../routes.js";
 
 export const Auth = ({locationContext}) => {
     const [isLoading, setIsLoading] = Serianilla.useState(false);
@@ -98,8 +98,8 @@ export const Auth = ({locationContext}) => {
         loginTabClass: isLogin ? 'active' : '',
         signupTabClass: isLogin ? '' : 'active',
         containerClass: isLoading ? 'auth__container-loading' : 'auth__container',
-        setLogin: () => locationContext.setPathname('/login'),
-        setSignUp: () => locationContext.setPathname('/signup'),
+        setLogin: () => locationContext.setPathname(LOGIN_ROUTE),
+        setSignUp: () => locationContext.setPathname(SIGNUP_ROUTE),
         handleNotificationExit: () => setNotificationInfo({...notificationInfo, isShown: false}),
     };
 
