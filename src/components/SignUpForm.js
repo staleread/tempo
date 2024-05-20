@@ -29,7 +29,7 @@ export const SignUpForm = ({onValidSubmit}) => {
             updateCallback({value, isValidated: true, errorMessage});
         }
 
-        if (validationEntries.map(e => e[1]).some(err => err !== '')) {
+        if (validationEntries.map(e => e[2]).some(err => err !== '')) {
             return;
         }
         onValidSubmit(formData);
