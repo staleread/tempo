@@ -81,12 +81,10 @@ export const Serianilla = (function () {
         useEffect(callback, deps) {
             const stateIndex = _stateManager.currentStateIndex;
 
-            const hasDeps = deps !== null;
-
             const _deps = _stateManager.currentBucket.states[stateIndex];
-            const hasChanges = _deps ? deps.every((d, i) => d === _deps[i]) : false;
+            const hasChanges = _deps ? deps.some((d, i) => !Object.is(d, _deps[i])) : false;
 
-            if (hasDeps || hasChanges) {
+            if (!_deps || hasChanges) {
                 setTimeout(callback, 0);
                 _stateManager.currentBucket.states[stateIndex] = deps;
             }
