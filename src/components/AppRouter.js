@@ -1,7 +1,11 @@
 import {Serianilla} from "../../framework/Serianilla.js";
 
 export const AppRouter = (props) => {
-    const [route, setRoute] = Serianilla.useState(props.routes[0]);
+    const defaultRoute = props.defaultPath
+        ? props.routes.find(r => r.path === props.defaultPath)
+        : props.routes[0];
+
+    const [route, setRoute] = Serianilla.useState(defaultRoute);
     const [query, setQuery] = Serianilla.useState('');
 
     const popStateRef = Serianilla.useRef(null);
@@ -16,7 +20,7 @@ export const AppRouter = (props) => {
     if (!popStateRef.current) {
         popStateRef.current = {};
 
-        history.replaceState({}, '', props.defaultPath ?? '/');
+        history.replaceState({}, '', defaultRoute.path);
 
         window.addEventListener('popstate', () => {
             const path = location.pathname;
