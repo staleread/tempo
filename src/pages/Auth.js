@@ -7,6 +7,7 @@ import {InputPassword} from "../components/ui/InputPassword.js";
 import {Loader} from "../components/ui/Loader.js";
 import {login, signUp} from "../services/auth-service.js";
 import {Notification} from "../components/ui/Notification.js";
+import {FRIENDS_ROUTE} from "../routes.js";
 
 export const Auth = ({locationContext}) => {
     const [isLoading, setIsLoading] = Serianilla.useState(false);
@@ -24,7 +25,7 @@ export const Auth = ({locationContext}) => {
         const res = await login(formData);
 
         if (res.isSuccess) {
-            locationContext.setPathname('/friends')
+            locationContext.setPathname(FRIENDS_ROUTE)
         } else {
             setNotificationInfo({
                 ...notificationInfo,
@@ -41,7 +42,7 @@ export const Auth = ({locationContext}) => {
         const res = await signUp(formData);
 
         if (res.isSuccess) {
-            locationContext.setPathname('/friends')
+            locationContext.setPathname(FRIENDS_ROUTE)
         } else {
             setNotificationInfo({
                 ...notificationInfo,
