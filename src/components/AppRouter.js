@@ -1,4 +1,5 @@
 import {Serianilla} from "../../framework/Serianilla.js";
+import {NotificationProvider} from "./NotificationProvider.js";
 
 export const AppRouter = (props) => {
     const defaultRoute = props.defaultPath
@@ -28,11 +29,12 @@ export const AppRouter = (props) => {
         });
     }
 
-    const imports = [route.component];
+    const imports = [NotificationProvider];
 
-    const template = `<${route.component.name} locationContext={locationContext}/>`;
+    const template = `<NotificationProvider component={route.component} locationContext={locationContext}/>`;
 
     const attach = {
+        route,
         locationContext: {
             pathname: route.path,
             search: query,
@@ -41,5 +43,5 @@ export const AppRouter = (props) => {
         },
     };
 
-    return {imports, template, attach, hasDynamicInterpolation: true};
+    return {imports, template, attach};
 }

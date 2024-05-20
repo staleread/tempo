@@ -8,14 +8,8 @@ import {Loader} from "../components/ui/Loader.js";
 import {login, signUp} from "../services/auth-service.js";
 import {FRIENDS_ROUTE, LOGIN_ROUTE, SIGNUP_ROUTE} from "../utils/consts.js";
 
-export const Auth = ({locationContext}) => {
+export const Auth = ({locationContext, notificationContext}) => {
     const [isLoading, setIsLoading] = Serianilla.useState(false);
-    const [notificationInfo, setNotificationInfo] = Serianilla.useState({
-        isShown: false,
-        title: '',
-        message: '',
-        status: 'error'
-    });
 
     const isLogin = locationContext.pathname === '/login';
 
@@ -24,15 +18,12 @@ export const Auth = ({locationContext}) => {
         const res = await login(formData);
 
         if (res.isSuccess) {
-            locationContext.setPathname(FRIENDS_ROUTE)
+            notificationContext.displayMessage('Hurray!', res.message, 'success');
+            locationContext.setPathname(FRIENDS_ROUTE);
         } else {
-            setNotificationInfo({
-                ...notificationInfo,
-                isShown: true,
-                title: 'Oops!',
-                message: res.message
-            });
+            notificationContext.displayMessage('Oops!', res.message, 'error');
         }
+
         setIsLoading(false);
     }
 
@@ -41,57 +32,45 @@ export const Auth = ({locationContext}) => {
         const res = await signUp(formData);
 
         if (res.isSuccess) {
-            locationContext.setPathname(FRIENDS_ROUTE)
+            notificationContext.displayMessage('Hurray!', res.message, 'success');
+            locationContext.setPathname(FRIENDS_ROUTE);
         } else {
-            setNotificationInfo({
-                ...notificationInfo,
-                isShown: true,
-                title: 'Oops!',
-                message: res.message
-            });
+            notificationContext.displayMessage('Oops!', res.message, 'error');
         }
+
         setIsLoading(false);
     }
 
-    const imports = [SignUpForm, LoginForm, InputText, InputPassword, Button, Loader, Notification];
+    const imports = [SignUpForm, LoginForm, InputText, InputPassword, Button, Loader];
 
     const template = `
-    <div>
-        <div class={containerClass}>
-            <div class="auth__tabs">
-                <Button 
-                    classes="auth__tab {loginTabClass}" 
-                    onClick={setLogin} 
-                    content="Log in" />
-                <Button 
-                    classes="auth__tab {signupTabClass}" 
-                    onClick={setSignUp} 
-                    content="Sign up" />
-            </div>
-            <div class="auth__form-container">
-                <$if true={isLogin}>
-                    <LoginForm onValidSubmit={onValidLoginFormSubmit}/>                
-                </$if>
-                <$if false={isLogin}>
-                    <SignUpForm onValidSubmit={onValidSignupFormSubmit}/>                
-                </$if>
-                <$if true={isLoading}>
-                    <Loader/>            
-                </$if>
-            </div>
+    <div class={containerClass}>
+        <div class="auth__tabs">
+            <Button 
+                classes="auth__tab {loginTabClass}" 
+                onClick={setLogin} 
+                content="Log in" />
+            <Button 
+                classes="auth__tab {signupTabClass}" 
+                onClick={setSignUp} 
+                content="Sign up" />
         </div>
-        <Notification 
-            isShown={notificationInfo.isShown} 
-            title={notificationInfo.title}
-            message={notificationInfo.message} 
-            status={notificationInfo.status} 
-            onExit={handleNotificationExit}/>    
+        <div class="auth__form-container">
+            <$if true={isLogin}>
+                <LoginForm onValidSubmit={onValidLoginFormSubmit}/>                
+            </$if>
+            <$if false={isLogin}>
+                <SignUpForm onValidSubmit={onValidSignupFormSubmit}/>                
+            </$if>
+            <$if true={isLoading}>
+                <Loader/>            
+            </$if>
+        </div>
     </div>`;
 
     const attach = {
         isLogin,
         isLoading,
-        notificationInfo,
         onValidLoginFormSubmit,
         onValidSignupFormSubmit,
         loginTabClass: isLogin ? 'active' : '',
@@ -99,7 +78,6 @@ export const Auth = ({locationContext}) => {
         containerClass: isLoading ? 'auth__container-loading' : 'auth__container',
         setLogin: () => locationContext.setPathname(LOGIN_ROUTE),
         setSignUp: () => locationContext.setPathname(SIGNUP_ROUTE),
-        handleNotificationExit: () => setNotificationInfo({...notificationInfo, isShown: false}),
     };
 
     return {imports, template, attach};
