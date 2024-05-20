@@ -1,37 +1,53 @@
-# my-friends
-Simple frontend on Vanilla JS web components
+# Serianilla 🍦
 
-## Serianilla 🍦
+In my recent JS project I was trying to pull some interesting concepts 
+from modern JS frameworks like React. I truly loved JSX, that makes React 
+components more clean and boosts the development.
 
-### Tokenizer
+Before meeting React the things like JS extensions wouldn't bother me, but now 
+**_I wanted to implement this in Vanilla JS!_**
 
-The current version of the tokenizer (almost 300 lines of JS) supports strict XML syntax (all tags should be closed, so `<img src="image.png">` without `/` will fail) and serial values wrapped into `{}` braces.
+IMHO, importing compilers like Babel would be an overkill, so inspired by 
+[Super tiny compiler](https://github.com/jamiebuilds/the-super-tiny-compiler), 
+I decided to create somewhat similar, that is my own interpretation of JSX 🙂
 
-So for now the following code splits the input string into 41 tokens
+## It's all about components
 
-```js
-const cards = [
-    {title: 'Summer'},
-    {title: 'Photoshop'}
-]
+Serianilla allows splitting the presentation logic into consistent components.
+Every component is just a function that returns a JS object. Let's display "Hello, World"
+using Serianilla!
 
-const input = `
-<div>
-    <button onclick={sayHello} onhover={sayBye} disabled></button>
-    <app-counter class="counter" _initial={initial} _onTick={sayHello}/>
-    <ul> ${cards.map(c => `
-        <article>
-            <p>${c.title}</p>
-            <button onclick={setFavorite}> Set favorite </button>
-        </article>`).join('\n')}
-    </ul>
-</div>`
+_index.html_
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My First App</title>
+</head>
+<body>
 
-const tokens = tokenize(input);
+<main id="root"></main>
 
-// {type: 'tag', name: 'div', body: 'start', children: null}
-// {type: 'tag', name: 'div', body: 'end', children: 'start'}
-// {type: 'tag', name: 'button', body: 'start', children: null}
-// {type: 'attr', name: 'onclick', valueType: 'serial', value: 'sayHello'}
-// ...
+<script type="module" src="index.js"></script>
+</body>
+</html>
 ```
+
+_index.js_
+```js
+import {Serianilla} from "./Serianilla.js";
+
+const MyApp = () => {
+    const template = 'Hello, World!';
+    return {template};
+}
+
+const root = document.getElementById('root');
+Serianilla.render(root, MyApp);
+```
+
+Quite simple, isn't it?
+
+## Issues to solve
+❌ Text node overwrites all sibling nodes 
