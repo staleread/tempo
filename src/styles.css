@@ -157,6 +157,88 @@ input[type=file] {
   transition: opacity 0.3s;
 }
 
+.app__drop-container {
+  display: block;
+  position: relative;
+  min-width: 170px;
+}
+
+.app__drop-btn {
+  display: block;
+  position: relative;
+  font-size: 20px;
+  padding-left: 35px;
+  text-align: left;
+  background-color: transparent;
+  border: solid 2px hsl(0, 0%, 39%);
+  color: hsl(0, 0%, 39%);
+  cursor: pointer;
+  border-radius: 10px;
+  width: 100%;
+  height: 100%;
+}
+.app__drop-btn:hover {
+  background-color: hsl(0, 0%, 39%);
+  color: hsl(0, 0%, 13%);
+}
+.app__drop-btn::after {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border: solid hsl(0, 0%, 39%);
+  border-width: 0 2px 2px 0;
+  transform: translateY(-70%) rotate(45deg);
+}
+.app__drop-btn:hover::after {
+  border-color: hsl(0, 0%, 13%);
+}
+.app__drop-options:not(.app__drop-hidden) + .app__drop-btn::after {
+  transform: translateY(-50%) rotate(225deg);
+}
+
+.app__drop-options {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  top: calc(100% + 3px);
+  left: 0;
+  width: 100%;
+  background-color: hsl(0, 0%, 13%);
+  border: solid 2px hsl(0, 0%, 39%);
+  border-radius: 8px;
+  z-index: 1000;
+}
+.app__drop-options.app__drop-hidden {
+  display: none;
+}
+
+.app__drop-option-input {
+  display: none;
+}
+
+.app__drop-option-label {
+  display: block;
+  padding: 7px 15px;
+  border: none;
+  opacity: 1;
+  color: hsl(0, 0%, 39%);
+  font-size: 18px;
+  cursor: pointer;
+}
+.app__drop-option-label:hover {
+  background-color: hsl(0, 0%, 39%);
+  color: hsl(0, 0%, 13%);
+}
+.option-wrapper:first-child .app__drop-option-label {
+  border-radius: 5px 5px 0 0;
+}
+.option-wrapper:last-child .app__drop-option-label {
+  border-radius: 0 0 5px 5px;
+}
+
 .auth__container, .auth__container-loading {
   display: flex;
   flex-direction: column;

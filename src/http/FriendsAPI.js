@@ -25,7 +25,9 @@ export const fetchFriends = async (pageNumber = 1) => {
         country: res.location.country,
         email: res.email,
         age: res.dob.age,
-        phoneNumber: res.phone
+        dobTimestamp: Date.parse(res.dob.date),
+        phoneNumber: res.phone,
+        registeredTimestamp: Date.parse(res.registered.date),
     }));
 }
 
