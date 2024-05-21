@@ -34,11 +34,11 @@ a {
 }
 
 .opened-eye {
-  background-image: url("src/assets/opened-eye.png");
+  background-image: url("assets/opened-eye.png");
 }
 
 .closed-eye {
-  background-image: url("src/assets/closed-eye.png");
+  background-image: url("assets/closed-eye.png");
 }
 
 .input-base {
@@ -455,21 +455,21 @@ input[type=file] {
   background-position: center;
   background-size: auto 60%;
   background-repeat: no-repeat;
-  background-image: url("src/assets/arrow-up.png");
+  background-image: url("assets/arrow-up.png");
   border: solid 2px hsl(0, 0%, 39%);
   color: hsl(0, 0%, 39%);
   cursor: pointer;
 }
 .fri__sort-toggle-btn:hover {
   background-color: hsl(0, 0%, 39%);
-  background-image: url("src/assets/arrow-up-accent.png");
+  background-image: url("assets/arrow-up-accent.png");
 }
 .fri__sort-toggle-btn.fri__sort_desc {
-  background-image: url("src/assets/arrow-down.png");
+  background-image: url("assets/arrow-down.png");
 }
 .fri__sort-toggle-btn.fri__sort_desc:hover {
   background-color: hsl(0, 0%, 39%);
-  background-image: url("src/assets/arrow-down-accent.png");
+  background-image: url("assets/arrow-down-accent.png");
 }
 
 .app__container {
