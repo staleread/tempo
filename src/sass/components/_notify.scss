@@ -24,6 +24,11 @@
   background-color: hsl(0, 100%, 35%);
 }
 
+.app__notify_warning {
+  background-color: hsl(60, 68%, 40%);
+  color: a.$gray-super-dark;
+}
+
 .app__notify_enter {
   opacity: 0;
 }

@@ -108,7 +108,7 @@ export const Friends = ({locationContext, notificationContext}) => {
                     options={sortOptions} 
                     value={sortValue} 
                     onSelect={handleSortValueChanged} />
-                <Button content="Filter" classes="fri__button"/>            
+                <Button content="Filter" classes="fri__button" onClick={handleFilter}/>            
             </div>
         </section>
         <FriendsList friends={friends} isLoading={isLoading}/>
@@ -131,6 +131,12 @@ export const Friends = ({locationContext, notificationContext}) => {
                 'Bye!',
                 'Your data was deleted. Feel free to start from scratch)',
                 'success');
+        },
+        handleFilter: () => {
+            notificationContext.displayMessage(
+                'Oops!',
+                'This functionality is still in progress',
+                'warning');
         },
         handleSearchInput: input => {
             // setSearchString(input);
