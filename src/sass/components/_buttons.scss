@@ -27,10 +27,10 @@
 
 .opened-eye {
   @extend %button-with-bg-img;
-  background-image: url("/src/assets/opened-eye.png");
+  background-image: url("src/assets/opened-eye.png");
 }
 
 .closed-eye {
   @extend %button-with-bg-img;
-  background-image: url("/src/assets/closed-eye.png");
+  background-image: url("src/assets/closed-eye.png");
 }
