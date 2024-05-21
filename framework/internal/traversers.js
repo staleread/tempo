@@ -105,11 +105,6 @@ export const applyComponentAttachments = (node, attachMap, parentNode) => {
             const items = retrieveValue(node.params.items, attachMap);
             const index = parent.children.indexOf(node);
 
-            if (items.length === 0) {
-                node.parent.children.splice(index, 1);
-                return;
-            }
-
             const wrapper = {
                 type: 'FragmentNode',
                 key: node.name,
@@ -120,6 +115,11 @@ export const applyComponentAttachments = (node, attachMap, parentNode) => {
 
             // replace command node with a fragment node wrapper
             parent.children[index] = wrapper;
+
+            if (items.length === 0) {
+                wrapper.children = [];
+                return;
+            }
 
             const sealedChildrenCopy = JSON.stringify(wrapper.children);
 
