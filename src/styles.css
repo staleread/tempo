@@ -290,7 +290,35 @@ input[type=file] {
   box-shadow: 0 0 0 4px hsla(120, 100%, 25%, 0.3);
 }
 
+.fri__header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fri__title {
+  color: hsl(0, 0%, 80%);
+  font-weight: 500;
+  font-size: 32px;
+}
+
+.fri__button {
+  font-size: 20px;
+  padding: 12px 18px;
+  border-radius: 7px;
+}
+
+.fri__action-buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .fri__card-list {
+  position: relative;
+  min-height: 100px;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -307,7 +335,7 @@ input[type=file] {
   border-radius: 15px;
   border: solid 2px hsl(0, 0%, 39%);
   color: hsl(0, 0%, 80%);
-  width: 240px;
+  width: 250px;
 }
 
 .fri__age-label {
@@ -322,6 +350,27 @@ input[type=file] {
   width: 128px;
   height: 128px;
   border-radius: 50%;
+}
+
+.fri__full-name {
+  text-align: center;
+  overflow-wrap: break-word;
+}
+
+.fri__email {
+  max-width: 200px;
+  text-align: center;
+  overflow-wrap: break-word;
+  font-size: 12px;
+}
+
+.app__container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 830px;
+  padding: 20px;
+  margin: 0 auto;
 }
 
 /*# sourceMappingURL=styles.css.map */
