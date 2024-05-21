@@ -11,7 +11,7 @@ import {FRIENDS_ROUTE, LOGIN_ROUTE, SIGNUP_ROUTE} from "../utils/consts.js";
 export const Auth = ({locationContext, notificationContext}) => {
     const [isLoading, setIsLoading] = Serianilla.useState(false);
 
-    const isLogin = locationContext.pathname === '/login';
+    const isLogin = locationContext.pathname === LOGIN_ROUTE;
 
     const onValidLoginFormSubmit = async (formData) => {
         setIsLoading(true);
@@ -19,7 +19,7 @@ export const Auth = ({locationContext, notificationContext}) => {
 
         if (res.isSuccess) {
             notificationContext.displayMessage('Hurray!', res.message, 'success');
-            locationContext.setPathname(FRIENDS_ROUTE);
+            locationContext.goTo(FRIENDS_ROUTE);
         } else {
             notificationContext.displayMessage('Oops!', res.message, 'error');
         }
@@ -33,7 +33,7 @@ export const Auth = ({locationContext, notificationContext}) => {
 
         if (res.isSuccess) {
             notificationContext.displayMessage('Hurray!', res.message, 'success');
-            locationContext.setPathname(FRIENDS_ROUTE);
+            locationContext.goTo(FRIENDS_ROUTE);
         } else {
             notificationContext.displayMessage('Oops!', res.message, 'error');
         }
@@ -76,8 +76,8 @@ export const Auth = ({locationContext, notificationContext}) => {
         loginTabClass: isLogin ? 'active' : '',
         signupTabClass: isLogin ? '' : 'active',
         containerClass: isLoading ? 'auth__container-loading' : 'auth__container',
-        setLogin: () => locationContext.setPathname(LOGIN_ROUTE),
-        setSignUp: () => locationContext.setPathname(SIGNUP_ROUTE),
+        setLogin: () => locationContext.goTo(LOGIN_ROUTE),
+        setSignUp: () => locationContext.goTo(SIGNUP_ROUTE),
     };
 
     return {imports, template, attach};

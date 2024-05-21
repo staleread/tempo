@@ -1,31 +1,36 @@
 import {Serianilla} from "../../framework/Serianilla.js";
 import {NotificationProvider} from "./NotificationProvider.js";
 
-export const AppRouter = (props) => {
-    const defaultRoute = props.defaultPath
-        ? props.routes.find(r => r.path === props.defaultPath)
-        : props.routes[0];
-
+export const AppRouter = ({routes, defaultRoute}) => {
     const [route, setRoute] = Serianilla.useState(defaultRoute);
-    const [query, setQuery] = Serianilla.useState('');
-
+    const query = Serianilla.useRef('');
     const popStateRef = Serianilla.useRef(null);
 
-    const handleNewPathname = (path) => {
-        const newRoute = props.routes.find(r => r.path === path) ?? props.routes.at(-1);
-        const pathWithQuery = newRoute.path + query;
-        history.pushState({}, '', pathWithQuery);
+    const changeQuery = (newQuery) => {
+        history.pushState('', '', '?' + newQuery);
+        query.current = newQuery;
+    }
+
+    const handlePathChanged = (newPath) => {
+        const newRoute = routes.find(r => r.path === newPath) ?? routes.at(-1);
+
+        history.pushState('', '', newRoute.path);
+        query.current = '';
         setRoute(newRoute);
+    }
+
+    const updateRoute = (newPath) => {
+        const route = routes.find(r => r.path === newPath) ?? routes.at(-1);
+        setRoute(route);
     }
 
     if (!popStateRef.current) {
         popStateRef.current = {};
 
-        history.replaceState({}, '', defaultRoute.path);
+        history.replaceState('', '', defaultRoute.path);
 
-        window.addEventListener('popstate', () => {
-            const path = location.pathname;
-            handleNewPathname(path);
+        window.addEventListener('popstate', e => {
+            updateRoute(location.pathname);
         });
     }
 
@@ -37,9 +42,9 @@ export const AppRouter = (props) => {
         route,
         locationContext: {
             pathname: route.path,
-            search: query,
-            setPathname: handleNewPathname,
-            setQuery: setQuery,
+            search: query.current,
+            goTo: path => handlePathChanged(path, ''),
+            changeQuery,
         },
     };
 

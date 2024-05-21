@@ -8,7 +8,7 @@ import {ToggleButton} from "../components/ui/ToggleButton.js";
 
 export const Friends = ({locationContext, notificationContext}) => {
     const [friends, setFriends] = Serianilla.useState([]);
-    const [shouldLoadFriends, setShouldLoadFriends] = Serianilla.useState(true);
+    const [pagesToDisplay, setPagesToDisplay] = Serianilla.useState(0);
     const [sortValue, setSortValue] = Serianilla.useState('firstName');
     const [isSortAsc, setIsSortAsc] = Serianilla.useState(true);
     const [isLoading, setIsLoading] = Serianilla.useState(false);
@@ -21,23 +21,33 @@ export const Friends = ({locationContext, notificationContext}) => {
     ]
 
     Serianilla.useEffect(async () => {
-        if (!shouldLoadFriends) {
+        if (pagesToDisplay !== 0) {
             setFriends(getSortedFriends(friends, sortValue, isSortAsc));
+            setQuery(sortValue, isSortAsc);
             return;
         }
         if (isLoading) {
             return;
         }
         setIsLoading(true);
-        setShouldLoadFriends(false);
+        setPagesToDisplay(1);
         try {
             const fetchedFriends = await fetchFriends();
             setFriends(getSortedFriends(fetchedFriends, sortValue, isSortAsc));
+            setQuery(sortValue, isSortAsc);
         } catch (err) {
             notificationContext.displayMessage('Error', err.message, 'error');
         }
         setIsLoading(false);
-    });
+    }, [sortValue, isSortAsc, pagesToDisplay]);
+
+    const setQuery = (sortKey, isAsc) => {
+        const params = {
+            sort: sortKey,
+            dir: isAsc ? 'asc' : 'desc'
+        }
+        locationContext.changeQuery(new URLSearchParams(params).toString());
+    }
 
     const compareFriends = (a, b, key) => {
         if (typeof a[key] === 'number')
