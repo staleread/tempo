@@ -14,7 +14,6 @@ export const AppRouter = ({routes, defaultRoute}) => {
     const handlePathChanged = (newPath) => {
         const newRoute = routes.find(r => r.path === newPath) ?? routes.at(-1);
 
-        history.pushState('', '', newRoute.path);
         query.current = '';
         setRoute(newRoute);
     }
@@ -26,8 +25,6 @@ export const AppRouter = ({routes, defaultRoute}) => {
 
     if (!popStateRef.current) {
         popStateRef.current = {};
-
-        history.replaceState('', '', defaultRoute.path);
 
         window.addEventListener('popstate', e => {
             updateRoute(location.pathname);
