@@ -15,6 +15,7 @@ export const InputText = (props) => {
             <label class="auth__label" for={props.id}>{props.label}</label>
         </$if>
         <input
+            ref={props.ref}
             class="input-base auth__input {validationClass}"
             type="text"
             name={props.name}

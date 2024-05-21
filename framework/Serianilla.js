@@ -12,6 +12,7 @@ export const Serianilla = (function () {
     let _eventSet;
     let _stateTimeout = null;
     let _stateManager;
+    let _isEffectInProgress = false;
 
     const _updateVirtualDOM = () => {
         _stateManager.reset();
@@ -86,6 +87,25 @@ export const Serianilla = (function () {
 
             if (!_deps || hasChanges) {
                 setTimeout(callback, 0);
+                _stateManager.currentBucket.states[stateIndex] = deps;
+            }
+        },
+
+        useEffectAsync(asyncCallback, deps) {
+            if (_isEffectInProgress) {
+                return;
+            }
+            _isEffectInProgress = true;
+            const stateIndex = _stateManager.currentStateIndex;
+
+            const _deps = _stateManager.currentBucket.states[stateIndex];
+            const hasChanges = _deps ? deps.some((d, i) => !Object.is(d, _deps[i])) : false;
+
+            if (!_deps || hasChanges) {
+                setTimeout(async () => {
+                    await asyncCallback();
+                    _isEffectInProgress = false;
+                }, 0);
                 _stateManager.currentBucket.states[stateIndex] = deps;
             }
         },

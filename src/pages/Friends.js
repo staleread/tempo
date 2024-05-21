@@ -5,13 +5,18 @@ import {Button} from "../components/ui/Button.js";
 import {InputText} from "../components/ui/InputText.js";
 import {Dropdown} from "../components/ui/Dropdown.js";
 import {ToggleButton} from "../components/ui/ToggleButton.js";
+import {setCaretAtEnd} from "../utils/input.js";
 
 export const Friends = ({locationContext, notificationContext}) => {
     const [friends, setFriends] = Serianilla.useState([]);
     const [pagesToDisplay, setPagesToDisplay] = Serianilla.useState(0);
     const [sortValue, setSortValue] = Serianilla.useState('firstName');
+    // const [searchString, setSearchString] = Serianilla.useState('a');
     const [isSortAsc, setIsSortAsc] = Serianilla.useState(true);
     const [isLoading, setIsLoading] = Serianilla.useState(false);
+    // const [isSearchInputFocused, setIsSearchInputFocused] = Serianilla.useState(true);
+
+    const searchInputRef = Serianilla.useRef(null);
 
     const sortOptions = [
         {value: 'firstName', name: 'First name'},
@@ -21,8 +26,13 @@ export const Friends = ({locationContext, notificationContext}) => {
     ]
 
     Serianilla.useEffect(async () => {
+        // if (isSearchInputFocused) {
+        //     setCaretAtEnd(searchInputRef.current);
+        //     setIsSearchInputFocused(false)
+        // }
         if (pagesToDisplay !== 0) {
-            setFriends(getSortedFriends(friends, sortValue, isSortAsc));
+            const newList = getProcessedFriends(friends, sortValue, isSortAsc)
+            setFriends(newList);
             setQuery(sortValue, isSortAsc);
             return;
         }
@@ -33,7 +43,7 @@ export const Friends = ({locationContext, notificationContext}) => {
         setPagesToDisplay(1);
         try {
             const fetchedFriends = await fetchFriends();
-            setFriends(getSortedFriends(fetchedFriends, sortValue, isSortAsc));
+            setFriends(getProcessedFriends(fetchedFriends, sortValue, isSortAsc));
             setQuery(sortValue, isSortAsc);
         } catch (err) {
             notificationContext.displayMessage('Error', err.message, 'error');
@@ -44,7 +54,7 @@ export const Friends = ({locationContext, notificationContext}) => {
     const setQuery = (sortKey, isAsc) => {
         const params = {
             sort: sortKey,
-            dir: isAsc ? 'asc' : 'desc'
+            dir: isAsc ? 'asc' : 'desc',
         }
         locationContext.changeQuery(new URLSearchParams(params).toString());
     }
@@ -53,12 +63,22 @@ export const Friends = ({locationContext, notificationContext}) => {
         if (typeof a[key] === 'number')
             return  a[key] - b[key];
         return a[key].localeCompare(b[key])
-    }
 
-    const getSortedFriends = (friendsList, key, isAsc) => {
-        return [...friendsList].sort(isAsc
-            ? (a, b) => compareFriends(a, b, key)
-            : (a, b) => compareFriends(b, a, key))
+    }
+    // const getProcessedFriends = (friendsList, key, isAsc, search) => {
+    //     return [...friendsList]
+    //         .filter(f => f.firstName.toLowerCase().includes(search.toLowerCase()) ||
+    //                 f.lastName.toLowerCase().includes(search.toLowerCase()))
+    //         .sort(isAsc
+    //             ? (a, b) => compareFriends(a, b, key)
+    //             : (a, b) => compareFriends(b, a, key))
+    // }
+
+    const getProcessedFriends = (friendsList, key, isAsc) => {
+        return [...friendsList]
+            .sort(isAsc
+                ? (a, b) => compareFriends(a, b, key)
+                : (a, b) => compareFriends(b, a, key))
     }
 
     const imports = [FriendsList, Button, InputText, Dropdown, ToggleButton];
@@ -70,7 +90,11 @@ export const Friends = ({locationContext, notificationContext}) => {
             <Button content="Log out" classes="fri__button"/>
         </header>
         <section class="fri__header">
-            <InputText placeholder="Search for friend" />
+            <InputText 
+                ref={searchInputRef}
+                placeholder="Search for friend" 
+                value={searchString}
+                onInput={handleSearchInput}/>
             <div class="fri__action-buttons">
                 <ToggleButton 
                     classes="fri__sort-toggle-btn"
@@ -94,8 +118,14 @@ export const Friends = ({locationContext, notificationContext}) => {
         sortOptions,
         sortValue,
         isSortAsc,
+        searchString: '',
+        searchInputRef,
         handleSortToggle: isAsc => setIsSortAsc(isAsc),
         handleSortValueChanged: key => setSortValue(key),
+        handleSearchInput: input => {
+            // setSearchString(input);
+            // setIsSearchInputFocused(true);
+        },
     };
 
     return {imports, template, attach};
