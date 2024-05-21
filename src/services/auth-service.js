@@ -66,3 +66,8 @@ export async function signUp(formData) {
         message: 'Signed up successfully'
     }
 }
+
+export async function logOut() {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    localStorage.removeItem(USER_DATA_KEY);
+}

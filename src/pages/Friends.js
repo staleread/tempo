@@ -5,6 +5,8 @@ import {Button} from "../components/ui/Button.js";
 import {InputText} from "../components/ui/InputText.js";
 import {Dropdown} from "../components/ui/Dropdown.js";
 import {ToggleButton} from "../components/ui/ToggleButton.js";
+import {logOut} from "../services/auth-service.js";
+import {SIGNUP_ROUTE} from "../utils/consts.js";
 // import {setCaretAtEnd} from "../utils/input.js";
 
 export const Friends = ({locationContext, notificationContext}) => {
@@ -87,7 +89,7 @@ export const Friends = ({locationContext, notificationContext}) => {
     <div class="app__container">
         <header class="fri__header">
             <h1 class="fri__title">My Friends</h1>
-            <Button content="Log out" classes="fri__button"/>
+            <Button content="Log out" classes="fri__button" onClick={handleLogOut}/>
         </header>
         <section class="fri__header">
             <InputText 
@@ -122,6 +124,14 @@ export const Friends = ({locationContext, notificationContext}) => {
         searchInputRef,
         handleSortToggle: isAsc => setIsSortAsc(isAsc),
         handleSortValueChanged: key => setSortValue(key),
+        handleLogOut: async () => {
+            await logOut();
+            locationContext.goTo(SIGNUP_ROUTE);
+            notificationContext.displayMessage(
+                'Bye!',
+                'Your data was deleted. Feel free to start from scratch)',
+                'success');
+        },
         handleSearchInput: input => {
             // setSearchString(input);
             // setIsSearchInputFocused(true);
