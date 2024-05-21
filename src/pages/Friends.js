@@ -5,7 +5,7 @@ import {Button} from "../components/ui/Button.js";
 import {InputText} from "../components/ui/InputText.js";
 import {Dropdown} from "../components/ui/Dropdown.js";
 import {ToggleButton} from "../components/ui/ToggleButton.js";
-import {setCaretAtEnd} from "../utils/input.js";
+// import {setCaretAtEnd} from "../utils/input.js";
 
 export const Friends = ({locationContext, notificationContext}) => {
     const [friends, setFriends] = Serianilla.useState([]);
