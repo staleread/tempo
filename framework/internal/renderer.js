@@ -192,6 +192,12 @@ export const renderDiff = (oldTree, newTree) => {
             oldPtr = oldPtr.parent;
             newPtr = newPtr.parent;
 
+            // go to the first TagNode
+            while (oldPtr.parent.ref === oldPtr.ref) {
+                oldPtr = oldPtr.parent;
+                newPtr = newPtr.parent;
+            }
+
             rerenderChildren();
 
             oldPtr._nodesLeft = 0;
