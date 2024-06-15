@@ -3,6 +3,7 @@
 *.html eol=crlf
 *.js   eol=crlf
 *.css  eol=crlf
+*scss  eol=crlf
 *.md   eol=crlf
 
 *.png  -text
