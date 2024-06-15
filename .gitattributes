@@ -1,0 +1,8 @@
+*      text=auto
+
+*.html eol=crlf
+*.js   eol=crlf
+*.css  eol=crlf
+*.md   eol=crlf
+
+*.png  -text
