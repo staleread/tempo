@@ -24,7 +24,7 @@ export default class HooksDispatcher {
                 return;
             }
 
-            _stateTimeout = setTimeout(() => {
+            this._stateTimeout = setTimeout(() => {
                 this._updateVirtualDOMCallback();
                 this._stateTimeout = null;
             }, 0);

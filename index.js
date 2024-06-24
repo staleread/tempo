@@ -3,7 +3,7 @@ import {
     useState,
     useEffect,
     useRef,
-} from '/src/serianilla';
+} from './src/serianilla';
 
 export {
     render,

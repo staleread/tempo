@@ -3,9 +3,9 @@ import {parseComponentChild} from './pipeline/parse/parser';
 import {applyComponentAttachments} from './pipeline/attach/apply-attachments';
 
 export default class VirtualDOMUnwrapper {
-    constuctor(rootComponent, stateManager) {
+    constructor(rootComponent, stateManager) {
         this._rootComponent = rootComponent;
-        this._stateManger = stateManager;
+        this._stateManager = stateManager;
         this._templateMap = new Map();
     }
 
@@ -68,7 +68,6 @@ export default class VirtualDOMUnwrapper {
             return parseComponentChild(tokens);
         } 
 
-        let ast;
         const astString = this._templateMap.get(componentName);
 
         if (astString) {

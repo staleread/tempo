@@ -27,7 +27,7 @@ const renderNode = (node) => {
     }
 }
 
-export const renderAST = (ast) => {
+export const renderAST = (ast, rootElement) => {
     let ptr = ast;
     let isRespect = false;
 
@@ -39,6 +39,8 @@ export const renderAST = (ast) => {
     const goToNextChild = () => {
         ptr = ptr.children.at(-ptr._nodesLeft);
     }
+
+    ast.ref = rootElement;
 
     while (ptr !== ast.parent) {
         if (isRespect) {

@@ -1,18 +1,19 @@
-import StateManager from './state/state-manager';
-import EventManager from './events/event-manager';
-import HookDispatcher from './hooks/hook-dispatcher';
-import VirtualDOMUnwrapper from './unwrap/virtual-dom-unwrapper';
+import StateManager from "./state/state-manager";
+import EventManager from "./events/event-manager";
+import HookDispatcher from "./hooks/hooks-dispatcher";
+import VirtualDOMUnwrapper from "./unwrap/virtual-dom-unwrapper";
+import {renderAST, renderDiff} from "./render/renderer"
 
 let stateManager;
 let eventManager;
 let hookDispatcher;
-let vdUnwrapper;
+let domUnwrapper;
 let virtualDOM;
 
-const updateVitrualDOM = () => {
+const updateVirtualDOM = () => {
     stateManager.reset();
 
-    const candidateDOM = vdUnwrapper.unwrapVirtualDOM();
+    const candidateDOM = domUnwrapper.unwrapVirtualDOM();
 
     renderDiff(virtualDOM, candidateDOM);
     eventManager.updateEvents(virtualDOM);
@@ -22,10 +23,10 @@ export const render = (rootElement, rootComponent) => {
     stateManager = new StateManager();
     eventManager = new EventManager(rootElement);
     hookDispatcher = new HookDispatcher(stateManager, updateVirtualDOM);
-    vdUnwrapper = new VirtualDOMUnwrapper(rootComponent, stateManager);
+    domUnwrapper = new VirtualDOMUnwrapper(rootComponent, stateManager);
     
-    virtualDOM = vdUnwrapper.unwrapVirtualDOM();
-    renderAST(virtualDOM);
+    virtualDOM = domUnwrapper.unwrapVirtualDOM();
+    renderAST(virtualDOM, rootElement);
     eventManager.updateEvents(virtualDOM);
 }
 
