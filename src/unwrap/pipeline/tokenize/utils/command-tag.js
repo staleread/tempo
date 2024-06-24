@@ -1,4 +1,4 @@
-import {LOWER_CAMEL_CASE, readValue, readWord, skipSpaces} from "./shared.js";
+import {LOWER_CAMEL_CASE, readValue, readWord, skipSpaces} from "./shared";
 
 const processCommandParamsToken = (input, current) => {
     let paramName, valueType, value;

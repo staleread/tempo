@@ -1,4 +1,4 @@
-export class StateManager {
+export default class StateManager {
     _buckets = [];
     _currentBucketIndex = -1;
     _currentStateIndex = -1;

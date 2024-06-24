@@ -1,19 +1,7 @@
-import {readStringValueNoRepeatedSpaces, skipSpaces} from "./tokenize-utils/shared.js";
-import {
-    processCustomTagBody,
-    processCustomTagBodyStart,
-    processCustomTagChildrenEnd
-} from "./tokenize-utils/custom-tag.js";
-import {
-    processCommandTagBody,
-    processCommandTagBodyStart,
-    processCommandTagChildrenEnd
-} from "./tokenize-utils/command-tag.js";
-import {
-    processRegularTagBody,
-    processRegularTagBodyStart,
-    processRegularTagChildrenEnd
-} from "./tokenize-utils/regular-tag.js";
+import * from "./utils/shared";
+import * from "./utils/custom-tag";
+import * from "./utils/command-tag";
+import * from "./utils/regular-tag";
 
 const processSplitTagBodyEnd = (input, current) => {
     current++;

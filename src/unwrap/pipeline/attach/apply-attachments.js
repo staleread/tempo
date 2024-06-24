@@ -1,62 +1,4 @@
-const unwrapStringValue = (stringValue, refs, attachMap) => {
-    let lastPos = 0;
-    let resultString = '';
-
-    refs.forEach(r => {
-        const refInfo = {
-            valueType: r.refType,
-            value: r.ref
-        }
-        const chunk = retrieveValue(refInfo, attachMap);
-
-        if (chunk === undefined || chunk === null) {
-            return;
-        }
-
-        resultString += stringValue.slice(lastPos, r.pos);
-        resultString += chunk.toString();
-        lastPos = r.pos;
-    })
-
-    if (lastPos < stringValue.length) {
-        resultString += stringValue.slice(lastPos);
-    }
-    return resultString.trim();
-}
-
-const retrieveValue = ({valueType, value}, attachMap) => {
-    if (valueType === 'empty') {
-        return '';
-    }
-    if (valueType === 'string') {
-        return unwrapStringValue(value.string, value.refs, attachMap);
-    }
-    if (valueType === 'ref') {
-        const result = attachMap.get(value);
-
-        if (result === undefined) {
-            throw new TypeError(`Please attach a reference value of "${value}"`)
-        }
-        return result;
-    }
-    if (valueType !== 'ref-chain') {
-        throw new TypeError(`Unresolved value type: ${valueType}`);
-    }
-
-    const chainInfo = value;
-    let result = attachMap.get(chainInfo.context);
-
-    if (result === undefined) {
-        throw new TypeError(`Please attach a reference value of "${value}"`)
-    }
-
-    for (const chainMember of chainInfo.chain) {
-        result = result[chainMember];
-    }
-    return result;
-}
-
-export const applyComponentAttachments = (node, attachMap, parentNode) => {
+export const applyComponentAttachments = (node, attach, parentNode) => {
     const processNode = (node, parent, shouldRender) => {
         node.parent = parent;
         node.shouldRender = shouldRender;
@@ -159,43 +101,7 @@ export const applyComponentAttachments = (node, attachMap, parentNode) => {
         }
         throw new TypeError(`ATTACH: Unknown node type found: "${node.type}"`)
     }
+
+    const attachMap = attach ? new Map(Object.entries(attach)) : new Map();
     processNode(node, parentNode, true);
-}
-
-export const findUsedEvents = (node) => {
-    const eventSet = new Set();
-    const processNode = (node) => {
-        if (!node.shouldRender) {
-            return;
-        }
-        if (node.events) {
-            Object.keys(node.events).forEach(event => eventSet.add(event));
-        }
-        if (node.children) {
-            node.children.forEach(child => processNode(child));
-        }
-    }
-    processNode(node);
-    return eventSet;
-}
-
-export const findCustomNodes = (node, importsMap) => {
-    const nodes = [];
-    const processNode = (node, index) => {
-        if (node.type === 'CustomNode') {
-            const ctr = importsMap.get(node.name);
-
-            if (!ctr) {
-                throw new TypeError(`Please, import ${node.name}`);
-            }
-
-            nodes.push({node, constructor: ctr, index});
-            return;
-        }
-        if (node.children) {
-            node.children.forEach((child, i) => processNode(child, i));
-        }
-    }
-    processNode(node, 0);
-    return nodes;
 }

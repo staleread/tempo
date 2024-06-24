@@ -5,7 +5,7 @@ import {
     readValue,
     readWord,
     skipSpaces
-} from "./shared.js";
+} from "./shared";
 
 const processEventToken = (input, current) => {
     let eventName, valueType, value;

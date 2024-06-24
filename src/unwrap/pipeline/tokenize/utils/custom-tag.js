@@ -4,7 +4,7 @@ import {
     readValue,
     readWord,
     skipSpaces
-} from "./shared.js";
+} from "./shared";
 
 const processPropsToken = (input, current) => {
     let propsName, valueType, value;
