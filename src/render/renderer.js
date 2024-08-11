@@ -1,9 +1,11 @@
+import {nodeComparator} from "./node-comparator";
+
 const renderNode = (node) => {
     if (!node.shouldRender) {
         return;
     }
     if (node.type === 'TagNode') {
-        const elem = node.ref ?? document.createElement(node.tag);
+        const elem = document.createElement(node.tag);
 
         for (const [key, value] of Object.entries(node.attrs)) {
             if (key === 'ref') {
@@ -13,7 +15,7 @@ const renderNode = (node) => {
             elem.setAttribute(key, value);
         }
 
-        node.parent.ref.appendChild(elem)
+        node.parent.ref.appendChild(elem);
         node.ref = elem;
         elem._ref = node;
         return;
@@ -64,45 +66,6 @@ export const renderAST = (ast, rootElement) => {
         ptr._nodesLeft = ptr.children.length;
         goToNextChild();
     }
-}
-
-const nodeComparator = {
-    RootNode: {
-        compare: () => true
-    },
-    TagNode: {
-        compare: (a, b) => {
-            if (a.shouldRender !== b.shouldRender)
-                return false;
-
-            if (a.name !== b.name)
-                return false;
-
-            if (Object.keys(a.attrs).length !== Object.keys(b.attrs).length)
-                return false
-
-            const aSortedAttrs = Object.entries(a.attrs).sort((x, y) => x[0] - y[0]);
-            const bSortedAttrs = Object.entries(b.attrs).sort((x, y) => x[0] - y[0]);
-
-            for (let i = 0; i < aSortedAttrs.length; i++) {
-                if (aSortedAttrs[i][0] !== bSortedAttrs[i][0] ||
-                    aSortedAttrs[i][1] !== bSortedAttrs[i][1]) {
-                    return false;
-                }
-            }
-            return true;
-        }
-    },
-    TextNode: {
-        compare: (a, b) => {
-            return a.shouldRender === b.shouldRender && a.value === b.value;
-        }
-    },
-    FragmentNode: {
-        compare: (a, b) => {
-            return a.shouldRender === b.shouldRender && a.key === b.key;
-        }
-    },
 }
 
 export const renderDiff = (oldTree, newTree) => {
