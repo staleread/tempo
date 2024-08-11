@@ -1,6 +1,6 @@
 # Serianilla 🍦
 
-Updating DOM in a declaratively. Inspired by [React](https://github.com/facebook/react).
+Just another declarative way to update DOM. Inspired by [React](https://github.com/facebook/react).
 
 ## Roadmap
 - [ ] ISSUE: Text node overwrites all sibling nodes
