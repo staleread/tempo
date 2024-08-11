@@ -1,11 +1,8 @@
 {
   "name": "serianilla",
   "version": "0.0.1",
-  "description": "Yet another JS pseudo-framework",
+  "description": "Just another declarative way to update DOM",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "author": "Mykola Ratushniak",
   "license": "ISC"
 }
