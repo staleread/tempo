@@ -4,5 +4,13 @@
   "description": "Just another declarative way to update DOM",
   "main": "index.js",
   "author": "Mykola Ratushniak",
-  "license": "ISC"
+  "license": "ISC",
+  "scripts": {
+    "check": "npx @biomejs/biome check src/ test/",
+    "fix": "npx @biomejs/biome check --write src/ test/"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.8.3",
+    "typescript": "^5.5.4"
+  }
 }
