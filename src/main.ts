@@ -1,5 +1,5 @@
-import { SerianillaScanner } from './scanner/scanner';
-import { Token } from './scanner/token.types';
+import { Scanner } from './cmp-frontend/scanner';
+import { Token } from './cmp-frontend/token.types';
 
 const text = `
 <$map context="prod" items={prods}>
@@ -7,7 +7,7 @@ const text = `
   <#MyTag @click={handler} />
 </$map>`;
 
-const scanner = new SerianillaScanner(text, 'Component');
+const scanner = new Scanner(text, 'Component');
 var token: Token;
 
 do {
