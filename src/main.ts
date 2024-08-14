@@ -2,7 +2,7 @@ import { Scanner } from './cmp-frontend/scanner';
 import { Token } from './cmp-frontend/token.types';
 
 const text = `
-<$map context="prod" items={prods}>
+<$map cont-ext="prod" items={prods}>
   Hello!
   <#MyTag @click={handler} />
 </$map>`;

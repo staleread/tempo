@@ -25,7 +25,7 @@ or symbol as a token. In other cases the scanner treats anything as a text.
 | Component        | `#[A-Z][a-zA-Z]*`                                 |
 | Event            | `@[a-z][a-z]*`                                    |
 | Keyword          | `$[a-z][a-z]*`                                    |
-| Identifier       | `[a-zA-Z](-[a-zA-Z0-9][a-zA-Z0-9]*)*[a-zA-Z0-9]*` |
+| Identifier       | `[a-zA-Z][a-zA-Z0-9]*(-[a-zA-Z0-9][a-zA-Z0-9]*)*` |
 
 > [!NOTE]
 > The regular expression below are presented in a notation containing

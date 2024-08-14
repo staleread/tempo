@@ -234,6 +234,13 @@ export class Scanner {
 
     while (
       this.canMoveCarret(tokenEndPos) &&
+      ALPHANUMERICS.includes(this.text[tokenEndPos])
+    ) {
+      tokenEndPos++;
+    }
+
+    while (
+      this.canMoveCarret(tokenEndPos) &&
       this.text[tokenEndPos] === '-'
     ) {
       tokenEndPos++;
@@ -252,13 +259,6 @@ export class Scanner {
       ) {
         tokenEndPos++;
       }
-    }
-
-    while (
-      this.canMoveCarret(tokenEndPos) &&
-      ALPHANUMERICS.includes(this.text[tokenEndPos])
-    ) {
-      tokenEndPos++;
     }
 
     const token = this.text.substring(this.carretPos, tokenEndPos);
