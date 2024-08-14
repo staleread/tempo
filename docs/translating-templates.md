@@ -1,6 +1,6 @@
 # Translating templates
 
-## Lexical Analisis (Scanning)
+## Lexical Analysis (Scanning)
 
 ### Scanning modes
 
