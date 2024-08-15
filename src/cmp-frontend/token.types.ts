@@ -1,7 +1,7 @@
 export type TokenTypes =
   | 'TEXT'
   | 'OPENING_TAG_START'
-  | 'OPENING_TAG_END'
+  | 'MONO_TAG_END'
   | 'CLOSING_TAG_START'
   | 'TAG_END'
   | 'IDENTIFIER'

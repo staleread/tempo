@@ -81,7 +81,7 @@ export class Scanner {
         return this.readTagStart();
       case '/':
         this.carretPos++;
-        return this.readOpeningTagEndToken();
+        return this.readMonoTagEndToken();
       default:
         return this.readIdentifierToken();
     }
@@ -208,7 +208,7 @@ export class Scanner {
     return { type: 'OPENING_TAG_START' };
   }
 
-  private readOpeningTagEndToken(): Token {
+  private readMonoTagEndToken(): Token {
     this.skipSpaces();
 
     if (this.text[this.carretPos] !== '>') {
@@ -219,7 +219,7 @@ export class Scanner {
     }
 
     this.isTextMod = true;
-    return { type: 'OPENING_TAG_END' };
+    return { type: 'MONO_TAG_END' };
   }
 
   private readIdentifierToken(): Token {
