@@ -32,8 +32,8 @@ export class Scanner {
       var tokenEndPos = this.carretPos;
 
       while (
-        !'<>'.includes(this.text[tokenEndPos]) &&
-        tokenEndPos !== this.text.length - 1
+        this.canMoveCarret(tokenEndPos) &&
+        !'<>'.includes(this.text[tokenEndPos])
       ) {
         tokenEndPos++;
       }
