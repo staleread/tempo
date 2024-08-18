@@ -1,16 +1,23 @@
-import { Scanner } from './cmp-frontend/scanner';
-import { Token } from './cmp-frontend/token.types';
+import { printLexerError } from './lexer/display';
+import { readToken } from './lexer/lexer';
+import { Lexer, Token } from './lexer/lexer.types';
 
 const text = `
-<$map cont-ext="prod" items={prods}>
+< map cont-ext = " prod" items={ prods} >
   Hello!
-  <#MyTag @click={handler} />
-</$map>`;
+  <#MyTag-e @click={handler} />
+>c</map>>>`;
 
-const scanner = new Scanner(text, 'Component');
+var lexer: Lexer = {
+  context: 'MyApp',
+  state: 'TXT',
+  buffer: text,
+  pos: 0,
+};
+
 var token: Token;
 
 do {
-  token = scanner.readNextToken();
-  console.log(token);
+  token = readToken(lexer);
+  token.error ? printLexerError(lexer, token) : console.log(token);
 } while (token.type !== 'EOF');
