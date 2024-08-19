@@ -20,14 +20,14 @@ export function printLexerError(l: Lexer, token: Token): void {
 
   const spacesBeforeChar = l.pos - prevNewLinePos;
 
-  let pointer = '|';
+  let pointer = '^';
 
   for (let i = 0; i < spacesBeforeChar; i++) {
-    pointer = '_' + pointer;
+    pointer = ' ' + pointer;
   }
 
   console.error(
     `[LEXER ERROR] in ${l.context}, line ${lineNumber}: ` +
-      `${token.error}\n  ${errorLine}\n${pointer}`,
+      `${token.error}\n  ${errorLine}\n${pointer}\n`,
   );
 }
