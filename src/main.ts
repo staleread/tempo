@@ -3,10 +3,10 @@ import { readToken } from './lexer/lexer';
 import { Lexer, Token } from './lexer/lexer.types';
 
 const text = `
-< map cont-ext = " prod" items={ prods} >
+<$map cont-ext = "" $as $revo items={ prods} ></secret>
   Hello!
   <#MyTag-e @click={handler} />
->c</map>>>`;
+>c</$map>>>`;
 
 var lexer: Lexer = {
   context: 'MyApp',

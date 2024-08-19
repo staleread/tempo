@@ -197,12 +197,38 @@ function readEventTokenName(l: Lexer): Token {
   return { type: 'EVENT', literal: name };
 }
 
-function readCommandToken(_: Lexer): Token {
-  return {
-    type: 'ILLEGAL',
-    literal: undefined,
-    error: 'NOT_IMPLEMENTED',
-  };
+function readKeywordTokenName(l: Lexer): Token {
+  const tmpPos = l.pos;
+
+  if (!LOWER_LETTERS.includes(readChar(l))) {
+    return {
+      type: 'ILLEGAL',
+      literal: undefined,
+      error: 'KEY_MUST_START_WITH_LOWER_LETTER',
+    };
+  }
+  skipRange(l, LOWER_LETTERS);
+
+  const keyword = l.buffer.substring(tmpPos, l.pos);
+
+  switch (keyword) {
+    case 'map':
+      return { type: 'MAP' };
+    case 'if':
+      return { type: 'IF' };
+    case 'as':
+      return { type: 'AS' };
+    case 'not':
+      return { type: 'NOT' };
+    case 'child':
+      return { type: 'CHILD' };
+    default:
+      return {
+        type: 'ILLEGAL',
+        literal: undefined,
+        error: 'UNKNOWN_KEYWORD',
+      };
+  }
 }
 
 function readTagToken(l: Lexer): Token {
@@ -228,7 +254,7 @@ function readTagToken(l: Lexer): Token {
     case '@':
       return readEventTokenName(l);
     case '$':
-      return readCommandToken(l);
+      return readKeywordTokenName(l);
     case EOF:
       return { type: 'EOF' };
     default:

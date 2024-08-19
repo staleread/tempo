@@ -15,7 +15,11 @@ export type TokenType =
   | 'ID'
   | 'COMPONENT'
   | 'EVENT'
-  | 'KEY';
+  | 'MAP'
+  | 'IF'
+  | 'AS'
+  | 'NOT'
+  | 'CHILD';
 
 export type LexerErrorType =
   | 'NO_TOKENS_LEFT'
@@ -24,6 +28,8 @@ export type LexerErrorType =
   | 'ID_HAS_ILLEGAL_CHAR'
   | 'COMPONENT_MUST_START_WITH_CAPITAL_LETTER'
   | 'EVENT_MUST_START_WITH_LOWER_LETTER'
+  | 'KEY_MUST_START_WITH_LOWER_LETTER'
+  | 'UNKNOWN_KEYWORD'
   | 'TXT_HAS_ILLEGAL_CHAR'
   | 'VAR_HAS_ILLEGAL_CHAR'
   | 'TXT_VAR_HAS_ILLEGAL_CHAR'
