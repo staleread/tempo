@@ -20,7 +20,7 @@ export class Lexer {
     this.tokenPos = pos;
   }
 
-  readToken(): Token {
+  public readToken(): Token {
     switch (this.mode) {
       case 'TXT':
         return this.readTextToken();
@@ -33,7 +33,7 @@ export class Lexer {
     }
   }
 
-  readTextToken(): Token {
+  private readTextToken(): Token {
     this.syncTokenStart();
     this.skipUntilRange(Lexer.STOP_CHARS);
 
@@ -59,7 +59,7 @@ export class Lexer {
     }
   }
 
-  readVarToken(): Token {
+  private readVarToken(): Token {
     this.skipSpaces();
     this.syncTokenStart();
 
@@ -81,7 +81,7 @@ export class Lexer {
     }
   }
 
-  readTextVarToken(): Token {
+  private readTextVarToken(): Token {
     this.skipSpaces();
     this.syncTokenStart();
 
@@ -140,7 +140,7 @@ export class Lexer {
     }
   }
 
-  readComponentTokenName(): Token {
+  private readComponentTokenName(): Token {
     this.syncTokenStart();
 
     if (!Lexer.UPPER_LETTERS.includes(this.readChar())) {
@@ -154,7 +154,7 @@ export class Lexer {
     return this.createToken('COMPONENT', name);
   }
 
-  readEventTokenName(): Token {
+  private readEventTokenName(): Token {
     this.syncTokenStart();
 
     if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
@@ -166,7 +166,7 @@ export class Lexer {
     return this.createToken('EVENT', name);
   }
 
-  readKeywordTokenName(): Token {
+  private readKeywordTokenName(): Token {
     this.syncTokenStart();
 
     if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
@@ -192,7 +192,7 @@ export class Lexer {
     }
   }
 
-  readIdTokenName(): Token {
+  private readIdTokenName(): Token {
     this.skipRange(Lexer.ALPHANUMERICS);
 
     while (this.peekChar() === '-') {
@@ -206,16 +206,16 @@ export class Lexer {
     return this.createToken('ID', name);
   }
 
-  syncTokenStart() {
+  private syncTokenStart() {
     this.tokenPos = this.pos;
   }
 
-  createToken(type: TokenType, literal?: string): Token {
+  private createToken(type: TokenType, literal?: string): Token {
     const token: Token = { type, pos: this.tokenPos, literal };
     return token;
   }
 
-  createIllegalToken(error: LexerError): Token {
+  private createIllegalToken(error: LexerError): Token {
     const token: Token = {
       type: 'ILLEGAL',
       pos: this.tokenPos,
@@ -225,28 +225,28 @@ export class Lexer {
     return token;
   }
 
-  peekChar(): string {
+  private peekChar(): string {
     if (this.pos >= this.buffer.length) {
       return Lexer.EOF;
     }
     return this.buffer[this.pos];
   }
 
-  readChar(): string {
+  private readChar(): string {
     if (this.pos >= this.buffer.length) {
       return Lexer.EOF;
     }
     return this.buffer[this.pos++];
   }
 
-  nextChar(): string {
+  private nextChar(): string {
     if (this.pos >= this.buffer.length) {
       return Lexer.EOF;
     }
     return this.buffer[++this.pos];
   }
 
-  skipRange(range: string): void {
+  private skipRange(range: string): void {
     while (
       this.pos < this.buffer.length &&
       range.includes(this.buffer[this.pos])
@@ -255,7 +255,7 @@ export class Lexer {
     }
   }
 
-  skipUntilRange(range: string): void {
+  private skipUntilRange(range: string): void {
     while (
       this.pos < this.buffer.length &&
       !range.includes(this.buffer[this.pos])
@@ -264,7 +264,7 @@ export class Lexer {
     }
   }
 
-  skipSpaces(): void {
+  private skipSpaces(): void {
     while (/\s/.test(this.buffer[this.pos])) {
       this.pos++;
     }
