@@ -1,4 +1,4 @@
-export type LexerState = 'TAG' | 'TXT' | 'VAR' | 'TXT_VAR';
+export type LexerMode = 'TAG' | 'TXT' | 'VAR' | 'TXT_VAR';
 
 export type TokenType =
   | 'ILLEGAL'
@@ -21,31 +21,23 @@ export type TokenType =
   | 'NOT'
   | 'CHILD';
 
-export type LexerErrorType =
+export type LexerError =
   | 'NO_TOKENS_LEFT'
-  | 'TAG_HAS_ILLEGAL_CHAR'
+  | 'ILLEGAL_CHAR_IN_TAG_EXPR'
   | 'ID_MUST_START_WITH_LETTER'
-  | 'ID_HAS_ILLEGAL_CHAR'
+  | 'ILLEGAL_CHAR_IN_ID'
   | 'COMPONENT_MUST_START_WITH_CAPITAL_LETTER'
   | 'EVENT_MUST_START_WITH_LOWER_LETTER'
   | 'KEY_MUST_START_WITH_LOWER_LETTER'
   | 'UNKNOWN_KEYWORD'
-  | 'TXT_HAS_ILLEGAL_CHAR'
-  | 'VAR_HAS_ILLEGAL_CHAR'
-  | 'TXT_VAR_HAS_ILLEGAL_CHAR'
+  | 'ILLEGAL_CHAR_IN_TXT_EXPR'
+  | 'ILLEGAL_CHAR_IN_VAR_EXPR'
+  | 'ILLEGAL_CHAR_IN_TXT_VAR_EXPR'
   | 'NOT_IMPLEMENTED';
 
 export interface Token {
   type: TokenType;
-  literal?: string;
-  error?: LexerErrorType;
-}
-
-export interface Lexer {
-  context: string;
-  state: LexerState;
-  buffer: string;
   pos: number;
+  literal?: string;
+  error?: LexerError;
 }
-
-export type LexerStateHandler = (lexer: Lexer) => Token;

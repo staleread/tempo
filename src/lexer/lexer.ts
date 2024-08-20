@@ -1,289 +1,272 @@
-import {
-  Lexer,
-  LexerErrorType,
-  LexerState,
-  LexerStateHandler,
-  Token,
-  TokenType,
-} from './lexer.types';
+import { LexerError, LexerMode, Token, TokenType } from './lexer.types';
 
-const EOF = 'EOF';
-const STOP_CHARS = '{}<>"';
-const LOWER_LETTERS = 'qwertyuioipasdfghjklzxcvbnm';
-const UPPER_LETTERS = 'QWERTYUIOIPASDFGHJKLZXCVBNM';
-const DIGITS = '0123456789';
+export class Lexer {
+  static EOF = 'EOF';
+  static STOP_CHARS = '{}<>"';
+  static LOWER_LETTERS = 'qwertyuioipasdfghjklzxcvbnm';
+  static UPPER_LETTERS = 'QWERTYUIOIPASDFGHJKLZXCVBNM';
+  static DIGITS = '0123456789';
+  static LETTERS = Lexer.LOWER_LETTERS + Lexer.UPPER_LETTERS;
+  static ALPHANUMERICS = Lexer.LETTERS + Lexer.DIGITS;
 
-const LETTERS = LOWER_LETTERS + UPPER_LETTERS;
-const ALPHANUMERICS = LETTERS + DIGITS;
+  private readonly buffer: string;
+  private mode: LexerMode = 'TXT';
+  private pos: number;
+  private tokenPos: number;
 
-function peekChar(l: Lexer): string {
-  if (l.pos >= l.buffer.length) {
-    return EOF;
-  }
-  return l.buffer[l.pos];
-}
-
-function readChar(l: Lexer): string {
-  if (l.pos >= l.buffer.length) {
-    return EOF;
-  }
-  return l.buffer[l.pos++];
-}
-
-function nextChar(l: Lexer): string {
-  if (l.pos >= l.buffer.length) {
-    return EOF;
-  }
-  return l.buffer[++l.pos];
-}
-
-function skipRange(l: Lexer, range: string): void {
-  while (l.pos < l.buffer.length && range.includes(l.buffer[l.pos])) {
-    l.pos++;
-  }
-}
-
-function skipUntilRange(l: Lexer, range: string): void {
-  while (l.pos < l.buffer.length && !range.includes(l.buffer[l.pos])) {
-    l.pos++;
-  }
-}
-
-function skipSpaces(l: Lexer): void {
-  while (/\s/.test(l.buffer[l.pos])) {
-    l.pos++;
-  }
-}
-
-function readTextToken(l: Lexer): Token {
-  const tmpPos = l.pos;
-
-  skipUntilRange(l, STOP_CHARS);
-
-  if (tmpPos < l.pos) {
-    const text = l.buffer.substring(tmpPos, l.pos);
-    return { type: 'STR', literal: text };
+  constructor(buffer: string, pos: number = 0) {
+    this.buffer = buffer;
+    this.pos = pos;
+    this.tokenPos = pos;
   }
 
-  switch (readChar(l)) {
-    case '{':
-      l.state = 'TXT_VAR';
-      return { type: 'L_CURL' };
-    case '"':
-      l.state = 'TAG';
-      return { type: 'QUOTE' };
-    case '<':
-      l.state = 'TAG';
-      return { type: 'L_ARROW' };
-    case EOF:
-      return { type: 'EOF' };
-    default:
-      return {
-        type: 'ILLEGAL',
-        literal: undefined,
-        error: 'TXT_HAS_ILLEGAL_CHAR',
-      };
-  }
-}
-
-function readIdTokenName(l: Lexer): Token {
-  const tmpPos = l.pos;
-
-  if (!LETTERS.includes(readChar(l))) {
-    return {
-      type: 'ILLEGAL',
-      literal: undefined,
-      error: 'ID_MUST_START_WITH_LETTER',
-    };
-  }
-  skipRange(l, ALPHANUMERICS);
-
-  while (peekChar(l) === '-') {
-    if (!ALPHANUMERICS.includes(nextChar(l))) {
-      return {
-        type: 'ILLEGAL',
-        literal: undefined,
-        error: 'ID_HAS_ILLEGAL_CHAR',
-      };
+  readToken(): Token {
+    switch (this.mode) {
+      case 'TXT':
+        return this.readTextToken();
+      case 'TAG':
+        return this.readTagToken();
+      case 'VAR':
+        return this.readVarToken();
+      case 'TXT_VAR':
+        return this.readTextVarToken();
     }
-    skipRange(l, ALPHANUMERICS);
   }
 
-  const name = l.buffer.substring(tmpPos, l.pos);
-  return { type: 'ID', literal: name };
-}
+  readTextToken(): Token {
+    this.syncTokenStart();
+    this.skipUntilRange(Lexer.STOP_CHARS);
 
-function readVarToken(l: Lexer): Token {
-  skipSpaces(l);
+    if (this.tokenPos < this.pos) {
+      const text = this.buffer.substring(this.tokenPos, this.pos);
+      return this.createToken('STR', text);
+    }
 
-  const char = readChar(l);
+    switch (this.readChar()) {
+      case '{':
+        this.mode = 'TXT_VAR';
+        return this.createToken('L_CURL');
+      case '"':
+        this.mode = 'TAG';
+        return this.createToken('QUOTE');
+      case '<':
+        this.mode = 'TAG';
+        return this.createToken('L_ARROW');
+      case Lexer.EOF:
+        return this.createToken('EOF');
+      default:
+        return this.createIllegalToken('ILLEGAL_CHAR_IN_TXT_EXPR');
+    }
+  }
 
-  switch (char) {
-    case '.':
-      return { type: 'DOT' };
-    case '}':
-      l.state = 'TAG';
-      return { type: 'R_CURL' };
-    case EOF:
-      return { type: 'EOF' };
-    default:
-      if (LETTERS.includes(char)) {
-        l.pos--;
-        return readIdTokenName(l);
+  readVarToken(): Token {
+    this.skipSpaces();
+    this.syncTokenStart();
+
+    const char = this.readChar();
+    switch (char) {
+      case '.':
+        return this.createToken('DOT');
+      case '}':
+        this.mode = 'TAG';
+        return this.createToken('R_CURL');
+      case Lexer.EOF:
+        return this.createToken('EOF');
+      default:
+        if (Lexer.LETTERS.includes(char)) {
+          this.pos--;
+          return this.readIdTokenName();
+        }
+        return this.createIllegalToken('ILLEGAL_CHAR_IN_VAR_EXPR');
+    }
+  }
+
+  readTextVarToken(): Token {
+    this.skipSpaces();
+    this.syncTokenStart();
+
+    const char = this.readChar();
+    switch (char) {
+      case '.':
+        return this.createToken('DOT');
+      case '}':
+        this.mode = 'TXT';
+        return this.createToken('R_CURL');
+      case Lexer.EOF:
+        return this.createToken('EOF');
+      default:
+        if (Lexer.LETTERS.includes(char)) {
+          this.pos--;
+          return this.readIdTokenName();
+        }
+        return this.createIllegalToken('ILLEGAL_CHAR_IN_TXT_VAR_EXPR');
+    }
+  }
+
+  private readTagToken(): Token {
+    this.skipSpaces();
+    this.syncTokenStart();
+
+    var char = this.readChar();
+
+    switch (char) {
+      case '{':
+        this.mode = 'VAR';
+        return this.createToken('L_CURL');
+      case '"':
+        this.mode = 'TXT';
+        return this.createToken('QUOTE');
+      case '>':
+        this.mode = 'TXT';
+        return this.createToken('R_ARROW');
+      case '=':
+        return this.createToken('EQUAL');
+      case '/':
+        return this.createToken('SLASH');
+      case '#':
+        return this.readComponentTokenName();
+      case '@':
+        return this.readEventTokenName();
+      case '$':
+        return this.readKeywordTokenName();
+      case Lexer.EOF:
+        return this.createToken('EOF');
+      default:
+        if (Lexer.LETTERS.includes(char)) {
+          this.syncTokenStart();
+          return this.readIdTokenName();
+        }
+        return this.createIllegalToken('ILLEGAL_CHAR_IN_TAG_EXPR');
+    }
+  }
+
+  readComponentTokenName(): Token {
+    this.syncTokenStart();
+
+    if (!Lexer.UPPER_LETTERS.includes(this.readChar())) {
+      return this.createIllegalToken(
+        'COMPONENT_MUST_START_WITH_CAPITAL_LETTER',
+      );
+    }
+    this.skipRange(Lexer.LETTERS);
+
+    const name = this.buffer.substring(this.tokenPos, this.pos);
+    return this.createToken('COMPONENT', name);
+  }
+
+  readEventTokenName(): Token {
+    this.syncTokenStart();
+
+    if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
+      return this.createIllegalToken('EVENT_MUST_START_WITH_LOWER_LETTER');
+    }
+    this.skipRange(Lexer.LOWER_LETTERS);
+
+    const name = this.buffer.substring(this.tokenPos, this.pos);
+    return this.createToken('EVENT', name);
+  }
+
+  readKeywordTokenName(): Token {
+    this.syncTokenStart();
+
+    if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
+      return this.createIllegalToken('KEY_MUST_START_WITH_LOWER_LETTER');
+    }
+    this.skipRange(Lexer.LOWER_LETTERS);
+
+    const keyword = this.buffer.substring(this.tokenPos, this.pos);
+
+    switch (keyword) {
+      case 'map':
+        return this.createToken('MAP');
+      case 'if':
+        return this.createToken('IF');
+      case 'as':
+        return this.createToken('AS');
+      case 'not':
+        return this.createToken('NOT');
+      case 'child':
+        return this.createToken('CHILD');
+      default:
+        return this.createIllegalToken('UNKNOWN_KEYWORD');
+    }
+  }
+
+  readIdTokenName(): Token {
+    this.skipRange(Lexer.ALPHANUMERICS);
+
+    while (this.peekChar() === '-') {
+      if (!Lexer.ALPHANUMERICS.includes(this.nextChar())) {
+        return this.createIllegalToken('ILLEGAL_CHAR_IN_ID');
       }
-      return {
-        type: 'ILLEGAL',
-        literal: undefined,
-        error: 'VAR_HAS_ILLEGAL_CHAR',
-      };
+      this.skipRange(Lexer.ALPHANUMERICS);
+    }
+
+    const name = this.buffer.substring(this.tokenPos, this.pos);
+    return this.createToken('ID', name);
   }
-}
 
-function readTextVarToken(l: Lexer): Token {
-  skipSpaces(l);
-
-  const char = readChar(l);
-
-  switch (char) {
-    case '.':
-      return { type: 'DOT' };
-    case '}':
-      l.state = 'TXT';
-      return { type: 'R_CURL' };
-    case EOF:
-      return { type: 'EOF' };
-    default:
-      if (LETTERS.includes(char)) {
-        l.pos--;
-        return readIdTokenName(l);
-      }
-      return {
-        type: 'ILLEGAL',
-        literal: undefined,
-        error: 'TXT_VAR_HAS_ILLEGAL_CHAR',
-      };
+  syncTokenStart() {
+    this.tokenPos = this.pos;
   }
-}
 
-function readComponentTokenName(l: Lexer): Token {
-  const tmpPos = l.pos;
+  createToken(type: TokenType, literal?: string): Token {
+    const token: Token = { type, pos: this.tokenPos, literal };
+    return token;
+  }
 
-  if (!UPPER_LETTERS.includes(readChar(l))) {
-    return {
+  createIllegalToken(error: LexerError): Token {
+    const token: Token = {
       type: 'ILLEGAL',
+      pos: this.tokenPos,
       literal: undefined,
-      error: 'COMPONENT_MUST_START_WITH_CAPITAL_LETTER',
+      error: error,
     };
+    return token;
   }
-  skipRange(l, LETTERS);
 
-  const name = l.buffer.substring(tmpPos, l.pos);
-  return { type: 'COMPONENT', literal: name };
-}
-
-function readEventTokenName(l: Lexer): Token {
-  const tmpPos = l.pos;
-
-  if (!LOWER_LETTERS.includes(readChar(l))) {
-    return {
-      type: 'ILLEGAL',
-      literal: undefined,
-      error: 'EVENT_MUST_START_WITH_LOWER_LETTER',
-    };
+  peekChar(): string {
+    if (this.pos >= this.buffer.length) {
+      return Lexer.EOF;
+    }
+    return this.buffer[this.pos];
   }
-  skipRange(l, LOWER_LETTERS);
 
-  const name = l.buffer.substring(tmpPos, l.pos);
-  return { type: 'EVENT', literal: name };
-}
-
-function readKeywordTokenName(l: Lexer): Token {
-  const tmpPos = l.pos;
-
-  if (!LOWER_LETTERS.includes(readChar(l))) {
-    return {
-      type: 'ILLEGAL',
-      literal: undefined,
-      error: 'KEY_MUST_START_WITH_LOWER_LETTER',
-    };
+  readChar(): string {
+    if (this.pos >= this.buffer.length) {
+      return Lexer.EOF;
+    }
+    return this.buffer[this.pos++];
   }
-  skipRange(l, LOWER_LETTERS);
 
-  const keyword = l.buffer.substring(tmpPos, l.pos);
-
-  switch (keyword) {
-    case 'map':
-      return { type: 'MAP' };
-    case 'if':
-      return { type: 'IF' };
-    case 'as':
-      return { type: 'AS' };
-    case 'not':
-      return { type: 'NOT' };
-    case 'child':
-      return { type: 'CHILD' };
-    default:
-      return {
-        type: 'ILLEGAL',
-        literal: undefined,
-        error: 'UNKNOWN_KEYWORD',
-      };
+  nextChar(): string {
+    if (this.pos >= this.buffer.length) {
+      return Lexer.EOF;
+    }
+    return this.buffer[++this.pos];
   }
-}
 
-function readTagToken(l: Lexer): Token {
-  skipSpaces(l);
-
-  var char = readChar(l);
-  switch (char) {
-    case '{':
-      l.state = 'VAR';
-      return { type: 'L_CURL' };
-    case '"':
-      l.state = 'TXT';
-      return { type: 'QUOTE' };
-    case '>':
-      l.state = 'TXT';
-      return { type: 'R_ARROW' };
-    case '=':
-      return { type: 'EQUAL' };
-    case '/':
-      return { type: 'SLASH' };
-    case '#':
-      return readComponentTokenName(l);
-    case '@':
-      return readEventTokenName(l);
-    case '$':
-      return readKeywordTokenName(l);
-    case EOF:
-      return { type: 'EOF' };
-    default:
-      if (LETTERS.includes(char)) {
-        l.pos--;
-        return readIdTokenName(l);
-      }
-      return {
-        type: 'ILLEGAL',
-        literal: undefined,
-        error: 'TAG_HAS_ILLEGAL_CHAR',
-      };
+  skipRange(range: string): void {
+    while (
+      this.pos < this.buffer.length &&
+      range.includes(this.buffer[this.pos])
+    ) {
+      this.pos++;
+    }
   }
-}
 
-function getStateHandler(state: LexerState): LexerStateHandler {
-  switch (state) {
-    case 'TXT':
-      return readTextToken;
-    case 'TAG':
-      return readTagToken;
-    case 'VAR':
-      return readVarToken;
-    case 'TXT_VAR':
-      return readTextVarToken;
+  skipUntilRange(range: string): void {
+    while (
+      this.pos < this.buffer.length &&
+      !range.includes(this.buffer[this.pos])
+    ) {
+      this.pos++;
+    }
   }
-}
 
-export function readToken(lexer: Lexer): Token {
-  const handler = getStateHandler(lexer.state);
-  return handler(lexer);
+  skipSpaces(): void {
+    while (/\s/.test(this.buffer[this.pos])) {
+      this.pos++;
+    }
+  }
 }

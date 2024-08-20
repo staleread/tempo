@@ -1,24 +1,43 @@
-import { Lexer, Token } from './lexer.types';
+import { Token } from './lexer.types';
 
-export function printLexerError(l: Lexer, token: Token): void {
+interface TokenPos {
+  line: number;
+  column: number;
+}
+
+function getTokenPos(buffer: string, pos: number): TokenPos {
+  var line = 0;
+  var column = 0;
+
+  for (let i = 0; i < pos; i++) {
+    if (buffer[i] !== '\n') {
+      column++;
+      continue;
+    }
+    line++;
+    column = 0;
+  }
+  return { line, column };
+}
+
+export function printLexerError(buffer: string, token: Token): void {
+  const tokenPos = getTokenPos(buffer, token.pos);
   let prevNewLinePos = 0;
-  let lineNumber = 1;
 
-  for (let i = 0; i < l.pos; i++) {
-    if (l.buffer[i] === '\n') {
+  for (let i = 0; i < token.pos; i++) {
+    if (buffer[i] === '\n') {
       prevNewLinePos = i;
-      lineNumber++;
     }
   }
 
-  const nextNewLinePos = l.buffer.indexOf('\n', l.pos);
+  const nextNewLinePos = buffer.indexOf('\n', token.pos);
 
   const errorLine =
     nextNewLinePos < 0
-      ? l.buffer.substring(prevNewLinePos + 1)
-      : l.buffer.substring(prevNewLinePos + 1, nextNewLinePos);
+      ? buffer.substring(prevNewLinePos + 1)
+      : buffer.substring(prevNewLinePos + 1, nextNewLinePos);
 
-  const spacesBeforeChar = l.pos - prevNewLinePos;
+  const spacesBeforeChar = token.pos - prevNewLinePos - 1;
 
   let pointer = '^';
 
@@ -27,7 +46,7 @@ export function printLexerError(l: Lexer, token: Token): void {
   }
 
   console.error(
-    `[LEXER ERROR] in ${l.context}, line ${lineNumber}: ` +
-      `${token.error}\n  ${errorLine}\n${pointer}\n`,
+    `[LEXER ERROR] on line ${tokenPos.line}, char ${tokenPos.column}: ` +
+      `${token.error}\n${errorLine}\n${pointer}\n`,
   );
 }
