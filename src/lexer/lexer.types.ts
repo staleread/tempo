@@ -15,6 +15,7 @@ export type TokenType =
   | 'STR'
   | 'ID'
   | 'COMPONENT'
+  | 'PROP'
   | 'EVENT'
   | 'MAP'
   | 'IF'
@@ -25,9 +26,7 @@ export type TokenType =
 export type LexerError =
   | 'NO_TOKENS_LEFT'
   | 'ILLEGAL_CHAR_IN_TAG_EXPR'
-  | 'ID_MUST_START_WITH_LETTER'
   | 'ILLEGAL_CHAR_IN_ID'
-  | 'COMPONENT_MUST_START_WITH_CAPITAL_LETTER'
   | 'EVENT_MUST_START_WITH_LOWER_LETTER'
   | 'KEY_MUST_START_WITH_LOWER_LETTER'
   | 'UNKNOWN_KEYWORD'

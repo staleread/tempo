@@ -104,8 +104,8 @@ export class Lexer {
   }
 
   private readTagToken(): Token {
-    this.skipSpaces();
     this.syncTokenStart();
+    this.skipSpaces();
 
     var char = this.readChar();
 
@@ -125,21 +125,23 @@ export class Lexer {
         return this.createToken('SLASH');
       case '!':
         return this.readCommentToken();
-      case '#':
-        return this.readComponentTokenName();
+      case '.':
+        return this.readPropToken();
       case '@':
         return this.readEventTokenName();
       case '$':
         return this.readKeywordTokenName();
       case Lexer.EOF:
         return this.createToken('EOF');
-      default:
-        if (Lexer.LETTERS.includes(char)) {
-          this.syncTokenStart();
-          return this.readIdTokenName();
-        }
-        return this.createIllegalToken('ILLEGAL_CHAR_IN_TAG_EXPR');
     }
+
+    if (Lexer.UPPER_LETTERS.includes(char)) {
+      return this.readComponentTokenName();
+    }
+    if (Lexer.LOWER_LETTERS.includes(char)) {
+      return this.readIdTokenName();
+    }
+    return this.createIllegalToken('ILLEGAL_CHAR_IN_TAG_EXPR');
   }
 
   private readCommentToken(): Token {
@@ -165,17 +167,18 @@ export class Lexer {
   }
 
   private readComponentTokenName(): Token {
-    this.syncTokenStart();
-
-    if (!Lexer.UPPER_LETTERS.includes(this.readChar())) {
-      return this.createIllegalToken(
-        'COMPONENT_MUST_START_WITH_CAPITAL_LETTER',
-      );
-    }
     this.skipRange(Lexer.LETTERS);
 
     const name = this.buffer.substring(this.tokenPos, this.pos);
     return this.createToken('COMPONENT', name);
+  }
+
+  private readPropToken(): Token {
+    this.syncTokenStart();
+    this.skipRange(Lexer.LETTERS);
+
+    const prop = this.buffer.substring(this.tokenPos, this.pos);
+    return this.createToken('PROP', prop);
   }
 
   private readEventTokenName(): Token {

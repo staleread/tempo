@@ -22,11 +22,12 @@ or symbol as a token. In other cases the scanner treats anything as a text.
 | Dot               | `.`                                               |
 | Quote             | `"`                                               |
 | String            | `[^"<>{}][^"<>{}]*`                               |
-| Component         | `#[A-Z][a-zA-Z]*`                                 |
+| Component         | `[A-Z][a-zA-Z]*`                                  |
+| Prop              | `.[a-z][a-zA-Z]*`                                 |
 | Event             | `@[a-z][a-z]*`                                    |
 | Keyword           | `$[a-z][a-z]*`                                    |
 | Comment           | `(!--)[^-]*(-[^-][^-]*)*(--)`                     |
-| Identifier        | `[a-zA-Z][a-zA-Z0-9]*(-[a-zA-Z0-9][a-zA-Z0-9]*)*` |
+| Identifier        | `[a-z][a-zA-Z0-9]*(-[a-zA-Z0-9][a-zA-Z0-9]*)*`    |
 
 > [!NOTE]
 > The regular expression below are presented in a notation containing
