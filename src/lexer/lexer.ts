@@ -75,7 +75,7 @@ export class Lexer {
       default:
         if (Lexer.LETTERS.includes(char)) {
           this.pos--;
-          return this.readIdTokenName();
+          return this.readVarIdToken();
         }
         return this.createIllegalToken('ILLEGAL_CHAR_IN_VAR_EXPR');
     }
@@ -97,7 +97,7 @@ export class Lexer {
       default:
         if (Lexer.LETTERS.includes(char)) {
           this.pos--;
-          return this.readIdTokenName();
+          return this.readVarIdToken();
         }
         return this.createIllegalToken('ILLEGAL_CHAR_IN_TXT_VAR_EXPR');
     }
@@ -139,7 +139,7 @@ export class Lexer {
       return this.readComponentTokenName();
     }
     if (Lexer.LOWER_LETTERS.includes(char)) {
-      return this.readIdTokenName();
+      return this.readIdToken();
     }
     return this.createIllegalToken('ILLEGAL_CHAR_IN_TAG_EXPR');
   }
@@ -175,6 +175,10 @@ export class Lexer {
 
   private readPropToken(): Token {
     this.syncTokenStart();
+
+    if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
+      return this.createIllegalToken('PROP_MUST_START_WITH_LOWER_LETTER');
+    }
     this.skipRange(Lexer.LETTERS);
 
     const prop = this.buffer.substring(this.tokenPos, this.pos);
@@ -219,7 +223,7 @@ export class Lexer {
     }
   }
 
-  private readIdTokenName(): Token {
+  private readIdToken(): Token {
     this.skipRange(Lexer.ALPHANUMERICS);
 
     while (this.peekChar() === '-') {
@@ -231,6 +235,18 @@ export class Lexer {
 
     const name = this.buffer.substring(this.tokenPos, this.pos);
     return this.createToken('ID', name);
+  }
+
+  private readVarIdToken(): Token {
+    this.syncTokenStart();
+
+    if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
+      return this.createIllegalToken('VARID_MUST_START_WITH_LOWER_LETTER');
+    }
+    this.skipRange(Lexer.LETTERS);
+
+    const prop = this.buffer.substring(this.tokenPos, this.pos);
+    return this.createToken('VARID', prop);
   }
 
   private syncTokenStart() {
