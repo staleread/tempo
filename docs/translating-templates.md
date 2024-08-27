@@ -1,6 +1,6 @@
 # Translating templates
 
-## Lexical Analysis (Scanning)
+## Scanning
 
 ### Scanning modes
 
@@ -11,21 +11,22 @@ or symbol as a token. In other cases the scanner treats anything as a text.
 
 ### Supported tokens
 
-| Token            | Regex                                             |
-| ---------------- | ------------------------------------------------- |
-| Opening tag start| `<`                                               |
-| Opening tag end  | `/>`                                              |
-| Closing tag start| `</`                                              |
-| Tag end          | `>`                                               |
-| Assign           | `=`                                               |
-| Attach start     | `{`                                               |
-| Attach end       | `}`                                               |
-| Dot              | `.`                                               |
-| String           | `"[^"\n]*"`                                       |
-| Component        | `#[A-Z][a-zA-Z]*`                                 |
-| Event            | `@[a-z][a-z]*`                                    |
-| Keyword          | `$[a-z][a-z]*`                                    |
-| Identifier       | `[a-zA-Z][a-zA-Z0-9]*(-[a-zA-Z0-9][a-zA-Z0-9]*)*` |
+| Token             | Regex                                             |
+| ----------------- | ------------------------------------------------- |
+| Left arrow        | `<`                                               |
+| Right arrow       | `>`                                               |
+| Slash             | `/`                                               |
+| Equal             | `=`                                               |
+| Left curl         | `{`                                               |
+| Rigth curl        | `}`                                               |
+| Dot               | `.`                                               |
+| Quote             | `"`                                               |
+| String            | `[^"<>{}][^"<>{}]*`                               |
+| Component         | `#[A-Z][a-zA-Z]*`                                 |
+| Event             | `@[a-z][a-z]*`                                    |
+| Keyword           | `$[a-z][a-z]*`                                    |
+| Comment           | `(!--)[^-]*(-[^-][^-]*)*(--)`                     |
+| Identifier        | `[a-zA-Z][a-zA-Z0-9]*(-[a-zA-Z0-9][a-zA-Z0-9]*)*` |
 
 > [!NOTE]
 > The regular expression below are presented in a notation containing

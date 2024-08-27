@@ -11,6 +11,7 @@ export type TokenType =
   | 'R_ARROW'
   | 'L_CURL'
   | 'R_CURL'
+  | 'COMMENT'
   | 'STR'
   | 'ID'
   | 'COMPONENT'
@@ -33,6 +34,8 @@ export type LexerError =
   | 'ILLEGAL_CHAR_IN_TXT_EXPR'
   | 'ILLEGAL_CHAR_IN_VAR_EXPR'
   | 'ILLEGAL_CHAR_IN_TXT_VAR_EXPR'
+  | 'ILLEGAL_COMMENT_START'
+  | 'UNCLOSED_COMMENT'
   | 'NOT_IMPLEMENTED';
 
 export interface Token {

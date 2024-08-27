@@ -123,6 +123,8 @@ export class Lexer {
         return this.createToken('EQUAL');
       case '/':
         return this.createToken('SLASH');
+      case '!':
+        return this.readCommentToken();
       case '#':
         return this.readComponentTokenName();
       case '@':
@@ -138,6 +140,28 @@ export class Lexer {
         }
         return this.createIllegalToken('ILLEGAL_CHAR_IN_TAG_EXPR');
     }
+  }
+
+  private readCommentToken(): Token {
+    this.syncTokenStart();
+    this.skipRange('-');
+
+    if (this.pos - this.tokenPos !== 2) {
+      return this.createIllegalToken('ILLEGAL_COMMENT_START');
+    }
+    this.skipUntilRange('-');
+
+    while (![Lexer.EOF, '-'].includes(this.nextChar())) {
+      this.pos++;
+      this.skipUntilRange('-');
+    }
+
+    if (this.readChar() === Lexer.EOF) {
+      return this.createIllegalToken('UNCLOSED_COMMENT');
+    }
+
+    const comment = this.buffer.substring(this.tokenPos + 2, this.pos - 2);
+    return this.createToken('COMMENT', comment);
   }
 
   private readComponentTokenName(): Token {
