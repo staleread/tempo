@@ -45,12 +45,12 @@
 
 Root Node
 ```
-Rn  <- Rn Tx | Tx Tg | Tg
+Rn <- Rn Tx | Tx Tg | Tg
 ```
 
 Tag
 ```
-Tg  <- Bt | Mt | Ct
+Tg <- Bt | Mt | Ct
 ```
 
 Basic tag
@@ -70,7 +70,7 @@ Mt3 <- Mt3 Sa | Mt3 Va | < comp
 
 Command tag
 ```
-Ct  <- Mp | If | Ch
+Ct <- Mp | If | Ch
 ```
 
 Map expression
@@ -95,9 +95,9 @@ Ch1 <- Ch1 Sa | Ch1 Va | < $child
 
 Attributes expressions
 ```
-Sa  <- id = St
-Va  <- prop = Vr
-Ea  <- event = Vr
+Sa <- id = St
+Va <- prop = Vr
+Ea <- event = Vr
 ```
 
 String literal
@@ -119,5 +119,5 @@ Vr1 <- Vr1 . vid | { vid
 
 Comments (ignore them)
 ```
-ε   <- comment | < comment >
+ε <- comment | < comment >
 ```
