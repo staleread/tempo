@@ -73,8 +73,7 @@ export class Lexer {
       case Lexer.EOF:
         return this.createToken('EOF');
       default:
-        if (Lexer.LETTERS.includes(char)) {
-          this.pos--;
+        if (Lexer.LOWER_LETTERS.includes(char)) {
           return this.readVarIdToken();
         }
         return this.createIllegalToken('ILLEGAL_CHAR_IN_VAR_EXPR');
@@ -95,8 +94,7 @@ export class Lexer {
       case Lexer.EOF:
         return this.createToken('EOF');
       default:
-        if (Lexer.LETTERS.includes(char)) {
-          this.pos--;
+        if (Lexer.LOWER_LETTERS.includes(char)) {
           return this.readVarIdToken();
         }
         return this.createIllegalToken('ILLEGAL_CHAR_IN_TXT_VAR_EXPR');
@@ -238,11 +236,6 @@ export class Lexer {
   }
 
   private readVarIdToken(): Token {
-    this.syncTokenStart();
-
-    if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
-      return this.createIllegalToken('VARID_MUST_START_WITH_LOWER_LETTER');
-    }
     this.skipRange(Lexer.LETTERS);
 
     const prop = this.buffer.substring(this.tokenPos, this.pos);

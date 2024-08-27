@@ -5,8 +5,8 @@ import { Token } from './lexer/lexer.types';
 const text = `
 <$map cont-ext = "" $as $revo items={ prods} ></secret>
   Hello! <!-- my first comment  -->
-  <MyTag @click={handler} .name={} !-- inline-comment -- />
->c</$map>>>`;
+  <MyTag @click={handler} .name={} .Name={Prop.prop}!-- inline-comment -- />
+>c</$map>`;
 
 const lexer = new Lexer(text);
 
