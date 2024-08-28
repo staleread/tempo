@@ -7,6 +7,7 @@ export type TokenType =
   | 'SLASH'
   | 'DOT'
   | 'EQUAL'
+  | 'ASTERIX'
   | 'L_ARROW'
   | 'R_ARROW'
   | 'L_CURL'

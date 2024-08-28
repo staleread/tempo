@@ -20,6 +20,19 @@ export class Lexer {
     this.tokenPos = pos;
   }
 
+  static getTokens(buffer: string, pos: number = 0): Token[] {
+    const lexer = new Lexer(buffer, pos);
+    const tokens: Token[] = [];
+
+    var token: Token = lexer.readToken();
+
+    while (token.type !== Lexer.EOF) {
+      tokens.push(token);
+      token = lexer.readToken();
+    }
+    return tokens;
+  }
+
   public readToken(): Token {
     switch (this.mode) {
       case 'TXT':
@@ -119,6 +132,8 @@ export class Lexer {
         return this.createToken('R_ARROW');
       case '=':
         return this.createToken('EQUAL');
+      case '*':
+        return this.createToken('ASTERIX');
       case '/':
         return this.createToken('SLASH');
       case '!':
