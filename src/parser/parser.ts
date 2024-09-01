@@ -186,6 +186,7 @@ export class Parser {
         this.logUnexpectedToken('>');
         return this.panic();
       }
+      this.index++;
       parent.children.push(node);
       return;
     }

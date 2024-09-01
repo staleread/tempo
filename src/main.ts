@@ -5,16 +5,9 @@ import { Parser } from './parser/parser';
 import { Node } from './parser/parser.types';
 
 const text = `
-<div>
-  <$map {prods} $as .prod>
-    <div class="product">
-      <!-- <h1>{prod.name}</h1> -->
-      <$if $not !-- check here -- {prod.isSecretPrice}>
-        <p>{prod.price}</p>
-      </$if>
-    </div>
-  </$map>
-</div>`;
+<$map {prods} $as .prod>
+  <Product .prod={prod} />
+</$map>`;
 
 const root: Node = {
   type: 'Rt',
