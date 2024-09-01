@@ -1,4 +1,4 @@
-import { LexerError, LexerMode, Token, TokenType } from './lexer.types';
+import { LexerMode, Token, TokenType } from './lexer.types';
 
 export class Lexer {
   static EOF = 'EOF';
@@ -9,31 +9,25 @@ export class Lexer {
   static LETTERS = Lexer.LOWER_LETTERS + Lexer.UPPER_LETTERS;
   static ALPHANUMERICS = Lexer.LETTERS + Lexer.DIGITS;
 
-  private readonly buffer: string;
   private mode: LexerMode = 'TXT';
-  private pos: number;
-  private tokenPos: number;
+  private pos = 0;
+  private tokenStart = 0;
 
-  constructor(buffer: string, pos: number = 0) {
-    this.buffer = buffer;
-    this.pos = pos;
-    this.tokenPos = pos;
-  }
+  constructor(private readonly buffer: string) {}
 
-  static getTokens(buffer: string, pos: number = 0): Token[] {
-    const lexer = new Lexer(buffer, pos);
-    const tokens: Token[] = [];
+  public readTokens(): Token[] {
+    var tokens: Token[] = [];
+    var token: Token;
 
-    var token: Token = lexer.readToken();
-
-    while (token.type !== Lexer.EOF) {
+    do {
+      token = this.readToken();
       tokens.push(token);
-      token = lexer.readToken();
-    }
+    } while (token.type !== 'eof');
+
     return tokens;
   }
 
-  public readToken(): Token {
+  private readToken(): Token {
     switch (this.mode) {
       case 'TXT':
         return this.readTextToken();
@@ -47,95 +41,93 @@ export class Lexer {
   }
 
   private readTextToken(): Token {
-    this.syncTokenStart();
+    this.tokenStart = this.pos;
     this.skipUntilRange(Lexer.STOP_CHARS);
 
-    if (this.tokenPos < this.pos) {
-      const text = this.buffer.substring(this.tokenPos, this.pos);
-      return this.createToken('STR', text);
+    if (this.tokenStart < this.pos) {
+      const text = this.buffer.substring(this.tokenStart, this.pos);
+      return this.createToken('str', text);
     }
 
     switch (this.readChar()) {
       case '{':
         this.mode = 'TXT_VAR';
-        return this.createToken('L_CURL');
+        return this.createToken('{');
       case '"':
         this.mode = 'TAG';
-        return this.createToken('QUOTE');
+        return this.createToken('"');
       case '<':
         this.mode = 'TAG';
-        return this.createToken('L_ARROW');
+        return this.createToken('<');
       case Lexer.EOF:
-        return this.createToken('EOF');
+        return this.createToken('eof');
       default:
-        return this.createIllegalToken('ILLEGAL_CHAR_IN_TXT_EXPR');
+        return this.createIllegalToken('Illegal char in txt expression');
     }
   }
 
   private readVarToken(): Token {
     this.skipSpaces();
-    this.syncTokenStart();
+    this.tokenStart = this.pos;
 
     const char = this.readChar();
     switch (char) {
       case '.':
-        return this.createToken('DOT');
+        return this.createToken('dot');
       case '}':
         this.mode = 'TAG';
-        return this.createToken('R_CURL');
+        return this.createToken('}');
       case Lexer.EOF:
-        return this.createToken('EOF');
-      default:
-        if (Lexer.LOWER_LETTERS.includes(char)) {
-          return this.readVarIdToken();
-        }
-        return this.createIllegalToken('ILLEGAL_CHAR_IN_VAR_EXPR');
+        return this.createToken('eof');
     }
+    if (Lexer.LOWER_LETTERS.includes(char)) {
+      return this.readVarIdToken();
+    }
+    return this.createIllegalToken('Illegal char in var expression');
   }
 
   private readTextVarToken(): Token {
     this.skipSpaces();
-    this.syncTokenStart();
+    this.tokenStart = this.pos;
 
     const char = this.readChar();
     switch (char) {
       case '.':
-        return this.createToken('DOT');
+        return this.createToken('dot');
       case '}':
         this.mode = 'TXT';
-        return this.createToken('R_CURL');
+        return this.createToken('}');
       case Lexer.EOF:
-        return this.createToken('EOF');
-      default:
-        if (Lexer.LOWER_LETTERS.includes(char)) {
-          return this.readVarIdToken();
-        }
-        return this.createIllegalToken('ILLEGAL_CHAR_IN_TXT_VAR_EXPR');
+        return this.createToken('eof');
     }
+    if (Lexer.LOWER_LETTERS.includes(char)) {
+      return this.readVarIdToken();
+    }
+    return this.createIllegalToken('Illegal char in txt-var expression');
   }
 
   private readTagToken(): Token {
-    this.syncTokenStart();
     this.skipSpaces();
+    this.tokenStart = this.pos;
 
     var char = this.readChar();
 
     switch (char) {
       case '{':
         this.mode = 'VAR';
-        return this.createToken('L_CURL');
+        return this.createToken('{');
       case '"':
         this.mode = 'TXT';
-        return this.createToken('QUOTE');
+        return this.createToken('"');
       case '>':
         this.mode = 'TXT';
-        return this.createToken('R_ARROW');
+        return this.createToken('>');
       case '=':
-        return this.createToken('EQUAL');
+        return this.createToken('=');
       case '*':
-        return this.createToken('ASTERIX');
+        return this.createToken('spread');
       case '/':
-        return this.createToken('SLASH');
+        return this.createToken('/');
       case '!':
         return this.readCommentToken();
       case '.':
@@ -145,7 +137,7 @@ export class Lexer {
       case '$':
         return this.readKeywordTokenName();
       case Lexer.EOF:
-        return this.createToken('EOF');
+        return this.createToken('eof');
     }
 
     if (Lexer.UPPER_LETTERS.includes(char)) {
@@ -154,15 +146,15 @@ export class Lexer {
     if (Lexer.LOWER_LETTERS.includes(char)) {
       return this.readIdToken();
     }
-    return this.createIllegalToken('ILLEGAL_CHAR_IN_TAG_EXPR');
+    return this.createIllegalToken('Illegal char in tag expression');
   }
 
   private readCommentToken(): Token {
-    this.syncTokenStart();
+    this.tokenStart = this.pos;
     this.skipRange('-');
 
-    if (this.pos - this.tokenPos !== 2) {
-      return this.createIllegalToken('ILLEGAL_COMMENT_START');
+    if (this.pos - this.tokenStart !== 2) {
+      return this.createIllegalToken('Illegal comment start');
     }
     this.skipUntilRange('-');
 
@@ -172,67 +164,78 @@ export class Lexer {
     }
 
     if (this.readChar() === Lexer.EOF) {
-      return this.createIllegalToken('UNCLOSED_COMMENT');
+      return this.createIllegalToken('Comment is not closed');
     }
 
-    const comment = this.buffer.substring(this.tokenPos + 2, this.pos - 2);
-    return this.createToken('COMMENT', comment);
+    const comment = this.buffer.substring(
+      this.tokenStart + 2,
+      this.pos - 2,
+    );
+    return this.createToken('comment', comment);
   }
 
   private readComponentTokenName(): Token {
     this.skipRange(Lexer.LETTERS);
 
-    const name = this.buffer.substring(this.tokenPos, this.pos);
-    return this.createToken('COMPONENT', name);
+    const name = this.buffer.substring(this.tokenStart, this.pos);
+    return this.createToken('comp', name);
   }
 
   private readPropToken(): Token {
-    this.syncTokenStart();
+    this.tokenStart = this.pos;
 
     if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
-      return this.createIllegalToken('PROP_MUST_START_WITH_LOWER_LETTER');
+      return this.createIllegalToken(
+        'Prop must start with lowercase letter',
+      );
     }
     this.skipRange(Lexer.LETTERS);
 
-    const prop = this.buffer.substring(this.tokenPos, this.pos);
-    return this.createToken('PROP', prop);
+    const prop = this.buffer.substring(this.tokenStart, this.pos);
+    return this.createToken('prop', prop);
   }
 
   private readEventTokenName(): Token {
-    this.syncTokenStart();
+    this.tokenStart = this.pos;
 
     if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
-      return this.createIllegalToken('EVENT_MUST_START_WITH_LOWER_LETTER');
+      return this.createIllegalToken(
+        'Event must start with lowercase letter',
+      );
     }
     this.skipRange(Lexer.LOWER_LETTERS);
 
-    const name = this.buffer.substring(this.tokenPos, this.pos);
-    return this.createToken('EVENT', name);
+    const name = this.buffer.substring(this.tokenStart, this.pos);
+    return this.createToken('event', name);
   }
 
   private readKeywordTokenName(): Token {
-    this.syncTokenStart();
+    this.tokenStart = this.pos;
 
     if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
-      return this.createIllegalToken('KEY_MUST_START_WITH_LOWER_LETTER');
+      return this.createIllegalToken(
+        'Keyword must start with lowercase letter',
+      );
     }
     this.skipRange(Lexer.LOWER_LETTERS);
 
-    const keyword = this.buffer.substring(this.tokenPos, this.pos);
+    const keyword = this.buffer.substring(this.tokenStart, this.pos);
 
     switch (keyword) {
       case 'map':
-        return this.createToken('MAP');
+        return this.createToken('$map');
       case 'if':
-        return this.createToken('IF');
+        return this.createToken('$if');
       case 'as':
-        return this.createToken('AS');
+        return this.createToken('$as');
       case 'not':
-        return this.createToken('NOT');
-      case 'child':
-        return this.createToken('CHILD');
+        return this.createToken('$not');
+      case 'tag':
+        return this.createToken('$tag');
+      case 'comp':
+        return this.createToken('$comp');
       default:
-        return this.createIllegalToken('UNKNOWN_KEYWORD');
+        return this.createIllegalToken('Unknown keyword');
     }
   }
 
@@ -241,37 +244,32 @@ export class Lexer {
 
     while (this.peekChar() === '-') {
       if (!Lexer.ALPHANUMERICS.includes(this.nextChar())) {
-        return this.createIllegalToken('ILLEGAL_CHAR_IN_ID');
+        return this.createIllegalToken('Illegal char in id');
       }
       this.skipRange(Lexer.ALPHANUMERICS);
     }
 
-    const name = this.buffer.substring(this.tokenPos, this.pos);
-    return this.createToken('ID', name);
+    const name = this.buffer.substring(this.tokenStart, this.pos);
+    return this.createToken('id', name);
   }
 
   private readVarIdToken(): Token {
     this.skipRange(Lexer.LETTERS);
 
-    const prop = this.buffer.substring(this.tokenPos, this.pos);
-    return this.createToken('VARID', prop);
-  }
-
-  private syncTokenStart() {
-    this.tokenPos = this.pos;
+    const prop = this.buffer.substring(this.tokenStart, this.pos);
+    return this.createToken('vid', prop);
   }
 
   private createToken(type: TokenType, literal?: string): Token {
-    const token: Token = { type, pos: this.tokenPos, literal };
+    const token: Token = { type, pos: this.tokenStart, literal };
     return token;
   }
 
-  private createIllegalToken(error: LexerError): Token {
+  private createIllegalToken(error: string): Token {
     const token: Token = {
       type: 'ILLEGAL',
-      pos: this.tokenPos,
-      literal: undefined,
-      error: error,
+      pos: this.tokenStart,
+      error,
     };
     return token;
   }
