@@ -6,7 +6,7 @@ export class Parser {
   public nestedRoots: Node[] = [];
 
   private token: Token;
-  private index = -1;
+  private index = 0;
   private isError = false;
 
   constructor(
@@ -16,9 +16,7 @@ export class Parser {
   ) {}
 
   public run(): boolean {
-    this.index++;
     this.skipText();
-
     this.parseTag(this.root);
     this.skipText();
 
@@ -35,6 +33,7 @@ export class Parser {
       return this.panic();
     }
     this.index++;
+    this.skipComments();
 
     switch (this.getToken().type) {
       case 'id':
@@ -70,6 +69,7 @@ export class Parser {
     node.id = this.getToken().literal!;
 
     this.index++;
+
     while (!'/>'.includes(this.getToken().type)) {
       switch (this.getToken().type) {
         case 'id':
@@ -77,6 +77,9 @@ export class Parser {
           continue;
         case 'event':
           this.parseEventAttr(node);
+          continue;
+        case 'comment':
+          this.index++;
           continue;
         default:
           this.logUnexpectedToken();
@@ -86,6 +89,8 @@ export class Parser {
 
     if (this.getToken().type === '/') {
       this.index++;
+      this.skipComments();
+
       if (this.getToken().type !== '>') {
         this.logUnexpectedToken('>');
         return this.panic();
@@ -102,6 +107,7 @@ export class Parser {
       return this.panic();
     }
     this.index++;
+    this.skipComments();
 
     while (this.getToken().type !== '/') {
       this.index--;
@@ -115,6 +121,7 @@ export class Parser {
       this.index++;
     }
     this.index++;
+    this.skipComments();
 
     if (this.getToken().type !== 'id') {
       this.logUnexpectedToken('id');
@@ -128,12 +135,14 @@ export class Parser {
       this.isError = true;
     }
     this.index++;
+    this.skipComments();
 
     if (this.getToken().type !== '>') {
       this.logUnexpectedToken('>');
       return this.panic();
     }
     this.index++;
+    this.skipComments();
 
     parent.children.push(node);
   }
@@ -149,7 +158,6 @@ export class Parser {
       this.logUnexpectedToken('comp');
       return this.panic();
     }
-
     node.id = this.getToken().literal!;
     this.index++;
 
@@ -161,6 +169,9 @@ export class Parser {
         case 'spread':
           this.parseSpreadProp(node);
           continue;
+        case 'comment':
+          this.index++;
+          continue;
         default:
           this.logUnexpectedToken();
           return this.panic();
@@ -169,6 +180,7 @@ export class Parser {
 
     if (this.getToken().type === '/') {
       this.index++;
+      this.skipComments();
 
       if (this.getToken().type !== '>') {
         this.logUnexpectedToken('>');
@@ -184,6 +196,8 @@ export class Parser {
       this.logUnexpectedToken('<');
       return this.panic();
     }
+    this.index++;
+    this.skipComments();
 
     switch (this.getToken().type) {
       case '/':
@@ -217,12 +231,14 @@ export class Parser {
       return this.panic();
     }
     this.index++;
+    this.skipComments();
 
     if (this.getToken().type !== '/') {
       this.logUnexpectedToken('/');
       return this.panic();
     }
     this.index++;
+    this.skipComments();
 
     if (this.getToken().type !== 'comp') {
       this.logUnexpectedToken('comp');
@@ -236,6 +252,7 @@ export class Parser {
       this.isError = true;
     }
     this.index++;
+    this.skipComments();
 
     if (this.getToken().type !== '>') {
       this.logUnexpectedToken('>');
@@ -257,14 +274,17 @@ export class Parser {
       return this.panic();
     }
     this.index++;
+    this.skipComments();
 
     this.parseVar(node);
+    this.skipComments();
 
     if (this.getToken().type !== '$as') {
       this.logUnexpectedToken('$as');
       return this.panic();
     }
     this.index++;
+    this.skipComments();
 
     if (this.getToken().type !== 'prop') {
       this.logUnexpectedToken('prop');
@@ -272,6 +292,7 @@ export class Parser {
     }
     node.alias = this.getToken().literal!;
     this.index++;
+    this.skipComments();
 
     if (this.getToken().type !== '>') {
       this.logUnexpectedToken('>');
@@ -288,18 +309,21 @@ export class Parser {
       return this.panic();
     }
     this.index++;
+    this.skipComments();
 
     if (this.getToken().type !== '/') {
       this.logUnexpectedToken('/');
       return this.panic();
     }
     this.index++;
+    this.skipComments();
 
     if (this.getToken().type !== '$map') {
       this.logUnexpectedToken('$map');
       return this.panic();
     }
     this.index++;
+    this.skipComments();
 
     if (this.getToken().type !== '>') {
       this.logUnexpectedToken('>');
@@ -321,11 +345,17 @@ export class Parser {
       return this.panic();
     }
     this.index++;
+    this.skipComments();
 
     node.shouldNegate = this.getToken().type === '$not';
-    if (node.shouldNegate) this.index++;
+
+    if (node.shouldNegate) {
+      this.index++;
+      this.skipComments();
+    }
 
     this.parseVar(node);
+    this.skipComments();
 
     if (this.getToken().type !== '>') {
       this.logUnexpectedToken('>');
@@ -342,18 +372,21 @@ export class Parser {
       return this.panic();
     }
     this.index++;
+    this.skipComments();
 
     if (this.getToken().type !== '/') {
       this.logUnexpectedToken('/');
       return this.panic();
     }
     this.index++;
+    this.skipComments();
 
     if (this.getToken().type !== '$if') {
       this.logUnexpectedToken('$if');
       return this.panic();
     }
     this.index++;
+    this.skipComments();
 
     if (this.getToken().type !== '>') {
       this.logUnexpectedToken('>');
@@ -385,6 +418,9 @@ export class Parser {
         case 'event':
           this.parseEventAttr(node);
           continue;
+        case 'comment':
+          this.index++;
+          continue;
         default:
           this.logUnexpectedToken();
           return this.panic();
@@ -406,6 +442,7 @@ export class Parser {
       props: [],
       children: [],
     };
+
     if (this.getToken().type !== '$comp') {
       this.logUnexpectedToken('$comp');
       return this.panic();
@@ -420,12 +457,16 @@ export class Parser {
         case 'spread':
           this.parseSpreadProp(node);
           continue;
+        case 'comment':
+          this.index++;
+          continue;
         default:
           this.logUnexpectedToken();
           return this.panic();
       }
     }
     this.index++;
+
     if (this.getToken().type !== '>') {
       this.logUnexpectedToken('>');
       return this.panic();
@@ -566,7 +607,7 @@ export class Parser {
       chunks: [],
     };
 
-    while (this.tryParseChunk(node)) {}
+    while (this.tryParseChunk(node) || this.trySkipCommentTag()) {}
 
     if (node.chunks.length > 0) {
       parent.children.push(node);
@@ -591,6 +632,32 @@ export class Parser {
     }
     parent.chunks.push(node);
     return true;
+  }
+
+  private trySkipCommentTag(): boolean {
+    var tmpIndex = this.index;
+
+    if (this.getToken().type !== '<') {
+      return false;
+    }
+    this.index++;
+
+    if (this.getToken().type !== 'comment') {
+      this.index--;
+      return false;
+    }
+    while (this.getToken().type === 'comment') { this.index++ }
+
+    if (this.getToken().type !== '>') {
+      this.index = tmpIndex;
+      return false;
+    }
+    this.index++;
+    return true;
+  }
+
+  private skipComments(): void {
+    while (this.getToken().type === 'comment') { this.index++ }
   }
 
   private parseStringLiteral(parent: Node): void {

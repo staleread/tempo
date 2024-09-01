@@ -8,8 +8,8 @@ const text = `
 <div>
   <$map {prods} $as .prod>
     <div class="product">
-      <h1>{prod.name}</h1>
-      <$if $not {prod.isSecretPrice}>
+      <!-- <h1>{prod.name}</h1> -->
+      <$if $not !-- check here -- {prod.isSecretPrice}>
         <p>{prod.price}</p>
       </$if>
     </div>
@@ -21,12 +21,12 @@ const root: Node = {
   children: [],
 };
 
-const logger = new Logger('App', text);
 const lexer = new Lexer(text);
 
 const tokens: Token[] = lexer.readTokens();
 console.log(tokens);
 
+const logger = new Logger('App', text);
 const parser = new Parser(root, tokens, logger);
 const parserResult = parser.run();
 console.log(parserResult);
