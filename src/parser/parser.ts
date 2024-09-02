@@ -3,8 +3,6 @@ import { Logger } from '../log/logger';
 import { Node, NodeType } from './parser.types';
 
 export class Parser {
-  public nestedRoots: Node[] = [];
-
   private token: Token;
   private index = 0;
   private isError = false;
