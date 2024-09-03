@@ -12,14 +12,42 @@ export class Parser {
     private readonly logger: Logger,
   ) {}
 
+  private static getExpectedTokenByNode(nodeType: NodeType): TokenType {
+    switch (nodeType) {
+      case 'Bt':
+        return 'id';
+      case 'Cp':
+        return 'comp';
+      case 'Mp':
+        return '$map';
+      case 'If':
+        return '$if';
+      case 'Ht':
+        return '$tag';
+      case 'Hc':
+        return '$comp';
+      default:
+        return 'ILLEGAL';
+    }
+  }
+
   public run(): boolean {
     this.parseText([]);
 
     if (this.token().type !== '<') {
       this.logUnexpectedToken('<');
       this.panicJumpOver('<');
+      this.index--;
     }
+
     this.parseTag(this.root.children);
+
+    var child = this.root.children[0];
+
+    if (child && child.type !== 'Bt') {
+      this.isError = true;
+      this.logger.error(child.pos, 'The root tag should be a basic tag');
+    }
     this.parseText([]);
 
     if (this.token().type !== 'eof') {
@@ -76,7 +104,7 @@ export class Parser {
       props: [],
       children: [],
     };
-    
+
     dest.push(node);
     this.parseTagMetadata(node);
     this.parseTagChildren(node);
@@ -90,19 +118,19 @@ export class Parser {
           tag.pos,
           'Command tag are not allowed as component child tag',
         );
-      return;
+        return;
       }
     }
 
-    node.children = node.children.filter(
-      (c: Node) => ['Bt', 'Cp'].includes(c.type)
+    node.children = node.children.filter((c: Node) =>
+      ['Bt', 'Cp'].includes(c.type),
     );
 
     if (node.children.length > 1) {
       this.isError = true;
       this.logger.error(
         node.children[1].pos,
-        'Component may have maximum one child tag'
+        'Component may have maximum one child tag',
       );
       return;
     }
@@ -123,7 +151,7 @@ export class Parser {
     this.parseTagChildren(node);
 
     node.children = node.children.filter((c: Node) => c.type !== 'Tx');
-    
+
     if (node.children.length < 1) {
       this.isError = true;
       this.logger.error(node.pos, 'Map must have one child tag');
@@ -133,14 +161,14 @@ export class Parser {
       this.isError = true;
       this.logger.error(
         node.children[1].pos,
-        'Map must have only one child tag'
+        'Map must have only one child tag',
       );
       return;
     }
   }
 
   private parseIfCmd(dest: Node[]): void {
-    const condition: Node = { type: 'Ic' }
+    const condition: Node = { type: 'Ic' };
 
     var node: Node = {
       type: 'If',
@@ -164,7 +192,7 @@ export class Parser {
       this.isError = true;
       this.logger.error(
         node.children[1].pos,
-        'If command must have only one child tag'
+        'If command must have only one child tag',
       );
       return;
     }
@@ -187,7 +215,7 @@ export class Parser {
       this.isError = true;
       this.logger.error(
         node.children[0].pos,
-        'Tag command must not have any children'
+        'Tag command must not have any children',
       );
       return;
     }
@@ -209,18 +237,29 @@ export class Parser {
       this.isError = true;
       this.logger.error(
         node.children[0].pos,
-        'Component command must not have any children'
+        'Component command must not have any children',
       );
       return;
     }
   }
 
   private parseTagMetadata(node: Node): void {
+    var expectedType = Parser.getExpectedTokenByNode(node.type);
+
+    if (this.token().type !== expectedType) {
+      this.isError = true;
+      this.logger.error(
+        this.token().pos,
+        `Expected ${expectedType} opening tag, got ${this.token().type}`,
+      );
+      return this.panic();
+    }
+
     if (['Bt', 'Cp'].includes(node.type)) {
       node.id = {
         pos: this.token().pos,
         str: this.token().literal!,
-      }
+      };
     }
     this.index++;
     this.skipComments();
@@ -314,7 +353,7 @@ export class Parser {
 
     while (!'eof/'.includes(this.token().type)) {
       this.index--;
-    
+
       this.parseTag(node.children);
       this.parseText(node.children);
 
@@ -347,22 +386,13 @@ export class Parser {
       return this.panicJumpOver('>');
     }
 
-    const nodeToToken: {[key: string]: TokenType}= {
-      'Bt': 'id',
-      'Cp': 'comp',
-      'Mp': '$map',
-      'If': '$if',
-      'Ht': '$tag',
-      'Hc': '$comp',
-    }
-
-    var expectedType = nodeToToken[node.type];
+    var expectedType = Parser.getExpectedTokenByNode(node.type);
 
     if (this.token().type !== expectedType) {
       this.isError = true;
       this.logger.error(
         this.token().pos,
-        `Expecting ${expectedType} closing tag, got ${this.token().type}`,
+        `Expected ${expectedType} closing tag, got ${this.token().type}`,
       );
     } else if (this.token().literal !== node.id?.str) {
       this.isError = true;
@@ -408,7 +438,7 @@ export class Parser {
     context.alias = {
       pos: this.token().pos,
       str: this.token().literal!,
-    }
+    };
 
     this.index++;
     this.skipComments();
@@ -451,7 +481,7 @@ export class Parser {
     node.id = {
       pos: this.token().pos,
       str: this.token().literal,
-    }
+    };
     this.index++;
 
     if (this.token().type !== '=') {
@@ -477,7 +507,7 @@ export class Parser {
     node.id = {
       pos: this.token().pos,
       str: this.token().literal,
-    }
+    };
     this.index++;
 
     if (this.token().type !== '=') {
@@ -503,7 +533,7 @@ export class Parser {
     node.id = {
       pos: this.token().pos,
       str: this.token().literal,
-    }
+    };
     this.index++;
 
     if (this.token().type !== '=') {
@@ -638,7 +668,9 @@ export class Parser {
       this.index--;
       return false;
     }
-    while (this.token().type === 'comment') { this.index++ }
+    while (this.token().type === 'comment') {
+      this.index++;
+    }
 
     if (this.token().type !== '>') {
       this.index = tmpIndex;
@@ -649,7 +681,9 @@ export class Parser {
   }
 
   private skipComments(): void {
-    while (this.token().type === 'comment') { this.index++ }
+    while (this.token().type === 'comment') {
+      this.index++;
+    }
   }
 
   private panicJumpOver(until: TokenType): void {
@@ -663,7 +697,9 @@ export class Parser {
 
   private panic(): void {
     this.isError = true;
-    while (!'eof/>'.includes(this.token().type)) { this.index++ }
+    while (!'eof/>'.includes(this.token().type)) {
+      this.index++;
+    }
   }
 
   private logUnexpectedToken(expectedType?: TokenType): void {
