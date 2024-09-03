@@ -312,11 +312,17 @@ export class Parser {
     this.index++;
     this.skipComments();
 
-    while (this.token().type !== '/') {
+    while (!'eof/'.includes(this.token().type)) {
       this.index--;
     
       this.parseTag(node.children);
       this.parseText(node.children);
+
+      if (this.token().type === 'eof') {
+        this.isError = true;
+        this.logger.error(node.pos, 'The tag is never closed');
+        return;
+      }
 
       if (this.token().type !== '<') {
         this.logUnexpectedToken('<');
@@ -325,6 +331,11 @@ export class Parser {
       }
       this.index++;
       this.skipComments();
+    }
+    if (this.token().type === 'eof') {
+      this.isError = true;
+      this.logger.error(node.pos, 'The tag is never closed');
+      return;
     }
     this.index++;
     this.skipComments();
@@ -345,9 +356,14 @@ export class Parser {
       'Hc': '$comp',
     }
 
-    if (this.token().type !== nodeToToken[node.type]) {
+    var expectedType = nodeToToken[node.type];
+
+    if (this.token().type !== expectedType) {
       this.isError = true;
-      this.logUnexpectedToken(this.token().type);
+      this.logger.error(
+        this.token().pos,
+        `Expecting ${expectedType} closing tag, got ${this.token().type}`,
+      );
     } else if (this.token().literal !== node.id?.str) {
       this.isError = true;
       this.logger.error(
