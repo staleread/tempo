@@ -64,10 +64,9 @@ export class Parser {
       children: [],
     };
 
+    dest.push(node);
     this.parseTagMetadata(node);
     this.parseTagChildren(node);
-
-    dest.push(node);
   }
 
   private parseCompTag(dest: Node[]): void {
@@ -78,6 +77,7 @@ export class Parser {
       children: [],
     };
     
+    dest.push(node);
     this.parseTagMetadata(node);
     this.parseTagChildren(node);
 
@@ -90,6 +90,7 @@ export class Parser {
           tag.pos,
           'Command tag are not allowed as component child tag',
         );
+      return;
       }
     }
 
@@ -103,10 +104,8 @@ export class Parser {
         node.children[1].pos,
         'Component may have maximum one child tag'
       );
-      node.children = [ node.children[0] ];
+      return;
     }
-
-    dest.push(node);
   }
 
   private parseMapCmd(dest: Node[]): void {
@@ -119,6 +118,7 @@ export class Parser {
       children: [],
     };
 
+    dest.push(node);
     this.parseMapContext(context);
     this.parseTagChildren(node);
 
@@ -137,7 +137,6 @@ export class Parser {
       );
       return;
     }
-    dest.push(node);
   }
 
   private parseIfCmd(dest: Node[]): void {
@@ -150,6 +149,7 @@ export class Parser {
       children: [],
     };
 
+    dest.push(node);
     this.parseIfCondition(condition);
     this.parseTagChildren(node);
 
@@ -168,7 +168,6 @@ export class Parser {
       );
       return;
     }
-    dest.push(node);
   }
 
   private parseTagCmd(dest: Node[]): void {
@@ -180,6 +179,7 @@ export class Parser {
       children: [],
     };
 
+    dest.push(node);
     this.parseTagMetadata(node);
     this.parseTagChildren(node);
 
@@ -191,7 +191,6 @@ export class Parser {
       );
       return;
     }
-    dest.push(node);
   }
 
   private parseCompCmd(dest: Node[]): void {
@@ -202,6 +201,7 @@ export class Parser {
       children: [],
     };
 
+    dest.push(node);
     this.parseTagMetadata(node);
     this.parseTagChildren(node);
 
@@ -213,7 +213,6 @@ export class Parser {
       );
       return;
     }
-    dest.push(node);
   }
 
   private parseTagMetadata(node: Node): void {
