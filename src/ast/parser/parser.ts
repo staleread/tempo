@@ -1,5 +1,5 @@
 import { Token, TokenType } from '../lexer/lexer.types';
-import { Logger } from '../log/logger';
+import { Logger } from '../../log/logger';
 import { Node, NodeType } from './parser.types';
 
 export class Parser {
