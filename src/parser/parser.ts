@@ -114,32 +114,6 @@ export class Parser {
     this.parseTagId(node);
     this.parseTagAttrs(node);
     this.parseTagChildren(node);
-
-    var FORBIDDEN_TAGS = ['Mp', 'If', 'Ht', 'Hc'];
-
-    for (var tag of node.children) {
-      if (FORBIDDEN_TAGS.includes(tag.type)) {
-        this.isError = true;
-        this.logger.error(
-          tag.pos,
-          'Command tag are not allowed as component child tag',
-        );
-        return;
-      }
-    }
-
-    node.children = node.children.filter((c: Node) =>
-      ['Bt', 'Cp'].includes(c.type),
-    );
-
-    if (node.children.length > 1) {
-      this.isError = true;
-      this.logger.error(
-        node.children[1].pos,
-        'Component may have maximum one child tag',
-      );
-      return;
-    }
   }
 
   private parseMapCmd(dest: Node[]): void {
