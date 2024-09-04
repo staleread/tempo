@@ -3,13 +3,14 @@ export type NodeType =
   | 'Tg'
   | 'Bt'
   | 'Cp'
-  | 'Cm'
   | 'Mp'
   | 'Mx'
   | 'If'
   | 'Ic'
   | 'Ht'
   | 'Hc'
+  | 'Ch'
+  | 'Cx'
   | 'Sa'
   | 'Ea'
   | 'Pr'
@@ -17,7 +18,7 @@ export type NodeType =
   | 'Sl'
   | 'Vr'
   | 'Tx'
-  | 'Ch';
+  | 'Ck';
 
 export type Node = {
   type: NodeType;

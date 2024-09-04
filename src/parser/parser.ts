@@ -26,6 +26,8 @@ export class Parser {
         return '$tag';
       case 'Hc':
         return '$comp';
+      case 'Ch':
+        return '$children';
       default:
         return 'ILLEGAL';
     }
@@ -77,6 +79,8 @@ export class Parser {
         return this.parseTagCmd(dest);
       case '$comp':
         return this.parseCompCmd(dest);
+      case '$children':
+        return this.parseChildrenCmd(dest);
       default:
         this.logUnexpectedToken();
         return this.panicJumpOver('>');
@@ -93,7 +97,8 @@ export class Parser {
     };
 
     dest.push(node);
-    this.parseTagMetadata(node);
+    this.parseTagId(node);
+    this.parseTagAttrs(node);
     this.parseTagChildren(node);
   }
 
@@ -106,7 +111,8 @@ export class Parser {
     };
 
     dest.push(node);
-    this.parseTagMetadata(node);
+    this.parseTagId(node);
+    this.parseTagAttrs(node);
     this.parseTagChildren(node);
 
     var FORBIDDEN_TAGS = ['Mp', 'If', 'Ht', 'Hc'];
@@ -199,16 +205,21 @@ export class Parser {
   }
 
   private parseTagCmd(dest: Node[]): void {
+    var context: Node = { type: 'Cx' };
+
     var node: Node = {
       type: 'Ht',
       pos: this.token().pos,
+      context,
       attrs: [],
       events: [],
       children: [],
     };
 
     dest.push(node);
-    this.parseTagMetadata(node);
+    this.parseTagId(node);
+    this.parseContext(node.context);
+    this.parseTagAttrs(node);
     this.parseTagChildren(node);
 
     if (node.children.length > 0) {
@@ -222,15 +233,20 @@ export class Parser {
   }
 
   private parseCompCmd(dest: Node[]): void {
+    var context: Node = { type: 'Cx' };
+
     var node: Node = {
       type: 'Hc',
       pos: this.token().pos,
+      context,
       props: [],
       children: [],
     };
 
     dest.push(node);
-    this.parseTagMetadata(node);
+    this.parseTagId(node);
+    this.parseContext(node.context);
+    this.parseTagAttrs(node);
     this.parseTagChildren(node);
 
     if (node.children.length > 0) {
@@ -243,7 +259,29 @@ export class Parser {
     }
   }
 
-  private parseTagMetadata(node: Node): void {
+  private parseChildrenCmd(dest: Node[]): void {
+    var node: Node = {
+      type: 'Ch',
+      pos: this.token().pos,
+      children: [],
+    };
+
+    dest.push(node);
+    this.parseTagId(node);
+    this.parseTagAttrs(node);
+    this.parseTagChildren(node);
+
+    if (node.children.length > 0) {
+      this.isError = true;
+      this.logger.error(
+        node.children[0].pos,
+        'Children command must not have any children',
+      );
+      return;
+    }
+  }
+
+  private parseTagId(node: Node): void {
     var expectedType = Parser.getExpectedTokenByNode(node.type);
 
     if (this.token().type !== expectedType) {
@@ -263,7 +301,9 @@ export class Parser {
     }
     this.index++;
     this.skipComments();
+  }
 
+  private parseTagAttrs(node: Node): void {
     while (!'eof/>'.includes(this.token().type)) {
       switch (this.token().type) {
         case 'id':
@@ -473,6 +513,23 @@ export class Parser {
     }
   }
 
+  private parseContext(context: Node): void {
+    if (this.token().type !== '{') {
+      this.logUnexpectedToken('{');
+      return this.panic();
+    }
+    this.parseVar(context);
+    this.skipComments();
+
+    if (this.token().type !== '$with') {
+      this.logUnexpectedToken('$with');
+      return this.panic();
+    }
+
+    this.index++;
+    this.skipComments();
+  }
+
   private parseStringAttr(dest: Node[]): void {
     var node: Node = {
       type: 'Sa',
@@ -638,7 +695,7 @@ export class Parser {
 
   private tryParseChunk(parent: Node): boolean {
     var node: Node = {
-      type: 'Ch',
+      type: 'Ck',
     };
 
     switch (this.token().type) {

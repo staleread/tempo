@@ -230,10 +230,14 @@ export class Lexer {
         return this.createToken('$as');
       case 'not':
         return this.createToken('$not');
+      case 'with':
+        return this.createToken('$with');
       case 'tag':
         return this.createToken('$tag');
       case 'comp':
         return this.createToken('$comp');
+      case 'children':
+        return this.createToken('$children');
       default:
         return this.createIllegalToken('Unknown keyword');
     }

@@ -18,6 +18,8 @@
 | $not        | `$not`                                            |
 | $tag        | `$tag`                                            |
 | $comp       | `$comp`                                           |
+| $with       | `$with`                                           |
+| $children   | `$children`                                       |
 | comp        | `[A-Z][a-zA-Z]*`                                  |
 | prop        | `.[a-z][a-zA-Z]*`                                 |
 | event       | `@[a-z][a-z]*`                                    |
@@ -43,11 +45,14 @@
 | Cp           | Component tag             |
 | Cp1          |                           |
 | Mp           | Map command               |
+| Mp           | Map command context       |
 | If           | If command                |
-| Ht           | Child tag command         |
+| Ic           | If command condition      |
+| Ht           | Gereric tag command       |
 | Ht1          |                           |
-| Hc           | Child component command   |
+| Hc           | Generic component command |
 | Hc1          |                           |
+| Cx           | Generic X command context |
 | Sa           | String attribute          |
 | Ea           | Event attribute           |
 | Pr           | Property                  |
@@ -57,7 +62,7 @@
 | Vr           | Variable literal          |
 | Vr1          |                           |
 | Tx           | Text node                 |
-| Ch           | Text chunk                |
+| Ck           | Text chunk                |
 
 ### Grammar rules
 
@@ -84,18 +89,25 @@ Cp1 Cp1 Sp
   | Cp1 Vp
   | Cp1 Pp
   | < comp
-Mp  < $map Vr $as prop > Tx Tg Tx < / $map >
-If  < $if $not Vr > Tx Tg Tx < / $if >
-  | < $if Vr > Tx Tg Tx < / $if >
+Mp  < Mx > Tx Tg Tx < / $map >
+Mx  $map Vr $as prop
+If  < Ic > Tx Tg Tx < / $if >
+Ic  $if $not Vr
+  | $if Vr
 Ht  Ht1 / >
+  | Ht1 > < / $comp >
 Ht1 Ht1 Sa
   | Ht1 Ea
-  | < $tag
+  | < $tag Cx
 Hc  Hc1 / >
+  | Hc1 > < / $comp >
 Hc1 Hc1 Sp
   | Hc1 Vp
   | Hc1 Pp
-  | < $comp
+  | < $comp Cx
+Cx  Vr $with
+Ch  < $children / >
+  | < $children > < / $children >
 Sa  id = Sl
 Ea  event = Vr
 Pr  prop = Sl
@@ -109,8 +121,8 @@ Sl1 Sl1 str
 Vr  Vr1 }
 Vr1 Vr1 dot vid
   | { vid
-Tx  Tx Ch
+Tx  Tx Ck
   | ε
-Ch  str
+Ck  str
   | Vr
 ```

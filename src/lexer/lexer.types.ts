@@ -23,8 +23,10 @@ export type TokenType =
   | '$if'
   | '$as'
   | '$not'
+  | '$with'
   | '$tag'
-  | '$comp';
+  | '$comp'
+  | '$children';
 
 export interface Token {
   type: TokenType;
