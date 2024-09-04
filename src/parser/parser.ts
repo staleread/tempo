@@ -90,6 +90,7 @@ export class Parser {
   private parseBasicTag(dest: Node[]): void {
     var node: Node = {
       type: 'Bt',
+      id: undefined,
       pos: this.token().pos,
       attrs: [],
       events: [],
@@ -104,6 +105,7 @@ export class Parser {
 
   private parseCompTag(dest: Node[]): void {
     var node: Node = {
+      id: undefined,
       type: 'Cp',
       pos: this.token().pos,
       props: [],
