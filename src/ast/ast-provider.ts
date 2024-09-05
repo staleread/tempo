@@ -1,8 +1,8 @@
 import { Logger } from '../log/logger';
-import { Token } from './lexer/lexer.types';
 import { Lexer } from './lexer/lexer';
-import { Node } from './parser/parser.types';
+import { Token } from './lexer/lexer.types';
 import { Parser } from './parser/parser';
+import { Node } from './parser/parser.types';
 
 export class AstProvider {
   private readonly cache: Map<string, Node> = new Map();
