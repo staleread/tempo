@@ -14,9 +14,9 @@ export type ComponentFunc = (
 ) => ComponentResult;
 
 export type ComponentResult = {
-  imports: ComponentFunc[];
+  imports?: ComponentFunc[];
   template: string;
-  attach: AnyObject;
+  attach?: AnyObject;
 };
 
 export type ComponentAllocationContext = {
