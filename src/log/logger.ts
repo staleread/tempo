@@ -20,7 +20,7 @@ export class Logger {
     const lineWithPointer = this.getLineWithPointer(at);
 
     console.error(
-      `${this.componentName} at line ${lineNumber}: ` +
+      `(${this.componentName}) at line ${lineNumber}: ` +
         `${message}\n${lineWithPointer}`,
     );
   }
