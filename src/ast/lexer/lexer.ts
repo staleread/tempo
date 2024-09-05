@@ -234,10 +234,10 @@ export class Lexer {
         return this.createToken('$with');
       case 'tag':
         return this.createToken('$tag');
-      case 'comp':
-        return this.createToken('$comp');
-      case 'children':
-        return this.createToken('$children');
+      case 'cmp':
+        return this.createToken('$cmp');
+      case 'inject':
+        return this.createToken('$inject');
       default:
         return this.createIllegalToken('Unknown keyword');
     }

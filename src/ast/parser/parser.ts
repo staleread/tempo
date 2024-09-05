@@ -1,5 +1,5 @@
-import { Token, TokenType } from '../lexer/lexer.types';
 import { Logger } from '../../log/logger';
+import { Token, TokenType } from '../lexer/lexer.types';
 import { Node, NodeType } from './parser.types';
 
 export class Parser {
@@ -22,12 +22,12 @@ export class Parser {
         return '$map';
       case 'If':
         return '$if';
-      case 'Ht':
+      case 'Gt':
         return '$tag';
-      case 'Hc':
-        return '$comp';
-      case 'Ch':
-        return '$children';
+      case 'Gc':
+        return '$cmp';
+      case 'Ij':
+        return '$inject';
       default:
         return 'ILLEGAL';
     }
@@ -77,10 +77,10 @@ export class Parser {
         return this.parseIfCmd(dest);
       case '$tag':
         return this.parseTagCmd(dest);
-      case '$comp':
+      case '$cmp':
         return this.parseCompCmd(dest);
-      case '$children':
-        return this.parseChildrenCmd(dest);
+      case '$inject':
+        return this.parseInjectCmd(dest);
       default:
         this.logUnexpectedToken();
         return this.panicJumpOver('>');
@@ -116,6 +116,28 @@ export class Parser {
     this.parseTagId(node);
     this.parseTagAttrs(node);
     this.parseTagChildren(node);
+
+    for (var tag of node.children) {
+      if (!['Cp', 'Gc', 'Tx'].includes(tag.type)) {
+        this.isError = true;
+        this.logger.error(
+          tag.pos,
+          'Component tag only accepts component children',
+        );
+      }
+    }
+
+    node.children = node.children.filter((c: Node) =>
+      ['Cp', 'Gc'].includes(c.type),
+    );
+
+    if (node.children.length > 1) {
+      this.isError = true;
+      this.logger.error(
+        node.children[1].pos,
+        'Component tag may have maximum one child',
+      );
+    }
   }
 
   private parseMapCmd(dest: Node[]): void {
@@ -163,20 +185,33 @@ export class Parser {
     this.parseIfCondition(condition);
     this.parseTagChildren(node);
 
-    node.children = node.children.filter((c: Node) => c.type !== 'Tx');
+    var FORBIDDEN_TAGS = ['Mp', 'If', 'Gt', 'Gc'];
+
+    for (var tag of node.children) {
+      if (FORBIDDEN_TAGS.includes(tag.type)) {
+        this.isError = true;
+        this.logger.error(
+          tag.pos,
+          'This command tag is not allowed as If cmd child tag',
+        );
+      }
+    }
+
+    node.children = node.children.filter((c: Node) =>
+      ['Bt', 'Cp'].includes(c.type),
+    );
 
     if (node.children.length < 1) {
       this.isError = true;
-      this.logger.error(node.pos, 'If command must have one child tag');
+      this.logger.error(node.pos, 'If cmd must have one child tag');
       return;
     }
     if (node.children.length > 1) {
       this.isError = true;
       this.logger.error(
         node.children[1].pos,
-        'If command must have only one child tag',
+        'The If command may have maximum one child tag',
       );
-      return;
     }
   }
 
@@ -184,7 +219,7 @@ export class Parser {
     var context: Node = { type: 'Cx' };
 
     var node: Node = {
-      type: 'Ht',
+      type: 'Gt',
       pos: this.token().pos,
       context,
       attrs: [],
@@ -197,22 +232,13 @@ export class Parser {
     this.parseContext(node.context);
     this.parseTagAttrs(node);
     this.parseTagChildren(node);
-
-    if (node.children.length > 0) {
-      this.isError = true;
-      this.logger.error(
-        node.children[0].pos,
-        'Tag command must not have any children',
-      );
-      return;
-    }
   }
 
   private parseCompCmd(dest: Node[]): void {
     var context: Node = { type: 'Cx' };
 
     var node: Node = {
-      type: 'Hc',
+      type: 'Gc',
       pos: this.token().pos,
       context,
       props: [],
@@ -225,20 +251,34 @@ export class Parser {
     this.parseTagAttrs(node);
     this.parseTagChildren(node);
 
-    if (node.children.length > 0) {
+    for (var tag of node.children) {
+      if (!['Cp', 'Gc', 'Tx'].includes(tag.type)) {
+        this.isError = true;
+        this.logger.error(
+          tag.pos,
+          'Generic component tag only accepts component children',
+        );
+      }
+    }
+
+    node.children = node.children.filter((c: Node) =>
+      ['Cp', 'Gc'].includes(c.type),
+    );
+
+    if (node.children.length > 1) {
       this.isError = true;
       this.logger.error(
-        node.children[0].pos,
-        'Component command must not have any children',
+        node.children[1].pos,
+        'Generic component tag may have maximum one child',
       );
-      return;
     }
   }
 
-  private parseChildrenCmd(dest: Node[]): void {
+  private parseInjectCmd(dest: Node[]): void {
     var node: Node = {
-      type: 'Ch',
+      type: 'Ij',
       pos: this.token().pos,
+      props: [],
       children: [],
     };
 
@@ -251,7 +291,7 @@ export class Parser {
       this.isError = true;
       this.logger.error(
         node.children[0].pos,
-        'Children command must not have any children',
+        'Inject command must not have any children',
       );
       return;
     }
@@ -641,7 +681,6 @@ export class Parser {
   private parseText(dest: Node[]): void {
     var node: Node = {
       type: 'Tx',
-      pos: this.token().pos,
       chunks: [],
     };
 
@@ -671,12 +710,13 @@ export class Parser {
 
   private tryParseChunk(parent: Node): boolean {
     var node: Node = {
-      type: 'Ck',
+      type: 'Ch',
     };
 
     switch (this.token().type) {
       case 'str':
         node.str = this.token().literal;
+        node.pos = this.token().pos;
         this.index++;
         break;
       case '{':

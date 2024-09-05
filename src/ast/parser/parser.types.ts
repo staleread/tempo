@@ -7,9 +7,9 @@ export type NodeType =
   | 'Mx'
   | 'If'
   | 'Ic'
-  | 'Ht'
-  | 'Hc'
-  | 'Ch'
+  | 'Gt'
+  | 'Gc'
+  | 'Ij'
   | 'Cx'
   | 'Sa'
   | 'Ea'
@@ -18,7 +18,7 @@ export type NodeType =
   | 'Sl'
   | 'Vr'
   | 'Tx'
-  | 'Ck';
+  | 'Ch';
 
 export type Node = {
   type: NodeType;

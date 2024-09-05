@@ -25,8 +25,8 @@ export type TokenType =
   | '$not'
   | '$with'
   | '$tag'
-  | '$comp'
-  | '$children';
+  | '$cmp'
+  | '$inject';
 
 export interface Token {
   type: TokenType;
