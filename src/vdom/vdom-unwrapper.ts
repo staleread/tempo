@@ -1,4 +1,4 @@
-import { StateAllocator } from '../state/state-allocator';
+import { StateAllocator } from '../core/state/state-allocator';
 import { ComponentUnwrapperFactory } from './component-unwrapper-factory';
 import { ComponentAllocationContext } from './vdom.types';
 import { Vnode } from './vdom.types';

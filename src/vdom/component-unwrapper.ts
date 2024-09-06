@@ -1,13 +1,13 @@
 import {
   AnyObject,
-  Attr,
+  Kvarg,
   ComponentAllocationContext,
   ComponentFunc,
   ComponentUnwrapperContext,
   Vnode,
 } from './vdom.types';
 
-import { Node } from '../ast/parser/parser.types';
+import { AstNode } from '../ast/parser/parser.types';
 import { Logger } from '../log/logger';
 import { VdomUnwrapper } from './vdom-unwrapper';
 
@@ -16,7 +16,7 @@ export class ComponentUnwrapper {
 
   constructor(
     private readonly level: number,
-    private readonly root: Node,
+    private readonly root: AstNode,
     private readonly dest: Vnode[],
     private readonly logger: Logger,
     private readonly context: ComponentUnwrapperContext,
@@ -28,7 +28,7 @@ export class ComponentUnwrapper {
     return !this.isError;
   }
 
-  private visitNode(node: Node, dest: Vnode[]): void {
+  private visitNode(node: AstNode, dest: Vnode[]): void {
     switch (node.type) {
       case 'Bt':
         return this.visitBasicTag(node, dest);
@@ -51,7 +51,7 @@ export class ComponentUnwrapper {
     }
   }
 
-  private visitBasicTag(tag: Node, dest: Vnode[]): void {
+  private visitBasicTag(tag: AstNode, dest: Vnode[]): void {
     const vnode: Vnode = {
       type: 'Tag',
       id: tag.id.str,
@@ -62,10 +62,10 @@ export class ComponentUnwrapper {
 
     dest.push(vnode);
 
-    tag.children.forEach((c: Node) => this.visitNode(c, vnode.children));
+    tag.children.forEach((c: AstNode) => this.visitNode(c, vnode.children));
   }
 
-  private visitMapTag(tag: Node, dest: Vnode[]): void {
+  private visitMapTag(tag: AstNode, dest: Vnode[]): void {
     const items = this.getVar(tag.context.value);
 
     if (!Array.isArray(items)) {
@@ -93,17 +93,17 @@ export class ComponentUnwrapper {
     this.context.attachMap.delete(alias);
   }
 
-  private visitIfTag(tag: Node, dest: Vnode[]): void {
+  private visitIfTag(tag: AstNode, dest: Vnode[]): void {
     if (this.getVar(tag.condition.value) ^ tag.condition.shouldNegate) {
       return this.visitNode(tag.children[0], dest);
     }
 
-    const skip = (tag: Node) => {
+    const skip = (tag: AstNode) => {
       if (!tag.children) {
         return;
       }
       if (tag.type !== 'Cp') {
-        tag.children.forEach((c: Node) => skip(c));
+        tag.children.forEach((c: AstNode) => skip(c));
         return;
       }
       const func = this.context.importsMap.get(tag.id.str);
@@ -129,7 +129,7 @@ export class ComponentUnwrapper {
     dest.push(blank);
   }
 
-  private visitGenericTag(tag: Node, dest: Vnode[]): void {
+  private visitGenericTag(tag: AstNode, dest: Vnode[]): void {
     const id = this.getVar(tag.context.value);
 
     if (typeof id !== 'string') {
@@ -149,10 +149,10 @@ export class ComponentUnwrapper {
     };
 
     dest.push(vnode);
-    tag.children.forEach((c: Node) => this.visitNode(c, vnode.children));
+    tag.children.forEach((c: AstNode) => this.visitNode(c, vnode.children));
   }
 
-  private visitText(tag: Node, dest: Vnode[]): void {
+  private visitText(tag: AstNode, dest: Vnode[]): void {
     const node: Vnode = {
       type: 'Text',
       str: this.getText(tag),
@@ -160,7 +160,7 @@ export class ComponentUnwrapper {
     dest.push(node);
   }
 
-  private visitCompLikeTag(tag: Node, dest: Vnode[]): void {
+  private visitCompLikeTag(tag: AstNode, dest: Vnode[]): void {
     const allocCtxWrapper: any = {
       inner: undefined,
     };
@@ -214,7 +214,7 @@ export class ComponentUnwrapper {
     this.vdomUnwrapper.unwrapComponent(dest, allocCtx, this.level + 1);
   }
 
-  private visitInjectTag(tag: Node, dest: Vnode[]): void {
+  private visitInjectTag(tag: AstNode, dest: Vnode[]): void {
     if (!this.context.childAllocCtx) {
       this.isError = true;
       return this.logger.error(
@@ -237,10 +237,10 @@ export class ComponentUnwrapper {
     );
   }
 
-  private getProps(tag: Node): AnyObject {
+  private getProps(tag: AstNode): AnyObject {
     var props: AnyObject = {};
 
-    tag.props.forEach((p: Node) => {
+    tag.props.forEach((p: AstNode) => {
       if (p.type === 'Sp') {
         const value = this.getVar(p.value);
 
@@ -266,25 +266,25 @@ export class ComponentUnwrapper {
     return props;
   }
 
-  private getAttrs(tag: Node): Attr[] {
-    const attrs: Attr[] = [];
+  private getAttrs(tag: AstNode): Kvarg[] {
+    const attrs: Kvarg[] = [];
 
-    tag.attrs.forEach((a: Node) => {
+    tag.attrs.forEach((a: AstNode) => {
       attrs.push({ id: a.id.str, value: this.getText(a.strValue) });
     });
     return attrs;
   }
 
-  private getEvents(tag: Node): Attr[] {
-    const events: Attr[] = [];
+  private getEvents(tag: AstNode): Kvarg[] {
+    const events: Kvarg[] = [];
 
-    tag.events.forEach((e: Node) => {
+    tag.events.forEach((e: AstNode) => {
       events.push({ id: e.id.str, value: this.getVar(e.value) });
     });
     return events;
   }
 
-  private getVar(tag: Node): any {
+  private getVar(tag: AstNode): any {
     var value = this.context.attachMap.get(tag.vids[0].str);
 
     if (!value && tag.vids.length > 1) {
@@ -305,7 +305,7 @@ export class ComponentUnwrapper {
     return value;
   }
 
-  private getText(tag: Node): string {
+  private getText(tag: AstNode): string {
     var str = '';
 
     for (var i = 0; i < tag.chunks.length; i++) {

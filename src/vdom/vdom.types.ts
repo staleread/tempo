@@ -6,7 +6,7 @@ export type Vnode = {
 };
 
 export type AnyObject = { [key: string]: any };
-export type Attr = { id: string; value: any };
+export type Kvarg = { id: string; value: any };
 
 export type ComponentFunc = (
   props: AnyObject,

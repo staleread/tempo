@@ -2,19 +2,19 @@ import { Logger } from '../log/logger';
 import { Lexer } from './lexer/lexer';
 import { Token } from './lexer/lexer.types';
 import { Parser } from './parser/parser';
-import { Node } from './parser/parser.types';
+import { AstNode } from './parser/parser.types';
 
 export class AstProvider {
-  private readonly cache: Map<string, Node> = new Map();
+  private readonly cache: Map<string, AstNode> = new Map();
 
-  public getAst(template: string, logger: Logger): Node {
-    const maybeResult: Node | undefined = this.cache.get(template);
+  public getAst(template: string, logger: Logger): AstNode {
+    const maybeResult: AstNode | undefined = this.cache.get(template);
 
     if (maybeResult) {
       return maybeResult;
     }
 
-    const root: Node = {
+    const root: AstNode = {
       type: 'Rt',
       children: [],
     };

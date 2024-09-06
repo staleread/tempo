@@ -1,4 +1,4 @@
-export type NodeType =
+export type AstNodeType =
   | 'Rt'
   | 'Tg'
   | 'Bt'
@@ -20,7 +20,7 @@ export type NodeType =
   | 'Tx'
   | 'Ch';
 
-export type Node = {
-  type: NodeType;
+export type AstNode = {
+  type: AstNodeType;
   [key: string]: any;
 };

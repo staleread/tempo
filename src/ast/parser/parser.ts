@@ -1,18 +1,18 @@
 import { Logger } from '../../log/logger';
 import { Token, TokenType } from '../lexer/lexer.types';
-import { Node, NodeType } from './parser.types';
+import { AstNode, AstNodeType } from './parser.types';
 
 export class Parser {
   private index = 0;
   private isError = false;
 
   constructor(
-    private readonly root: Node,
+    private readonly root: AstNode,
     private readonly tokens: Token[],
     private readonly logger: Logger,
   ) {}
 
-  private static getExpectedTokenByNode(nodeType: NodeType): TokenType {
+  private static getExpectedTokenByNode(nodeType: AstNodeType): TokenType {
     switch (nodeType) {
       case 'Bt':
         return 'id';
@@ -62,7 +62,7 @@ export class Parser {
     return !this.isError;
   }
 
-  private parseTag(dest: Node[]): void {
+  private parseTag(dest: AstNode[]): void {
     this.index++;
     this.skipComments();
 
@@ -87,8 +87,8 @@ export class Parser {
     }
   }
 
-  private parseBasicTag(dest: Node[]): void {
-    var node: Node = {
+  private parseBasicTag(dest: AstNode[]): void {
+    var node: AstNode = {
       type: 'Bt',
       id: undefined,
       pos: this.token().pos,
@@ -103,8 +103,8 @@ export class Parser {
     this.parseTagChildren(node);
   }
 
-  private parseCompTag(dest: Node[]): void {
-    var node: Node = {
+  private parseCompTag(dest: AstNode[]): void {
+    var node: AstNode = {
       id: undefined,
       type: 'Cp',
       pos: this.token().pos,
@@ -127,7 +127,7 @@ export class Parser {
       }
     }
 
-    node.children = node.children.filter((c: Node) =>
+    node.children = node.children.filter((c: AstNode) =>
       ['Cp', 'Gc'].includes(c.type),
     );
 
@@ -140,10 +140,10 @@ export class Parser {
     }
   }
 
-  private parseMapCmd(dest: Node[]): void {
-    const context: Node = { type: 'Mx' };
+  private parseMapCmd(dest: AstNode[]): void {
+    const context: AstNode = { type: 'Mx' };
 
-    var node: Node = {
+    var node: AstNode = {
       type: 'Mp',
       pos: this.token().pos,
       context,
@@ -154,7 +154,7 @@ export class Parser {
     this.parseMapContext(context);
     this.parseTagChildren(node);
 
-    node.children = node.children.filter((c: Node) => c.type !== 'Tx');
+    node.children = node.children.filter((c: AstNode) => c.type !== 'Tx');
 
     if (node.children.length < 1) {
       this.isError = true;
@@ -171,10 +171,10 @@ export class Parser {
     }
   }
 
-  private parseIfCmd(dest: Node[]): void {
-    const condition: Node = { type: 'Ic' };
+  private parseIfCmd(dest: AstNode[]): void {
+    const condition: AstNode = { type: 'Ic' };
 
-    var node: Node = {
+    var node: AstNode = {
       type: 'If',
       pos: this.token().pos,
       condition,
@@ -197,7 +197,7 @@ export class Parser {
       }
     }
 
-    node.children = node.children.filter((c: Node) =>
+    node.children = node.children.filter((c: AstNode) =>
       ['Bt', 'Cp'].includes(c.type),
     );
 
@@ -215,10 +215,10 @@ export class Parser {
     }
   }
 
-  private parseTagCmd(dest: Node[]): void {
-    var context: Node = { type: 'Cx' };
+  private parseTagCmd(dest: AstNode[]): void {
+    var context: AstNode = { type: 'Cx' };
 
-    var node: Node = {
+    var node: AstNode = {
       type: 'Gt',
       pos: this.token().pos,
       context,
@@ -234,10 +234,10 @@ export class Parser {
     this.parseTagChildren(node);
   }
 
-  private parseCompCmd(dest: Node[]): void {
-    var context: Node = { type: 'Cx' };
+  private parseCompCmd(dest: AstNode[]): void {
+    var context: AstNode = { type: 'Cx' };
 
-    var node: Node = {
+    var node: AstNode = {
       type: 'Gc',
       pos: this.token().pos,
       context,
@@ -261,7 +261,7 @@ export class Parser {
       }
     }
 
-    node.children = node.children.filter((c: Node) =>
+    node.children = node.children.filter((c: AstNode) =>
       ['Cp', 'Gc'].includes(c.type),
     );
 
@@ -274,8 +274,8 @@ export class Parser {
     }
   }
 
-  private parseInjectCmd(dest: Node[]): void {
-    var node: Node = {
+  private parseInjectCmd(dest: AstNode[]): void {
+    var node: AstNode = {
       type: 'Ij',
       pos: this.token().pos,
       props: [],
@@ -297,7 +297,7 @@ export class Parser {
     }
   }
 
-  private parseTagId(node: Node): void {
+  private parseTagId(node: AstNode): void {
     var expectedType = Parser.getExpectedTokenByNode(node.type);
 
     if (this.token().type !== expectedType) {
@@ -319,7 +319,7 @@ export class Parser {
     this.skipComments();
   }
 
-  private parseTagAttrs(node: Node): void {
+  private parseTagAttrs(node: AstNode): void {
     while (!'eof/>'.includes(this.token().type)) {
       switch (this.token().type) {
         case 'id':
@@ -381,7 +381,7 @@ export class Parser {
     }
   }
 
-  private parseTagChildren(node: Node): void {
+  private parseTagChildren(node: AstNode): void {
     if (this.token().type === 'eof') {
       return;
     }
@@ -467,7 +467,7 @@ export class Parser {
     this.index++;
   }
 
-  private parseMapContext(context: Node): void {
+  private parseMapContext(context: AstNode): void {
     this.index++;
     this.skipComments();
 
@@ -505,7 +505,7 @@ export class Parser {
     }
   }
 
-  private parseIfCondition(condition: Node): void {
+  private parseIfCondition(condition: AstNode): void {
     this.index++;
     this.skipComments();
 
@@ -529,7 +529,7 @@ export class Parser {
     }
   }
 
-  private parseContext(context: Node): void {
+  private parseContext(context: AstNode): void {
     if (this.token().type !== '{') {
       this.logUnexpectedToken('{');
       return this.panic();
@@ -546,8 +546,8 @@ export class Parser {
     this.skipComments();
   }
 
-  private parseStringAttr(dest: Node[]): void {
-    var node: Node = {
+  private parseStringAttr(dest: AstNode[]): void {
+    var node: AstNode = {
       type: 'Sa',
     };
 
@@ -572,8 +572,8 @@ export class Parser {
     dest.push(node);
   }
 
-  private parseEventAttr(dest: Node[]): void {
-    var node: Node = {
+  private parseEventAttr(dest: AstNode[]): void {
+    var node: AstNode = {
       type: 'Ea',
     };
 
@@ -598,8 +598,8 @@ export class Parser {
     dest.push(node);
   }
 
-  private parseProp(dest: Node[]): void {
-    var node: Node = {
+  private parseProp(dest: AstNode[]): void {
+    var node: AstNode = {
       type: 'Pr',
     };
 
@@ -629,8 +629,8 @@ export class Parser {
     dest.push(node);
   }
 
-  private parseSpreadProp(dest: Node[]): void {
-    var node: Node = {
+  private parseSpreadProp(dest: AstNode[]): void {
+    var node: AstNode = {
       type: 'Sp',
     };
 
@@ -650,8 +650,8 @@ export class Parser {
     dest.push(node);
   }
 
-  private parseVar(parent: Node): void {
-    var node: Node = {
+  private parseVar(parent: AstNode): void {
+    var node: AstNode = {
       type: 'Vr',
       vids: [],
     };
@@ -678,8 +678,8 @@ export class Parser {
     parent.value = node;
   }
 
-  private parseText(dest: Node[]): void {
-    var node: Node = {
+  private parseText(dest: AstNode[]): void {
+    var node: AstNode = {
       type: 'Tx',
       chunks: [],
     };
@@ -691,8 +691,8 @@ export class Parser {
     }
   }
 
-  private parseStringLiteral(parent: Node): void {
-    var node: Node = {
+  private parseStringLiteral(parent: AstNode): void {
+    var node: AstNode = {
       type: 'Sl',
       chunks: [],
     };
@@ -708,8 +708,8 @@ export class Parser {
     parent.strValue = node;
   }
 
-  private tryParseChunk(parent: Node): boolean {
-    var node: Node = {
+  private tryParseChunk(parent: AstNode): boolean {
+    var node: AstNode = {
       type: 'Ch',
     };
 
