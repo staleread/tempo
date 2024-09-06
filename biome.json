@@ -71,7 +71,7 @@
 					},
 					"style": {
 						"noArguments": "error",
-						"noVar": "off",
+						"noVar": "error",
 						"useConst": "error"
 					},
 					"suspicious": {

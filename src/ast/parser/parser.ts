@@ -44,7 +44,7 @@ export class Parser {
 
     this.parseTag(this.root.children);
 
-    var child = this.root.children[0];
+    const child = this.root.children[0];
 
     if (child && child.type !== 'Bt') {
       this.isError = true;
@@ -88,7 +88,7 @@ export class Parser {
   }
 
   private parseBasicTag(dest: AstNode[]): void {
-    var node: AstNode = {
+    const node: AstNode = {
       type: 'Bt',
       id: undefined,
       pos: this.token().pos,
@@ -104,7 +104,7 @@ export class Parser {
   }
 
   private parseCompTag(dest: AstNode[]): void {
-    var node: AstNode = {
+    const node: AstNode = {
       id: undefined,
       type: 'Cp',
       pos: this.token().pos,
@@ -117,7 +117,7 @@ export class Parser {
     this.parseTagAttrs(node);
     this.parseTagChildren(node);
 
-    for (var tag of node.children) {
+    for (const tag of node.children) {
       if (!['Cp', 'Gc', 'Tx'].includes(tag.type)) {
         this.isError = true;
         this.logger.error(
@@ -143,7 +143,7 @@ export class Parser {
   private parseMapCmd(dest: AstNode[]): void {
     const context: AstNode = { type: 'Mx' };
 
-    var node: AstNode = {
+    const node: AstNode = {
       type: 'Mp',
       pos: this.token().pos,
       context,
@@ -174,7 +174,7 @@ export class Parser {
   private parseIfCmd(dest: AstNode[]): void {
     const condition: AstNode = { type: 'Ic' };
 
-    var node: AstNode = {
+    const node: AstNode = {
       type: 'If',
       pos: this.token().pos,
       condition,
@@ -185,9 +185,9 @@ export class Parser {
     this.parseIfCondition(condition);
     this.parseTagChildren(node);
 
-    var FORBIDDEN_TAGS = ['Mp', 'If', 'Gt', 'Gc'];
+    const FORBIDDEN_TAGS = ['Mp', 'If', 'Gt', 'Gc'];
 
-    for (var tag of node.children) {
+    for (const tag of node.children) {
       if (FORBIDDEN_TAGS.includes(tag.type)) {
         this.isError = true;
         this.logger.error(
@@ -216,9 +216,9 @@ export class Parser {
   }
 
   private parseTagCmd(dest: AstNode[]): void {
-    var context: AstNode = { type: 'Cx' };
+    const context: AstNode = { type: 'Cx' };
 
-    var node: AstNode = {
+    const node: AstNode = {
       type: 'Gt',
       pos: this.token().pos,
       context,
@@ -235,9 +235,9 @@ export class Parser {
   }
 
   private parseCompCmd(dest: AstNode[]): void {
-    var context: AstNode = { type: 'Cx' };
+    const context: AstNode = { type: 'Cx' };
 
-    var node: AstNode = {
+    const node: AstNode = {
       type: 'Gc',
       pos: this.token().pos,
       context,
@@ -251,7 +251,7 @@ export class Parser {
     this.parseTagAttrs(node);
     this.parseTagChildren(node);
 
-    for (var tag of node.children) {
+    for (const tag of node.children) {
       if (!['Cp', 'Gc', 'Tx'].includes(tag.type)) {
         this.isError = true;
         this.logger.error(
@@ -275,7 +275,7 @@ export class Parser {
   }
 
   private parseInjectCmd(dest: AstNode[]): void {
-    var node: AstNode = {
+    const node: AstNode = {
       type: 'Ij',
       pos: this.token().pos,
       props: [],
@@ -298,7 +298,7 @@ export class Parser {
   }
 
   private parseTagId(node: AstNode): void {
-    var expectedType = Parser.getExpectedTokenByNode(node.type);
+    const expectedType = Parser.getExpectedTokenByNode(node.type);
 
     if (this.token().type !== expectedType) {
       this.isError = true;
@@ -443,7 +443,7 @@ export class Parser {
       return this.panicJumpOver('>');
     }
 
-    var expectedType = Parser.getExpectedTokenByNode(node.type);
+    const expectedType = Parser.getExpectedTokenByNode(node.type);
 
     if (this.token().type !== expectedType) {
       this.isError = true;
@@ -548,7 +548,7 @@ export class Parser {
   }
 
   private parseStringAttr(dest: AstNode[]): void {
-    var node: AstNode = {
+    const node: AstNode = {
       type: 'Sa',
     };
 
@@ -574,7 +574,7 @@ export class Parser {
   }
 
   private parseEventAttr(dest: AstNode[]): void {
-    var node: AstNode = {
+    const node: AstNode = {
       type: 'Ea',
     };
 
@@ -600,7 +600,7 @@ export class Parser {
   }
 
   private parseProp(dest: AstNode[]): void {
-    var node: AstNode = {
+    const node: AstNode = {
       type: 'Pr',
     };
 
@@ -631,7 +631,7 @@ export class Parser {
   }
 
   private parseSpreadProp(dest: AstNode[]): void {
-    var node: AstNode = {
+    const node: AstNode = {
       type: 'Sp',
     };
 
@@ -652,7 +652,7 @@ export class Parser {
   }
 
   private parseVar(parent: AstNode): void {
-    var node: AstNode = {
+    const node: AstNode = {
       type: 'Vr',
       vids: [],
     };
@@ -680,7 +680,7 @@ export class Parser {
   }
 
   private parseText(dest: AstNode[]): void {
-    var node: AstNode = {
+    const node: AstNode = {
       type: 'Tx',
       chunks: [],
     };
@@ -693,7 +693,7 @@ export class Parser {
   }
 
   private parseStringLiteral(parent: AstNode): void {
-    var node: AstNode = {
+    const node: AstNode = {
       type: 'Sl',
       chunks: [],
     };
@@ -731,7 +731,7 @@ export class Parser {
   }
 
   private tryParseChunk(parent: AstNode): boolean {
-    var node: AstNode = {
+    const node: AstNode = {
       type: 'Ch',
     };
 
@@ -752,7 +752,7 @@ export class Parser {
   }
 
   private trySkipCommentTag(): boolean {
-    var tmpIndex = this.index;
+    const tmpIndex = this.index;
 
     if (this.token().type !== '<') {
       return false;
@@ -798,7 +798,7 @@ export class Parser {
   }
 
   private logUnexpectedToken(expectedType?: TokenType): void {
-    var token = this.token();
+    const token = this.token();
 
     if (token.type === 'ILLEGAL') {
       this.logger.error(token.pos, token.error!);

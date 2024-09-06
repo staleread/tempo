@@ -16,8 +16,8 @@ export class Lexer {
   constructor(private readonly buffer: string) {}
 
   public readTokens(): Token[] {
-    var tokens: Token[] = [];
-    var token: Token;
+    const tokens: Token[] = [];
+    let token: Token;
 
     do {
       token = this.readToken();
@@ -110,7 +110,7 @@ export class Lexer {
     this.skipSpaces();
     this.tokenStart = this.pos;
 
-    var char = this.readChar();
+    const char = this.readChar();
 
     switch (char) {
       case '{':

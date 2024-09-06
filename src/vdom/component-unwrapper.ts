@@ -165,8 +165,8 @@ export class ComponentUnwrapper {
       inner: undefined,
     };
 
-    var currTag = tag;
-    var currCtx = allocCtxWrapper;
+    let currTag = tag;
+    let currCtx = allocCtxWrapper;
 
     while (currTag) {
       let func: ComponentFunc | undefined;
@@ -238,7 +238,7 @@ export class ComponentUnwrapper {
   }
 
   private getProps(tag: AstNode): AnyObject {
-    var props: AnyObject = {};
+    let props: AnyObject = {};
 
     tag.props.forEach((p: AstNode) => {
       if (p.type === 'Sp') {
@@ -285,14 +285,14 @@ export class ComponentUnwrapper {
   }
 
   private getVar(tag: AstNode): any {
-    var value = this.context.attachMap.get(tag.vids[0].str);
+    let value = this.context.attachMap.get(tag.vids[0].str);
 
     if (!value && tag.vids.length > 1) {
       this.isError = true;
       this.logger.error(tag.vids[0].pos, 'The value seems to be undefined');
     }
 
-    for (var i = 1; i < tag.vids.length; i++) {
+    for (let i = 1; i < tag.vids.length; i++) {
       if (!value) {
         this.isError = true;
         this.logger.error(
@@ -306,9 +306,9 @@ export class ComponentUnwrapper {
   }
 
   private getText(tag: AstNode): string {
-    var str = '';
+    let str = '';
 
-    for (var i = 0; i < tag.chunks.length; i++) {
+    for (let i = 0; i < tag.chunks.length; i++) {
       if (tag.chunks[i].str) {
         str += tag.chunks[i].str;
         continue;

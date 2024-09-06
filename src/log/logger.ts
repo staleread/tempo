@@ -7,7 +7,7 @@ export class Logger {
   ) {}
 
   protected static getLineWithCharPointer(column: number) {
-    var pointer = '^';
+    let pointer = '^';
 
     for (let i = 0; i < column; i++) {
       pointer = ' ' + pointer;
@@ -29,7 +29,7 @@ export class Logger {
     const column = this.calcCharColumn(pos);
     const errorLine = this.getLineWithCharAt(pos);
 
-    var pointer = Logger.POINTER;
+    let pointer = Logger.POINTER;
 
     for (let i = 0; i < column; i++) {
       pointer = ' ' + pointer;
@@ -38,7 +38,7 @@ export class Logger {
   }
 
   protected calcCharLine(pos: number): number {
-    var line = 0;
+    let line = 0;
 
     for (let i = 0; i < pos; i++) {
       if (this.buffer[i] === '\n') {
@@ -49,7 +49,7 @@ export class Logger {
   }
 
   protected calcCharColumn(pos: number): number {
-    var column = 0;
+    let column = 0;
 
     for (let i = 0; i < pos; i++) {
       if (this.buffer[i] !== '\n') {
