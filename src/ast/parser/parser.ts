@@ -337,6 +337,7 @@ export class Parser {
         case 'event':
           if (node.attrs) {
             this.parseEventAttr(node.attrs);
+            this.validateLastEvent(node);
             continue;
           }
           this.isError = true;
@@ -706,6 +707,25 @@ export class Parser {
     }
     this.index++;
     parent.strValue = node;
+  }
+
+  private validateLastEvent(node: AstNode): void {
+    const eventId = node.attrs.at(-1).id;
+    const ALLOWED_EVENTS = ['click', 'submit', 'change', 'input'];
+
+    if (!ALLOWED_EVENTS.includes(eventId.str)) {
+      this.isError = true;
+      return this.logger.error(eventId.pos, 'Unknown event');
+    }
+
+    if (['change', 'input'].includes(eventId.str) &&
+      node.id.str !== 'input') {
+      this.isError = true;
+      return this.logger.error(
+        eventId.pos,
+        'The event is only supported by \'input\' tags'
+      );
+    }
   }
 
   private tryParseChunk(parent: AstNode): boolean {
