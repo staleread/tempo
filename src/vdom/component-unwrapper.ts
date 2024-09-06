@@ -1,9 +1,9 @@
 import {
   AnyObject,
-  Kvarg,
   ComponentAllocationContext,
   ComponentFunc,
   ComponentUnwrapperContext,
+  Kvarg,
   Vnode,
 } from './vdom.types';
 

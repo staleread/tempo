@@ -718,12 +718,14 @@ export class Parser {
       return this.logger.error(eventId.pos, 'Unknown event');
     }
 
-    if (['change', 'input'].includes(eventId.str) &&
-      node.id.str !== 'input') {
+    if (
+      ['change', 'input'].includes(eventId.str) &&
+      node.id.str !== 'input'
+    ) {
       this.isError = true;
       return this.logger.error(
         eventId.pos,
-        'The event is only supported by \'input\' tags'
+        'The event is only supported by "input" tags',
       );
     }
   }
