@@ -24,7 +24,7 @@ export class AstProvider {
 
     const parser = new Parser(root, tokens, logger);
 
-    if (!parser.run()) {
+    if (!parser.tryParse()) {
       throw new Error('Parsing failed');
     }
     this.cache.set(template, root);

@@ -19,14 +19,17 @@ export type TokenType =
   | 'comp'
   | 'prop'
   | 'event'
-  | '$map'
+  | '$for'
+  | '$of'
   | '$if'
-  | '$as'
   | '$not'
   | '$with'
+  | '$key'
   | '$tag'
   | '$cmp'
-  | '$inject';
+  | '$inject'
+  | '$as'
+  | '$children';
 
 export interface Token {
   type: TokenType;
