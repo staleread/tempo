@@ -29,7 +29,7 @@ export type AstNode = {
     invert: boolean;
     predicate: Var;
   };
-  inject?: {
+  injection?: {
     value: Var;
     ctx: Var;
   };

@@ -1012,14 +1012,14 @@ export class Parser {
     const node: AstNode = {
       type: 'Ij',
       id,
-      inject: {
+      injection: {
         value: [],
         ctx: [],
       },
       children: [],
     };
 
-    res = this.tryParseVar(node.inject!.value) && res;
+    res = this.tryParseVar(node.injection!.value) && res;
 
     if (res && this.token().type === '$as') {
       this.index++;
@@ -1031,7 +1031,7 @@ export class Parser {
     }
 
     if (res) {
-      res = this.tryParseVar(node.inject!.ctx) && res;
+      res = this.tryParseVar(node.injection!.ctx) && res;
     }
 
     if (this.token().type !== '>') {
@@ -1063,13 +1063,13 @@ export class Parser {
       );
     } else {
       const tag = tagChildren[0];
-      const ALLOWED_TYPES: AstNodeType[] = ['Cp', 'Gc'];
+      const ALLOWED_TYPES: AstNodeType[] = ['Cp', 'Gc', 'Ij'];
 
       if (!ALLOWED_TYPES.includes(tag.type)) {
         res = false;
         this.logger.error(
           tag.id!.pos,
-          'Inject tag only supports component-like tags',
+          'Inject tag only supports component-like and inject tags',
         );
       } else {
         node.children = [tag];
