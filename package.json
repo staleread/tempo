@@ -6,6 +6,7 @@
   "author": "Mykola Ratushniak",
   "license": "ISC",
   "scripts": {
+    "start": "npx tsc && npm run check && node dist/main.js",
     "check": "npx @biomejs/biome check src/ test/",
     "fix": "npx @biomejs/biome check --write src/ test/"
   },
