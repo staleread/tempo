@@ -1,4 +1,4 @@
-import { VdomEventType } from '../ast/parser/parser.types';
+import { EventHandler, VdomEventType } from '../dom/events/event.types';
 
 export type VdomNodeType = 'Root' | 'Text' | 'Tag' | 'List' | 'Blank';
 
@@ -12,7 +12,6 @@ export type VdomNode = {
   children?: VdomNode[];
 };
 
-export type EventHandler = (e: Event) => void;
 export type TagAttr = { id: string; value: string };
 export type AnyObject = { [key: string]: any };
 

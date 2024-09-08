@@ -1,3 +1,5 @@
+import { VdomEventType } from '../../dom/events/event.types';
+
 export type AstNodeType =
   | 'Rt'
   | 'Bt'
@@ -42,8 +44,6 @@ export type StrAttr = {
   pos: number;
   strValue: InterStr;
 };
-
-export type VdomEventType = 'click' | 'submit' | 'change' | 'input';
 
 export type EventAttr = {
   event: VdomEventType;

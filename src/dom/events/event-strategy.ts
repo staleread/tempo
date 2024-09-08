@@ -1,6 +1,5 @@
-import { VdomEventType } from '../../ast/parser/parser.types';
 import { DomElem } from '../dom.types';
-import { VdomEvent } from './event.types';
+import { EventHandler, VdomEvent, VdomEventType } from './event.types';
 
 function getEventTargetElem(event: Event): DomElem | null {
   const target: EventTarget | null = event.target;

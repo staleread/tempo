@@ -1,3 +1,4 @@
+import { VdomEventType } from '../../dom/events/event.types';
 import { Logger } from '../../log/logger';
 import { Token, TokenType } from '../lexer/lexer.types';
 import {
@@ -9,7 +10,6 @@ import {
   StrAttr,
   StrPtr,
   Var,
-  VdomEventType,
 } from './parser.types';
 
 export class Parser {

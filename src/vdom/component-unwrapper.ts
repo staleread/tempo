@@ -1,9 +1,9 @@
+import { EventHandler, VdomEventType } from '../dom/events/event.types';
 import {
   AnyObject,
   ComponentFunc,
   ComponentResult,
   ComponentUnwrapperContext,
-  EventHandler,
   Injection,
   TagAttr,
   VdomNode,
@@ -20,7 +20,6 @@ import {
   StrAttr,
   StrPtr,
   Var,
-  VdomEventType,
 } from '../ast/parser/parser.types';
 import { Logger } from '../log/logger';
 import { VdomUnwrapper } from './vdom-unwrapper';
