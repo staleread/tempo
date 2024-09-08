@@ -17,7 +17,7 @@ export type AnyObject = { [key: string]: any };
 
 export type Injection = {
   contextKey: string;
-  value: any;
+  value: unknown;
 };
 
 export type ComponentFunc = (props?: AnyObject) => ComponentResult;
@@ -28,11 +28,12 @@ export type ComponentResult = {
   attach?: AnyObject;
 };
 
-export type VdomUnwrapperContext = {
+export type ComponentUnwrapperDto = {
+  level: number;
+  dest: VdomNode[];
   componentId: string;
   func: ComponentFunc;
   props: AnyObject;
-  injections: Injection[];
   unwrapChildren?: (dest: VdomNode[]) => boolean;
 };
 

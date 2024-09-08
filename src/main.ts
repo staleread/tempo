@@ -6,8 +6,8 @@ import { VdomUnwrapper } from './vdom/vdom-unwrapper';
 import {
   AnyObject,
   ComponentResult,
+  ComponentUnwrapperDto,
   VdomNode,
-  VdomUnwrapperContext,
 } from './vdom/vdom.types';
 
 function App(): ComponentResult {
@@ -44,6 +44,7 @@ function Product({ name }: { name: string }): ComponentResult {
   return { template, attach };
 }
 
+const compFunc = App;
 const sa = new StateAllocator();
 const ap = new AstProvider();
 const lf = new LoggerFactory();
@@ -55,13 +56,14 @@ const root: VdomNode = {
   children: [],
 };
 
-const ctx: VdomUnwrapperContext = {
-  componentId: App.name,
-  func: App,
+const dto: ComponentUnwrapperDto = {
+  level: 0,
+  dest: root.children!,
+  componentId: compFunc.name,
+  func: compFunc,
   props: {},
-  injections: [],
 };
 
-vu.unwrapComponent(root.children!, ctx, 0);
+vu.unwrapComponent(dto, []);
 
 console.dir(root, { depth: null });

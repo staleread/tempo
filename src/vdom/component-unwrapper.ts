@@ -4,11 +4,11 @@ import {
   ComponentFunc,
   ComponentResult,
   ComponentUnwrapperContext,
+  ComponentUnwrapperDto,
   Injection,
   TagAttr,
   VdomNode,
   VdomNodeType,
-  VdomUnwrapperContext,
 } from './vdom.types';
 
 import {
@@ -310,20 +310,21 @@ export class ComponentUnwrapper {
       return false;
     }
 
-    const ctx: VdomUnwrapperContext = {
+    const dto: ComponentUnwrapperDto = {
+      level: this.level + 1,
+      dest,
       componentId: func.name,
       func: func as ComponentFunc,
       props: {},
-      injections,
       unwrapChildren: undefined,
     };
 
-    res = this.tryGetProps(tag.props, ctx.props) && res;
+    res = this.tryGetProps(tag.props, dto.props) && res;
 
     const tagChildren = tag.children;
 
     if (tagChildren.length > 0) {
-      ctx.unwrapChildren = (dest: VdomNode[]) => {
+      dto.unwrapChildren = (dest: VdomNode[]) => {
         let success = true;
 
         for (let i = 0; i < tagChildren.length; i++) {
@@ -333,7 +334,7 @@ export class ComponentUnwrapper {
       };
     }
 
-    if (res) this.vdomUnwrapper.unwrapComponent(dest, ctx, this.level + 1);
+    if (res) this.vdomUnwrapper.unwrapComponent(dto, injections);
     return res;
   }
 
@@ -370,20 +371,21 @@ export class ComponentUnwrapper {
       return false;
     }
 
-    const ctx: VdomUnwrapperContext = {
+    const dto: ComponentUnwrapperDto = {
+      level: this.level + 1,
+      dest,
       componentId: func.name,
       func: func as ComponentFunc,
       props: {},
-      injections,
       unwrapChildren: undefined,
     };
 
-    res = this.tryGetProps(tag.props, ctx.props) && res;
+    res = this.tryGetProps(tag.props, dto.props) && res;
 
     const tagChildren = tag.children;
 
     if (tagChildren.length > 0) {
-      ctx.unwrapChildren = (dest: VdomNode[]) => {
+      dto.unwrapChildren = (dest: VdomNode[]) => {
         let success = true;
 
         for (let i = 0; i < tagChildren.length; i++) {
@@ -393,7 +395,7 @@ export class ComponentUnwrapper {
       };
     }
 
-    if (res) this.vdomUnwrapper.unwrapComponent(dest, ctx, this.level + 1);
+    if (res) this.vdomUnwrapper.unwrapComponent(dto, injections);
     return res;
   }
 
