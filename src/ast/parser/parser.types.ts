@@ -31,7 +31,7 @@ export type AstNode = {
   };
   injection?: {
     value: Var;
-    ctx: Var;
+    contextKey: Var;
   };
   props?: PropAttr[];
   children?: AstNode[];

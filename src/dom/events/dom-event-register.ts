@@ -1,5 +1,6 @@
+import { VdomEventType } from '../../ast/parser/parser.types';
 import { eventStrategy } from './event-strategy';
-import { VdomEvent, VdomEventType } from './event.types';
+import { VdomEvent } from './event.types';
 
 export class DomEventRegister {
   private oldEvents: Set<VdomEventType> = new Set();

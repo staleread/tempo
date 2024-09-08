@@ -1,321 +1,659 @@
 import {
   AnyObject,
-  ComponentAllocationContext,
   ComponentFunc,
+  ComponentResult,
   ComponentUnwrapperContext,
-  Kvarg,
-  Vnode,
+  EventHandler,
+  Injection,
+  TagAttr,
+  VdomNode,
+  VdomNodeType,
+  VdomUnwrapperContext,
 } from './vdom.types';
 
-import { AstNode } from '../ast/parser/parser.types';
+import {
+  AstNode,
+  AstNodeType,
+  EventAttr,
+  InterStr,
+  PropAttr,
+  StrAttr,
+  StrPtr,
+  Var,
+  VdomEventType,
+} from '../ast/parser/parser.types';
 import { Logger } from '../log/logger';
 import { VdomUnwrapper } from './vdom-unwrapper';
 
 export class ComponentUnwrapper {
-  isError = false;
-
   constructor(
     private readonly level: number,
     private readonly root: AstNode,
-    private readonly dest: Vnode[],
+    private readonly dest: VdomNode[],
     private readonly logger: Logger,
     private readonly context: ComponentUnwrapperContext,
     private readonly vdomUnwrapper: VdomUnwrapper,
   ) {}
 
-  public run(): boolean {
-    this.visitBasicTag(this.root.children[0], this.dest);
-    return !this.isError;
+  public tryUnwrap(): boolean {
+    if (!this.root.children) {
+      throw new Error('Incomplete root node');
+    }
+    return this.tryUnwrapBasicTag(this.root.children[0], this.dest, false);
   }
 
-  private visitNode(node: AstNode, dest: Vnode[]): void {
+  private tryUnwrapNode(node: AstNode, dest: VdomNode[]): boolean {
     switch (node.type) {
       case 'Bt':
-        return this.visitBasicTag(node, dest);
-      case 'Mp':
-        return this.visitMapTag(node, dest);
+        return this.tryUnwrapBasicTag(node, dest, false);
+      case 'Fr':
+        return this.tryUnwrapForTag(node, dest);
       case 'If':
-        return this.visitIfTag(node, dest);
+        return this.tryUnwrapIfTag(node, dest);
       case 'Gt':
-        return this.visitGenericTag(node, dest);
-      case 'Tx':
-        return this.visitText(node, dest);
+        return this.tryUnwrapGenericTag(node, dest, false);
       case 'Cp':
+        return this.tryUnwrapCompTag(node, dest, [], false);
       case 'Gc':
-        return this.visitCompLikeTag(node, dest);
+        return this.tryUnwrapGenericCompTag(node, dest, [], false);
       case 'Ij':
-        return this.visitInjectTag(node, dest);
+        return this.tryUnwrapInjectTag(node, dest, []);
+      case 'Ch':
+        return this.tryUnwrapChildrenTag(node, dest);
+      case 'Tx':
+        return this.tryUnwrapText(node, dest);
       default:
-        this.isError = true;
-        return this.logger.error(node.pos, 'Unexpected node');
+        throw new Error('Unsupported node type');
     }
   }
 
-  private visitBasicTag(tag: AstNode, dest: Vnode[]): void {
-    const vnode: Vnode = {
+  private tryUnwrapBasicTag(
+    tag: AstNode,
+    dest: VdomNode[],
+    demandKey: boolean,
+  ): boolean {
+    if (
+      !tag.id ||
+      !tag.tagArgs ||
+      !tag.children ||
+      (demandKey && !tag.key)
+    ) {
+      throw new Error('Incomplete basic tag');
+    }
+    let res = true;
+
+    const vnode: VdomNode = {
       type: 'Tag',
-      id: tag.id.str,
-      attrs: this.getAttrs(tag),
-      events: this.getEvents(tag),
+      tag: tag.id.str,
+      key: tag.key,
+      attrs: [],
+      eventsMap: new Map(),
       children: [],
     };
 
-    dest.push(vnode);
+    res = this.tryGetTagAttrs(tag.tagArgs.attrs, vnode.attrs!) && res;
+    res = this.tryGetEventsMap(tag.tagArgs.events, vnode.eventsMap!) && res;
 
-    tag.children.forEach((c: AstNode) => this.visitNode(c, vnode.children));
+    for (let i = 0; i < tag.children.length; i++) {
+      res = this.tryUnwrapNode(tag.children[i], vnode.children!) && res;
+    }
+    if (res) dest.push(vnode);
+    return res;
   }
 
-  private visitMapTag(tag: AstNode, dest: Vnode[]): void {
-    const items = this.getVar(tag.context.value);
+  private tryUnwrapForTag(tag: AstNode, dest: VdomNode[]): boolean {
+    if (!tag.id || !tag.loop || !tag.children) {
+      throw new Error('Incomplete for tag');
+    }
+    let res = true;
+    const vnode: VdomNode = {
+      type: 'List',
+      children: [],
+    };
+
+    const items: unknown = this.getVar(tag.loop.items);
 
     if (!Array.isArray(items)) {
-      this.isError = true;
-      return this.logger.error(
-        tag.context.value.vids.at(-1).pos,
+      this.logger.error(
+        tag.loop.items.at(-1)!.pos,
         'The value must be an array',
       );
+      return false;
     }
 
-    const alias = tag.context.alias.str;
+    const alias = tag.loop.alias.str;
 
     if (this.context.attachMap.has(alias)) {
-      this.isError = true;
-      return this.logger.error(
-        tag.context.alias.pos,
+      this.logger.error(
+        tag.loop.alias.pos,
         'The property already exists in attachments',
       );
+      return false;
     }
 
-    items.forEach((i: any) => {
+    for (let i = 0; i < items.length; i++) {
       this.context.attachMap.set(alias, i);
-      this.visitNode(tag.children[0], dest);
-    });
+
+      switch (tag.children[i].type) {
+        case 'Bt':
+          res =
+            this.tryUnwrapBasicTag(
+              tag.children[0]!,
+              vnode.children!,
+              true,
+            ) && res;
+          break;
+        case 'Gt':
+          res =
+            this.tryUnwrapGenericTag(
+              tag.children[0]!,
+              vnode.children!,
+              true,
+            ) && res;
+          break;
+        case 'Cp':
+          res =
+            this.tryUnwrapCompTag(
+              tag.children[0]!,
+              vnode.children!,
+              [],
+              true,
+            ) && res;
+          break;
+        case 'Gc':
+          res =
+            this.tryUnwrapGenericCompTag(
+              tag.children[0]!,
+              vnode.children!,
+              [],
+              true,
+            ) && res;
+          break;
+        default:
+          throw new Error('Invalid tag type inside loop');
+      }
+    }
     this.context.attachMap.delete(alias);
+
+    if (res) dest.push(vnode);
+    return res;
   }
 
-  private visitIfTag(tag: AstNode, dest: Vnode[]): void {
-    if (this.getVar(tag.condition.value) ^ tag.condition.shouldNegate) {
-      return this.visitNode(tag.children[0], dest);
+  private tryUnwrapIfTag(tag: AstNode, dest: VdomNode[]): boolean {
+    if (!tag.id || !tag.condition || !tag.children) {
+      throw new Error('Incomplete if tag');
     }
 
-    const skip = (tag: AstNode) => {
-      if (!tag.children) {
-        return;
-      }
-      if (tag.type !== 'Cp') {
-        tag.children.forEach((c: AstNode) => skip(c));
-        return;
-      }
-      const func = this.context.importsMap.get(tag.id.str);
-
-      if (!func) {
-        this.isError = true;
-        this.logger.error(
-          tag.pos,
-          'Cannot find the import for the component',
-        );
-      } else if (typeof func !== 'function') {
-        this.isError = true;
-        this.logger.error(
-          tag.pos,
-          `Expected a component function, got ${typeof func}`,
-        );
-      }
-      return this.vdomUnwrapper.skipComponent(func!.name, this.level + 1);
-    };
-    skip(tag.children[0]);
-
-    const blank: Vnode = { type: 'Blank' };
-    dest.push(blank);
-  }
-
-  private visitGenericTag(tag: AstNode, dest: Vnode[]): void {
-    const id = this.getVar(tag.context.value);
-
-    if (typeof id !== 'string') {
-      this.isError = true;
+    let condition: unknown = this.getVar(tag.condition.predicate);
+    if (typeof condition !== 'boolean') {
       this.logger.error(
-        tag.context.value.vids.at(-1).pos,
-        'Tag id must be a string',
+        tag.condition.predicate.at(-1)!.pos,
+        `The value must be a boolean, got ${typeof condition}`,
       );
+      return false;
     }
 
-    const vnode: Vnode = {
+    condition = tag.condition.invert ? !condition : condition;
+
+    let res = true;
+
+    const skip = (node: AstNode) => {
+      if (!node.children) {
+        return;
+      }
+      if (node.type === 'Cp') {
+        res = this.trySkipCompTag(node) && res;
+        return;
+      }
+      if (node.type === 'Gc') {
+        res = this.trySkipGenericCompTag(node) && res;
+        return;
+      }
+      node.children.forEach((c: AstNode) => skip(c));
+    };
+
+    if (!condition) {
+      skip(tag.children[0]);
+
+      const blank: VdomNode = { type: 'Blank' };
+      if (res) dest.push(blank);
+      return res;
+    }
+
+    switch (tag.children[0].type) {
+      case 'Bt':
+        res = this.tryUnwrapBasicTag(tag.children[0]!, dest, true) && res;
+        break;
+      case 'Gt':
+        res = this.tryUnwrapGenericTag(tag.children[0]!, dest, true) && res;
+        break;
+      case 'Cp':
+        res =
+          this.tryUnwrapCompTag(tag.children[0]!, dest, [], true) && res;
+        break;
+      case 'Gc':
+        res =
+          this.tryUnwrapGenericCompTag(tag.children[0]!, dest, [], true) &&
+          res;
+        break;
+      default:
+        throw new Error('Invalid tag type inside if tag');
+    }
+    return res;
+  }
+
+  private tryUnwrapGenericTag(
+    tag: AstNode,
+    dest: VdomNode[],
+    demandKey: boolean,
+  ): boolean {
+    if (
+      !tag.id ||
+      !tag.tagName ||
+      !tag.tagArgs ||
+      !tag.children ||
+      (demandKey && !tag.key)
+    ) {
+      throw new Error('Incomplete generic tag');
+    }
+    let res = true;
+    const tagName: unknown = this.getVar(tag.tagName);
+
+    if (typeof tagName !== 'string') {
+      this.logger.error(tag.tagName.at(-1)!.pos, 'Tag id must be a string');
+      return false;
+    }
+
+    const vnode: VdomNode = {
       type: 'Tag',
-      id,
-      attrs: this.getAttrs(tag),
-      events: this.getEvents(tag),
+      tag: tagName,
+      attrs: [],
+      eventsMap: new Map(),
       children: [],
     };
 
-    dest.push(vnode);
-    tag.children.forEach((c: AstNode) => this.visitNode(c, vnode.children));
+    res = this.tryGetTagAttrs(tag.tagArgs.attrs, vnode.attrs!) && res;
+    res = this.tryGetEventsMap(tag.tagArgs.events, vnode.eventsMap!) && res;
+
+    for (let i = 0; i < tag.children.length; i++) {
+      res = this.tryUnwrapNode(tag.children[i], vnode.children!) && res;
+    }
+    if (res) dest.push(vnode);
+    return res;
   }
 
-  private visitText(tag: AstNode, dest: Vnode[]): void {
-    const node: Vnode = {
+  private tryUnwrapCompTag(
+    tag: AstNode,
+    dest: VdomNode[],
+    injections: Injection[],
+    demandKey: boolean,
+  ): boolean {
+    if (!tag.id || !tag.props || !tag.children || (demandKey && !tag.key)) {
+      throw new Error('Incomplete component tag');
+    }
+
+    let res = true;
+    const func: ComponentFunc | undefined = this.context.importsMap.get(
+      tag.id.str,
+    );
+
+    if (!func) {
+      this.logger.error(
+        tag.id.pos,
+        'Cannot find the component function in imports',
+      );
+      return false;
+    } else if (typeof func !== 'function' || func.length !== 1) {
+      this.logger.error(
+        tag.id.pos,
+        `Expected a component function, got ${typeof func}`,
+      );
+      return false;
+    }
+
+    const ctx: VdomUnwrapperContext = {
+      componentId: func.name,
+      func: func as ComponentFunc,
+      props: {},
+      injections,
+      unwrapChildren: undefined,
+    };
+
+    res = this.tryGetProps(tag.props, ctx.props) && res;
+
+    const tagChildren = tag.children;
+
+    if (tagChildren.length > 0) {
+      ctx.unwrapChildren = (dest: VdomNode[]) => {
+        let success = true;
+
+        for (let i = 0; i < tagChildren.length; i++) {
+          success = this.tryUnwrapNode(tagChildren[i], dest) && success;
+        }
+        return success;
+      };
+    }
+
+    if (res) this.vdomUnwrapper.unwrapComponent(dest, ctx, this.level + 1);
+    return res;
+  }
+
+  private tryUnwrapGenericCompTag(
+    tag: AstNode,
+    dest: VdomNode[],
+    injections: Injection[],
+    demandKey: boolean,
+  ): boolean {
+    if (
+      !tag.id ||
+      !tag.props ||
+      !tag.children ||
+      !tag.compFunc ||
+      (demandKey && !tag.key)
+    ) {
+      throw new Error('Incomplete generic component tag');
+    }
+
+    let res = true;
+    const func: unknown = this.getVar(tag.compFunc);
+
+    if (!func) {
+      this.logger.error(
+        tag.id.pos,
+        'Cannot find the component function in attachemnts',
+      );
+      return false;
+    } else if (typeof func !== 'function' || func.length !== 1) {
+      this.logger.error(
+        tag.id.pos,
+        `Expected a component function, got ${typeof func}`,
+      );
+      return false;
+    }
+
+    const ctx: VdomUnwrapperContext = {
+      componentId: func.name,
+      func: func as ComponentFunc,
+      props: {},
+      injections,
+      unwrapChildren: undefined,
+    };
+
+    res = this.tryGetProps(tag.props, ctx.props) && res;
+
+    const tagChildren = tag.children;
+
+    if (tagChildren.length > 0) {
+      ctx.unwrapChildren = (dest: VdomNode[]) => {
+        let success = true;
+
+        for (let i = 0; i < tagChildren.length; i++) {
+          success = this.tryUnwrapNode(tagChildren[i], dest) && success;
+        }
+        return success;
+      };
+    }
+
+    if (res) this.vdomUnwrapper.unwrapComponent(dest, ctx, this.level + 1);
+    return res;
+  }
+
+  private tryUnwrapInjectTag(
+    tag: AstNode,
+    dest: VdomNode[],
+    injections: Injection[],
+  ): boolean {
+    if (!tag.id || !tag.injection || !tag.children) {
+      throw new Error('Incomplete injection tag');
+    }
+
+    let res = true;
+
+    const value: unknown = this.getVar(tag.injection.value);
+
+    if (!value) {
+      this.logger.error(
+        tag.injection.value.at(-1)!.pos,
+        'Cannot find context value in attachments',
+      );
+      return false;
+    }
+
+    const contextKey: unknown = this.getVar(tag.injection.contextKey);
+
+    if (!contextKey) {
+      this.logger.error(
+        tag.injection.contextKey.at(-1)!.pos,
+        'Cannot find context key in attachments',
+      );
+      return false;
+    } else if (typeof contextKey !== 'string') {
+      this.logger.error(
+        tag.injection.contextKey.at(-1)!.pos,
+        'Context key should be a string',
+      );
+      return false;
+    }
+
+    injections.push({ contextKey, value });
+
+    switch (tag.children[0]!.type) {
+      case 'Cp':
+        res =
+          this.tryUnwrapCompTag(
+            tag.children[0]!,
+            dest,
+            injections,
+            false,
+          ) && res;
+        return res;
+      case 'Gc':
+        res =
+          this.tryUnwrapGenericCompTag(
+            tag.children[0]!,
+            dest,
+            injections,
+            false,
+          ) && res;
+        return res;
+      case 'Ij':
+        res =
+          this.tryUnwrapInjectTag(tag.children[0]!, dest, injections) &&
+          res;
+        return res;
+      default:
+        throw new Error('Invalid tag inside injection tag');
+    }
+  }
+
+  private tryUnwrapChildrenTag(tag: AstNode, dest: VdomNode[]): boolean {
+    if (!tag.id) {
+      throw new Error('Incomplete children tag');
+    }
+    if (this.context.unwrapChildren) {
+      return this.context.unwrapChildren(dest);
+    }
+    return true;
+  }
+
+  private tryUnwrapText(tag: AstNode, dest: VdomNode[]): boolean {
+    if (!tag.text) {
+      throw new Error('Incomplete text node');
+    }
+    const node: VdomNode = {
       type: 'Text',
-      str: this.getText(tag),
+      text: this.getText(tag.text),
     };
     dest.push(node);
+    return true;
   }
 
-  private visitCompLikeTag(tag: AstNode, dest: Vnode[]): void {
-    const allocCtxWrapper: any = {
-      inner: undefined,
-    };
-
-    let currTag = tag;
-    let currCtx = allocCtxWrapper;
-
-    while (currTag) {
-      let func: ComponentFunc | undefined;
-
-      if (currTag.type === 'Gc') {
-        func = this.getVar(currTag.context.value);
-      } else {
-        func = this.context.importsMap.get(currTag.id.str);
-      }
-
-      if (!func) {
-        this.isError = true;
-        const expectedSource =
-          currTag.type === 'Gc' ? 'attachments' : 'imports';
-        return this.logger.error(
-          tag.pos,
-          `Cannot find the component funtion in ${expectedSource}`,
-        );
-      } else if (typeof func !== 'function') {
-        this.isError = true;
-        return this.logger.error(
-          tag.pos,
-          `Expected a component function, got ${typeof func}`,
-        );
-      }
-
-      const ctx: ComponentAllocationContext = {
-        id: func.name,
-        func: func!,
-        props: this.getProps(currTag),
-        ctx: this.context.ctx,
-        inner: undefined,
-      };
-
-      currTag = currTag.children[0];
-      currCtx.inner = ctx;
-      currCtx = currCtx.inner;
+  private trySkipCompTag(tag: AstNode): boolean {
+    if (!tag.id || !tag.props || !tag.children) {
+      throw new Error('Incomplete component tag');
     }
 
-    const allocCtx: ComponentAllocationContext = allocCtxWrapper.inner;
-
-    if (this.isError) {
-      return;
-    }
-    this.vdomUnwrapper.unwrapComponent(dest, allocCtx, this.level + 1);
-  }
-
-  private visitInjectTag(tag: AstNode, dest: Vnode[]): void {
-    if (!this.context.childAllocCtx) {
-      this.isError = true;
-      return this.logger.error(
-        tag.pos,
-        'The component has no children passed from outside',
-      );
-    }
-    this.context.childAllocCtx.ctx = {
-      ...this.context.childAllocCtx.ctx,
-      ...this.getProps(tag),
-    };
-
-    if (this.isError) {
-      return;
-    }
-    this.vdomUnwrapper.unwrapComponent(
-      dest,
-      this.context.childAllocCtx,
-      this.level + 1,
+    const res = true;
+    const func: ComponentFunc | undefined = this.context.importsMap.get(
+      tag.id.str,
     );
+
+    if (!func) {
+      this.logger.error(
+        tag.id.pos,
+        'Cannot find the component function in imports',
+      );
+      return false;
+    } else if (typeof func !== 'function' || func.length !== 1) {
+      this.logger.error(
+        tag.id.pos,
+        `Expected a component function, got ${typeof func}`,
+      );
+      return false;
+    }
+    if (res) this.vdomUnwrapper.skipComponent(func.name, this.level + 1);
+    return res;
   }
 
-  private getProps(tag: AstNode): AnyObject {
-    let props: AnyObject = {};
+  private trySkipGenericCompTag(tag: AstNode): boolean {
+    if (!tag.id || !tag.props || !tag.children || !tag.compFunc) {
+      throw new Error('Incomplete generic component tag');
+    }
 
-    tag.props.forEach((p: AstNode) => {
-      if (p.type === 'Sp') {
-        const value = this.getVar(p.value);
+    const res = true;
+    const func: unknown = this.getVar(tag.compFunc);
 
-        if (!value || typeof value[Symbol.iterator] !== 'function') {
-          this.isError = true;
-          this.logger.error(
-            p.value.vids.at(-1).pos,
-            'The value must be iterable',
-          );
+    if (!func) {
+      this.logger.error(
+        tag.id.pos,
+        'Cannot find the component function in attachemnts',
+      );
+      return false;
+    } else if (typeof func !== 'function' || func.length !== 1) {
+      this.logger.error(
+        tag.id.pos,
+        `Expected a component function, got ${typeof func}`,
+      );
+      return false;
+    }
+
+    if (res) this.vdomUnwrapper.skipComponent(func.name, this.level + 1);
+    return res;
+  }
+
+  private tryGetProps(tagProps: PropAttr[], dest: AnyObject): boolean {
+    for (let i = 0; i < tagProps.length; i++) {
+      const prop: PropAttr = tagProps[i];
+
+      if (prop.isSpread) {
+        if (!prop.value) {
+          throw new Error('Incomplete spread property');
         }
-        props = { ...props, ...value };
-        return;
-      }
-      const id: string = p.id.str;
+        const value: unknown = this.getVar(prop.value);
 
-      if (p.strValue) {
-        props[id] = this.getText(p.strValue);
-        return;
-      }
-      props[id] = this.getVar(p.value);
-    });
-
-    return props;
-  }
-
-  private getAttrs(tag: AstNode): Kvarg[] {
-    const attrs: Kvarg[] = [];
-
-    tag.attrs.forEach((a: AstNode) => {
-      attrs.push({ id: a.id.str, value: this.getText(a.strValue) });
-    });
-    return attrs;
-  }
-
-  private getEvents(tag: AstNode): Kvarg[] {
-    const events: Kvarg[] = [];
-
-    tag.events.forEach((e: AstNode) => {
-      events.push({ id: e.id.str, value: this.getVar(e.value) });
-    });
-    return events;
-  }
-
-  private getVar(tag: AstNode): any {
-    let value = this.context.attachMap.get(tag.vids[0].str);
-
-    if (!value && tag.vids.length > 1) {
-      this.isError = true;
-      this.logger.error(tag.vids[0].pos, 'The value seems to be undefined');
-    }
-
-    for (let i = 1; i < tag.vids.length; i++) {
-      if (!value) {
-        this.isError = true;
-        this.logger.error(
-          tag.vids[0].pos,
-          'The value seems to be undefined',
-        );
-      }
-      value = value[tag.vids[i]];
-    }
-    return value;
-  }
-
-  private getText(tag: AstNode): string {
-    let str = '';
-
-    for (let i = 0; i < tag.chunks.length; i++) {
-      if (tag.chunks[i].str) {
-        str += tag.chunks[i].str;
+        if (typeof value !== 'object' || value === null) {
+          this.logger.error(
+            prop.value.at(-1)!.pos,
+            'The spread prop value must be an object',
+          );
+          return false;
+        }
+        dest = { ...dest, ...value };
         continue;
       }
-      const value = this.getVar(tag.chunks[i].value);
-      str += value.toString();
+      const name: string = prop.prop;
+
+      if (prop.strValue) {
+        dest[name] = this.getText(prop.strValue);
+        continue;
+      }
+      if (!prop.value) {
+        throw new Error('Incomplete property');
+      }
+      dest[name] = this.getVar(prop.value);
+    }
+    return true;
+  }
+
+  private tryGetTagAttrs(attrs: StrAttr[], dest: TagAttr[]): boolean {
+    for (let i = 0; i < attrs.length; i++) {
+      dest.push({
+        id: attrs[i].attr,
+        value: this.getText(attrs[i].strValue),
+      });
+    }
+    return true;
+  }
+
+  private tryGetEventsMap(
+    events: EventAttr[],
+    dest: Map<VdomEventType, EventHandler>,
+  ): boolean {
+    for (let i = 0; i < events.length; i++) {
+      const handler: unknown = this.getVar(events[i].handler);
+
+      if (!handler) {
+        this.logger.error(
+          events[i].handler.at(-1)!.pos,
+          'Cannot find event handler in attachments',
+        );
+        return false;
+      } else if (typeof handler !== 'function' || handler.length !== 1) {
+        this.logger.error(
+          events[i].handler.at(-1)!.pos,
+          `Expected an event handler, got ${typeof handler}`,
+        );
+        return false;
+      }
+      dest.set(events[i].event, handler as EventHandler);
+    }
+    return true;
+  }
+
+  private getText(interStr: InterStr): string {
+    let str = '';
+
+    for (let i = 0; i < interStr.length; i++) {
+      const chunk: StrPtr | Var = interStr[i];
+
+      if ('str' in chunk) {
+        str += chunk.str;
+        continue;
+      }
+      const value: unknown = this.getVar(chunk);
+
+      switch (typeof value) {
+        case 'object':
+          str += '{object}';
+          continue;
+        case 'function':
+          str += '{function}';
+          continue;
+        default:
+          str += value;
+          continue;
+      }
     }
     return str;
+  }
+
+  private getVar(value: Var): unknown {
+    let result: unknown = this.context.attachMap.get(value[0].str);
+
+    if (value.length === 1) {
+      return result;
+    }
+
+    for (let i = 1; i < value.length; i++) {
+      if (!result) {
+        this.logger.error(
+          value[i - 1].pos,
+          'The value seems to be undefined',
+        );
+        return result;
+      }
+      result = (result as AnyObject)[value[i].str];
+    }
+    return result;
   }
 }

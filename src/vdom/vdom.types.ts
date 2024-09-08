@@ -1,17 +1,27 @@
-export type VnodeType = 'Root' | 'Text' | 'Tag' | 'Blank';
+import { VdomEventType } from '../ast/parser/parser.types';
 
-export type Vnode = {
-  type: VnodeType;
-  [key: string]: any;
+export type VdomNodeType = 'Root' | 'Text' | 'Tag' | 'List' | 'Blank';
+
+export type VdomNode = {
+  type: VdomNodeType;
+  text?: string;
+  key?: any;
+  tag?: string;
+  attrs?: TagAttr[];
+  eventsMap?: Map<VdomEventType, EventHandler>;
+  children?: VdomNode[];
 };
 
+export type EventHandler = (e: Event) => void;
+export type TagAttr = { id: string; value: string };
 export type AnyObject = { [key: string]: any };
-export type Kvarg = { id: string; value: any };
 
-export type ComponentFunc = (
-  props: AnyObject,
-  ctx: AnyObject,
-) => ComponentResult;
+export type Injection = {
+  contextKey: string;
+  value: any;
+};
+
+export type ComponentFunc = (props?: AnyObject) => ComponentResult;
 
 export type ComponentResult = {
   imports?: ComponentFunc[];
@@ -19,17 +29,16 @@ export type ComponentResult = {
   attach?: AnyObject;
 };
 
-export type ComponentAllocationContext = {
-  id: string;
+export type VdomUnwrapperContext = {
+  componentId: string;
   func: ComponentFunc;
   props: AnyObject;
-  ctx: AnyObject;
-  inner?: ComponentAllocationContext;
+  injections: Injection[];
+  unwrapChildren?: (dest: VdomNode[]) => boolean;
 };
 
 export type ComponentUnwrapperContext = {
   importsMap: Map<string, ComponentFunc>;
-  attachMap: Map<string, any>;
-  ctx: AnyObject;
-  childAllocCtx?: ComponentAllocationContext;
+  attachMap: Map<string, unknown>;
+  unwrapChildren?: (dest: VdomNode[]) => boolean;
 };

@@ -1,5 +1,6 @@
+import { VdomEventType } from '../../ast/parser/parser.types';
 import { DomElem } from '../dom.types';
-import { VdomEvent, VdomEventType } from './event.types';
+import { VdomEvent } from './event.types';
 
 function getEventTargetElem(event: Event): DomElem | null {
   const target: EventTarget | null = event.target;
@@ -14,7 +15,7 @@ export const eventStrategy: Record<VdomEventType, VdomEvent> = {
       let domElem: DomElem | null = getEventTargetElem(event);
 
       while (domElem?._ref && !event.defaultPrevented) {
-        domElem._ref.events['click']?.(event);
+        domElem._ref.eventsMap!.get('click')?.(event);
         domElem = domElem.parentElement;
       }
     },
@@ -25,8 +26,8 @@ export const eventStrategy: Record<VdomEventType, VdomEvent> = {
       let domElem: DomElem | null = getEventTargetElem(event);
 
       while (domElem?._ref && !event.defaultPrevented) {
-        if (domElem._ref.id === 'form') {
-          domElem._ref.events['submit']?.(event);
+        if (domElem._ref.tag === 'form') {
+          domElem._ref.eventsMap!.get('submit')?.(event);
         }
         domElem = domElem.parentElement;
       }
@@ -38,7 +39,7 @@ export const eventStrategy: Record<VdomEventType, VdomEvent> = {
       const domElem: DomElem | null = getEventTargetElem(event);
       if (!domElem?._ref) return;
 
-      domElem._ref.events['change']?.(event);
+      domElem._ref.eventsMap!.get('change')?.(event);
     },
   },
   input: {
@@ -47,7 +48,7 @@ export const eventStrategy: Record<VdomEventType, VdomEvent> = {
       const domElem: DomElem | null = getEventTargetElem(event);
       if (!domElem?._ref) return;
 
-      domElem._ref.events['input']?.(event);
+      domElem._ref.eventsMap!.get('input')?.(event);
     },
   },
 };

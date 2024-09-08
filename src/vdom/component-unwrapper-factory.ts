@@ -3,11 +3,11 @@ import { LoggerFactory } from '../log/logger-factory';
 import { ComponentUnwrapper } from './component-unwrapper';
 import { VdomUnwrapper } from './vdom-unwrapper';
 import {
-  ComponentAllocationContext,
   ComponentFunc,
   ComponentResult,
   ComponentUnwrapperContext,
-  Vnode,
+  VdomNode,
+  VdomUnwrapperContext,
 } from './vdom.types';
 
 export class ComponentUnwrapperFactory {
@@ -18,16 +18,13 @@ export class ComponentUnwrapperFactory {
 
   public createComponentUnwrapper(
     level: number,
-    dest: Vnode[],
-    allocCtx: ComponentAllocationContext,
+    dest: VdomNode[],
+    ctx: VdomUnwrapperContext,
     vdomUnwrapper: VdomUnwrapper,
   ): ComponentUnwrapper {
-    const result: ComponentResult = allocCtx.func(
-      allocCtx.props,
-      allocCtx.ctx,
-    );
+    const result: ComponentResult = ctx.func(ctx.props);
     const logger = this.loggerFactory.createLogger(
-      allocCtx.id,
+      ctx.componentId,
       result.template,
     );
     const ast = this.astProvider.getAst(result.template, logger);
@@ -43,8 +40,7 @@ export class ComponentUnwrapperFactory {
     const context: ComponentUnwrapperContext = {
       importsMap,
       attachMap,
-      ctx: allocCtx.ctx,
-      childAllocCtx: allocCtx.inner,
+      unwrapChildren: ctx.unwrapChildren,
     };
 
     return new ComponentUnwrapper(

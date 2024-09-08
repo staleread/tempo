@@ -1,5 +1,4 @@
-export type VdomEventType = 'click' | 'submit' | 'input' | 'change';
-
+import { EventHandler } from '../../vdom/vdom.types';
 export type VdomEvent = {
   nativeEventName: string;
   handler: (event: Event) => void;

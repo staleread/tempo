@@ -1014,7 +1014,7 @@ export class Parser {
       id,
       injection: {
         value: [],
-        ctx: [],
+        contextKey: [],
       },
       children: [],
     };
@@ -1031,7 +1031,7 @@ export class Parser {
     }
 
     if (res) {
-      res = this.tryParseVar(node.injection!.ctx) && res;
+      res = this.tryParseVar(node.injection!.contextKey) && res;
     }
 
     if (this.token().type !== '>') {
