@@ -238,13 +238,6 @@ export class Parser {
     while (!'eof/>'.includes(this.token().type)) {
       switch (this.token().type) {
         case '$map':
-          if (node.type === 'Gt') {
-            this.logger.error(
-              node.id!.pos,
-              'Generic tag does not support keymaps',
-            );
-            return false;
-          }
           if (hasIfOrKeymaps) {
             this.logger.error(
               node.id!.pos,
@@ -276,10 +269,10 @@ export class Parser {
           };
           res = this.tryParseCondition(node.condition!) && res;
           continue;
-        case '$set':
+        case '$use':
           this.logger.error(
             this.token().pos,
-            '$set statement is not supported in tag-like tags',
+            '$use statement is not supported in tag-like tags',
           );
           this.panicInsideTag();
           return false;
@@ -308,13 +301,6 @@ export class Parser {
     while (!'eof/>'.includes(this.token().type)) {
       switch (this.token().type) {
         case '$map':
-          if (node.type === 'Gc') {
-            this.logger.error(
-              node.id!.pos,
-              'Generic component does not support keymaps',
-            );
-            return false;
-          }
           if (hasIfOrKeymaps) {
             this.logger.error(
               node.id!.pos,
@@ -345,7 +331,7 @@ export class Parser {
           };
           res = this.tryParseCondition(node.condition!) && res;
           break;
-        case '$set':
+        case '$use':
           node.injections = [];
           res = this.tryParseInjections(node.injections!) && res;
           break;
@@ -559,7 +545,7 @@ export class Parser {
           res = false;
           this.logger.error(
             pos,
-            'The event is only supported by "input" tags',
+            'The event is only supported by explicit <input> tag',
           );
         }
         break;

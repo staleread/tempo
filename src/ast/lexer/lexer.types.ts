@@ -26,7 +26,7 @@ export type TokenType =
   | '$not'
   | '$tag'
   | '$cmp'
-  | '$set'
+  | '$use'
   | '$as'
   | '$children';
 

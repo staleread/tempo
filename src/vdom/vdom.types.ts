@@ -5,8 +5,9 @@ export type VdomNodeType =
   | 'Root'
   | 'Text'
   | 'Tag'
-  | 'Generic'
+  | 'GenTag'
   | 'Keymap'
+  | 'GenKeymap'
   | 'Blank';
 
 export type VdomNode = {
@@ -14,6 +15,7 @@ export type VdomNode = {
   text?: string;
   tag?: string;
   key?: string | number;
+  id?: string;
   attrs?: TagAttr[];
   eventsMap?: Map<VdomEventType, EventHandler>;
   componentId?: string;

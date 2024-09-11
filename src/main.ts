@@ -18,7 +18,7 @@ function App(): ComponentResult {
     <div class="contrubutors">
       <p $map {c.id} $to .c $in {contribs}/>
     </div>
-    <Product .name={name} $set {theme} $as {context}>
+    <Product .name={name} $use {theme} $as {context}>
       <a href="imachild.com">Click me!</a>
     </Product>
   </div>`;

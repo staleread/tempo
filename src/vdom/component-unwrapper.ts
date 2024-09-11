@@ -42,23 +42,19 @@ export class ComponentUnwrapper {
     if (!this.root.children) {
       throw new Error('Incomplete root node');
     }
-    return this.tryUnwrapTagLikeTag(
-      this.root.children[0],
-      this.dest,
-      false,
-    );
+    return this.tryUnwrapBasicTag(this.root.children[0], this.dest, false);
   }
 
   private tryUnwrapNode(node: AstNode, dest: VdomNode[]): boolean {
     switch (node.type) {
       case 'Bt':
-        return this.tryUnwrapTagLikeTag(node, dest, false);
+        return this.tryUnwrapBasicTag(node, dest, false);
       case 'Gt':
-        return this.tryUnwrapTagLikeTag(node, dest, false);
+        return this.tryUnwrapGenTag(node, dest, false);
       case 'Cp':
         return this.tryUnwrapCompTag(node, dest, false);
       case 'Gc':
-        return this.tryUnwrapGenericCompTag(node, dest, false);
+        return this.tryUnwrapGenCompTag(node, dest, false);
       case 'Ch':
         return this.tryUnwrapChildrenTag(dest);
       case 'Tx':
@@ -68,7 +64,7 @@ export class ComponentUnwrapper {
     }
   }
 
-  private tryUnwrapTagLikeTag(
+  private tryUnwrapBasicTag(
     tag: AstNode,
     dest: VdomNode[],
     skipCommands: boolean,
@@ -76,35 +72,101 @@ export class ComponentUnwrapper {
     let res = true;
 
     if (tag.keymapArgs && !skipCommands) {
-      return this.tryUnwrapTagWithKeymap(tag, dest);
+      const node: VdomNode = {
+        type: 'Keymap',
+        children: [],
+      };
+
+      return this.tryUnwrapKeymap(tag.keymapArgs, () =>
+        this.tryUnwrapBasicTag(tag, node.children!, true),
+      );
     }
     if (tag.condition && !skipCommands) {
-      return this.tryUnwrapTagWithCondition(tag, dest);
+      return this.tryUnwrapCondition(tag, tag.condition, dest, () =>
+        this.tryUnwrapBasicTag(tag, dest, true),
+      );
     }
 
     const node: VdomNode = {
       type: 'Tag',
+      tag: tag.id!.str,
+      key: undefined,
       attrs: [],
       eventsMap: new Map(),
       children: [],
     };
 
-    if (tag.type === 'Gt') {
-      const tagName: unknown = this.getVar(tag.tagName!);
+    if (tag.keymapArgs?.key) {
+      const key: unknown = this.getVar(tag.keymapArgs.key);
 
-      if (typeof tagName !== 'string') {
+      if (typeof key !== 'string' && typeof key !== 'number') {
+        this.logger.error(
+          tag.keymapArgs.key.at(-1)!.pos,
+          'Unsupported value for a key',
+        );
+        return false;
+      }
+      node.key = key;
+    }
+
+    res = this.tryGetTagAttrs(tag.tagArgs!.attrs, node.attrs!) && res;
+    res = this.tryGetEventsMap(tag.tagArgs!.events, node.eventsMap!) && res;
+
+    for (let i = 0; i < tag.children!.length; i++) {
+      res = this.tryUnwrapNode(tag.children![i], node.children!) && res;
+    }
+    if (res) dest.push(node);
+    return res;
+  }
+
+  private tryUnwrapGenTag(
+    tag: AstNode,
+    dest: VdomNode[],
+    skipCommands: boolean,
+    tagName?: string,
+  ): boolean {
+    let res = true;
+
+    if (!tagName) {
+      const name: unknown = this.getVar(tag.tagName!);
+
+      if (typeof name !== 'string') {
         this.logger.error(
           tag.tagName!.at(-1)!.pos,
           'Tag id must be a string',
         );
         return false;
       }
-      node.tag = tagName;
-    } else {
-      node.tag = tag.id!.str;
+      tagName = name;
     }
 
-    if (skipCommands && tag.keymapArgs?.key) {
+    if (tag.keymapArgs && !skipCommands) {
+      const node: VdomNode = {
+        type: 'GenKeymap',
+        id: tagName,
+        children: [],
+      };
+
+      return this.tryUnwrapKeymap(tag.keymapArgs, () =>
+        this.tryUnwrapGenTag(tag, node.children!, true, tagName),
+      );
+    }
+    if (tag.condition && !skipCommands) {
+      return this.tryUnwrapCondition(tag, tag.condition, dest, () =>
+        this.tryUnwrapGenTag(tag, dest, true, tagName),
+      );
+    }
+
+    const node: VdomNode = {
+      type: 'GenTag',
+      tag: tagName,
+      key: undefined,
+      attrs: [],
+      eventsMap: new Map(),
+      children: [],
+    };
+
+    if (tag.keymapArgs?.key) {
       const key: unknown = this.getVar(tag.keymapArgs.key);
 
       if (typeof key !== 'string' && typeof key !== 'number') {
@@ -132,14 +194,24 @@ export class ComponentUnwrapper {
     dest: VdomNode[],
     skipCommands: boolean,
   ): boolean {
+    let res = true;
+
     if (tag.keymapArgs && !skipCommands) {
-      return this.tryUnwrapTagWithKeymap(tag, dest);
+      const node: VdomNode = {
+        type: 'Keymap',
+        children: [],
+      };
+
+      return this.tryUnwrapKeymap(tag.keymapArgs, () =>
+        this.tryUnwrapCompTag(tag, node.children!, true),
+      );
     }
     if (tag.condition && !skipCommands) {
-      return this.tryUnwrapTagWithCondition(tag, dest);
+      return this.tryUnwrapCondition(tag, tag.condition, dest, () =>
+        this.tryUnwrapCompTag(tag, dest, true),
+      );
     }
 
-    let res = true;
     const func: ComponentFunc | undefined = this.context.importsMap.get(
       tag.id!.str,
     );
@@ -172,7 +244,7 @@ export class ComponentUnwrapper {
     const injections: Injection[] = [];
 
     if (tag.injections) {
-      res = this.tryGetInjections(tag, injections);
+      res = this.tryGetInjections(tag.injections!, injections);
     }
 
     const tagChildren = tag.children!;
@@ -192,44 +264,55 @@ export class ComponentUnwrapper {
     return res;
   }
 
-  private tryUnwrapGenericCompTag(
+  private tryUnwrapGenCompTag(
     tag: AstNode,
     dest: VdomNode[],
     skipCommands: boolean,
+    compFunc?: ComponentFunc,
   ): boolean {
-    if (tag.condition && !skipCommands) {
-      return this.tryUnwrapTagWithCondition(tag, dest);
-    }
-
     let res = true;
 
-    const func: unknown = this.getVar(tag.compFunc!);
+    if (!compFunc) {
+      const func: unknown = this.getVar(tag.compFunc!);
 
-    if (!func) {
-      this.logger.error(
-        tag.id!.pos,
-        'Cannot find the component function in attachemnts',
-      );
-      return false;
-    } else if (typeof func !== 'function' || func.length !== 1) {
-      this.logger.error(
-        tag.id!.pos,
-        `Expected a component function, got ${typeof func}`,
-      );
-      return false;
+      if (!func) {
+        this.logger.error(
+          tag.id!.pos,
+          'Cannot find the component function in attachemnts',
+        );
+        return false;
+      } else if (typeof func !== 'function' || func.length !== 1) {
+        this.logger.error(
+          tag.id!.pos,
+          `Expected a component function, got ${typeof func}`,
+        );
+        return false;
+      }
+      compFunc = func as ComponentFunc;
     }
 
-    const node: VdomNode = {
-      type: 'Generic',
-      componentId: func.name,
-      children: [],
-    };
+    if (tag.keymapArgs && !skipCommands) {
+      const node: VdomNode = {
+        type: 'GenKeymap',
+        id: compFunc.name,
+        children: [],
+      };
+
+      return this.tryUnwrapKeymap(tag.keymapArgs, () =>
+        this.tryUnwrapGenCompTag(tag, node.children!, true, compFunc),
+      );
+    }
+    if (tag.condition && !skipCommands) {
+      return this.tryUnwrapCondition(tag, tag.condition, dest, () =>
+        this.tryUnwrapGenCompTag(tag, dest, true, compFunc),
+      );
+    }
 
     const dto: ComponentUnwrapperDto = {
       level: this.level + 1,
-      dest: node.children!,
-      componentId: func.name,
-      func: func as ComponentFunc,
+      dest,
+      componentId: compFunc.name,
+      func: compFunc,
       props: {},
       unwrapChildren: undefined,
     };
@@ -239,7 +322,7 @@ export class ComponentUnwrapper {
     const injections: Injection[] = [];
 
     if (tag.injections) {
-      res = this.tryGetInjections(tag, injections);
+      res = this.tryGetInjections(tag.injections!, injections);
     }
 
     const tagChildren = tag.children!;
@@ -255,64 +338,55 @@ export class ComponentUnwrapper {
       };
     }
 
-    if (res) {
-      this.vdomUnwrapper.unwrapComponent(dto, injections);
-      dest.push(node);
-    }
+    if (res) this.vdomUnwrapper.unwrapComponent(dto, injections);
     return res;
   }
 
-  private tryUnwrapTagWithKeymap(tag: AstNode, dest: VdomNode[]): boolean {
+  private tryUnwrapKeymap(
+    keymap: KeymapArgs,
+    unwrapNode: () => boolean,
+  ): boolean {
     let res = true;
 
-    const node: VdomNode = {
-      type: 'Keymap',
-      domElemMap: new Map(),
-      children: [],
-    };
-
-    const alias = tag.keymapArgs!.alias.str;
+    const alias = keymap.alias.str;
 
     if (this.context.attachMap.has(alias)) {
       this.logger.error(
-        tag.keymapArgs!.alias.pos,
+        keymap.alias.pos,
         'The property already exists in attachments',
       );
       return false;
     }
 
-    const items: unknown = this.getVar(tag.keymapArgs!.items);
+    const items: unknown = this.getVar(keymap.items);
 
     if (!Array.isArray(items)) {
       this.logger.error(
-        tag.keymapArgs!.items.at(-1)!.pos,
-        'The keymaps items must be an array',
+        keymap.items.at(-1)!.pos,
+        'The keymap items must be an array',
       );
       return false;
     }
 
     for (let i = 0; i < items.length; i++) {
       this.context.attachMap.set(alias, items[i]);
-      if (tag.type === 'Bt') {
-        res = this.tryUnwrapTagLikeTag(tag, node.children!, true);
-        continue;
-      }
-      res = this.tryUnwrapCompTag(tag, node.children!, true);
+      res = unwrapNode() && res;
     }
     this.context.attachMap.delete(alias);
 
-    if (res) dest.push(node);
     return res;
   }
 
-  private tryUnwrapTagWithCondition(
+  private tryUnwrapCondition(
     tag: AstNode,
+    condition: ConditionArgs,
     dest: VdomNode[],
+    unwrapNode: () => boolean,
   ): boolean {
     let res = true;
 
-    let predicate: boolean = !!this.getVar(tag.condition!.predicate);
-    predicate = tag.condition!.invert ? !predicate : predicate;
+    let predicate: boolean = !!this.getVar(condition.predicate);
+    predicate = condition.invert ? !predicate : predicate;
 
     const skip = (node: AstNode) => {
       if (!node.children) {
@@ -330,50 +404,41 @@ export class ComponentUnwrapper {
     };
 
     if (predicate) {
-      switch (tag.type) {
-        case 'Bt':
-        case 'Gt':
-          return this.tryUnwrapTagLikeTag(tag, dest, true);
-        case 'Cp':
-          return this.tryUnwrapCompTag(tag, dest, true);
-        case 'Gc':
-          return this.tryUnwrapGenericCompTag(tag, dest, true);
-        default:
-          return false;
-      }
+      return unwrapNode();
     }
     skip(tag);
-
     const blank: VdomNode = { type: 'Blank' };
+
     if (res) dest.push(blank);
     return res;
   }
 
-  private tryGetInjections(tag: AstNode, dest: Injection[]): boolean {
-    for (let i = 0; i < tag.injections!.length; i++) {
-      const value: unknown = this.getVar(tag.injections![i].value);
+  private tryGetInjections(
+    injections: InjectionArg[],
+    dest: Injection[],
+  ): boolean {
+    for (let i = 0; i < injections.length; i++) {
+      const value: unknown = this.getVar(injections[i].value);
 
       if (!value) {
         this.logger.error(
-          tag.injections![i].value.at(-1)!.pos,
+          injections[i].value.at(-1)!.pos,
           'Cannot find context value in attachments',
         );
         return false;
       }
 
-      const contextKey: unknown = this.getVar(
-        tag.injections![i].contextKey,
-      );
+      const contextKey: unknown = this.getVar(injections[i].contextKey);
 
       if (!contextKey) {
         this.logger.error(
-          tag.injections![i].contextKey.at(-1)!.pos,
+          injections[i].contextKey.at(-1)!.pos,
           'Cannot find context key in attachments',
         );
         return false;
       } else if (typeof contextKey !== 'string') {
         this.logger.error(
-          tag.injections![i].contextKey.at(-1)!.pos,
+          injections[i].contextKey.at(-1)!.pos,
           'The context key should be a string',
         );
         return false;

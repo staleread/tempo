@@ -236,8 +236,8 @@ export class Lexer {
         return this.createToken('$tag');
       case 'cmp':
         return this.createToken('$cmp');
-      case 'set':
-        return this.createToken('$set');
+      case 'use':
+        return this.createToken('$use');
       case 'as':
         return this.createToken('$as');
       case 'children':
