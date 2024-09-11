@@ -1,15 +1,26 @@
+import { DomElem } from '../dom/dom.types';
 import { EventHandler, VdomEventType } from '../dom/events/event.types';
 
-export type VdomNodeType = 'Root' | 'Text' | 'Tag' | 'List' | 'Blank';
+export type VdomNodeType =
+  | 'Root'
+  | 'Text'
+  | 'Tag'
+  | 'Generic'
+  | 'Keymap'
+  | 'Blank';
 
 export type VdomNode = {
   type: VdomNodeType;
   text?: string;
-  key?: any;
   tag?: string;
+  key?: string | number;
   attrs?: TagAttr[];
   eventsMap?: Map<VdomEventType, EventHandler>;
+  componentId?: string;
   children?: VdomNode[];
+  domElemMap?: Map<string | number, DomElem>;
+  domElem?: DomElem;
+  domTextNode?: Text;
 };
 
 export type TagAttr = { id: string; value: string };

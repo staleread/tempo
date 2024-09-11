@@ -222,24 +222,22 @@ export class Lexer {
     const keyword = this.buffer.substring(this.tokenStart, this.pos);
 
     switch (keyword) {
-      case 'for':
-        return this.createToken('$for');
-      case 'of':
-        return this.createToken('$of');
+      case 'map':
+        return this.createToken('$map');
+      case 'to':
+        return this.createToken('$to');
+      case 'in':
+        return this.createToken('$in');
       case 'if':
         return this.createToken('$if');
       case 'not':
         return this.createToken('$not');
-      case 'with':
-        return this.createToken('$with');
-      case 'key':
-        return this.createToken('$key');
       case 'tag':
         return this.createToken('$tag');
       case 'cmp':
         return this.createToken('$cmp');
-      case 'inject':
-        return this.createToken('$inject');
+      case 'set':
+        return this.createToken('$set');
       case 'as':
         return this.createToken('$as');
       case 'children':

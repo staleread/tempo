@@ -15,31 +15,41 @@ function App(): ComponentResult {
 
   const template = `
   <div>
-    <$inject {theme} $as {context}>
-      <Product .name={name}>
-        <a href="imachild.com">Click me!</a>
-      </Product>
-    </$inject>
+    <div class="contrubutors">
+      <p $map {c.id} $to .c $in {contribs}/>
+    </div>
+    <Product .name={name} $set {theme} $as {context}>
+      <a href="imachild.com">Click me!</a>
+    </Product>
   </div>`;
 
   const attach = {
     name: 'Apple',
     theme: 'Dark',
     context: 'ThemeContext',
+    contribs: [
+      { id: 1, user: 'Nicolas' },
+      { id: 2, user: 'Bodya' },
+    ],
   };
 
   return { imports, template, attach };
 }
 
-function Product({ name }: { name: string }): ComponentResult {
+function Product({
+  name,
+  price,
+}: { name: string; price?: number }): ComponentResult {
   const template = `
-  <table>
+  <div class="product">
+    <h2>Product: {name}</h2>
+    <p $if {price}>Price: {price}</p>
     <$children/>
-    <p>{name}</p>
-  </table>`;
+  </div>`;
 
   const attach = {
     name,
+    price,
   };
   return { template, attach };
 }
