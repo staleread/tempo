@@ -1,3 +1,4 @@
+import { DomElem } from '../dom/dom.types';
 import { EventHandler, VdomEventType } from '../dom/events/event.types';
 import {
   AnyObject,
@@ -75,11 +76,20 @@ export class ComponentUnwrapper {
       const node: VdomNode = {
         type: 'Keymap',
         children: [],
+        keymap: new Map(),
       };
 
-      return this.tryUnwrapKeymap(tag.keymapArgs, () =>
-        this.tryUnwrapBasicTag(tag, node.children!, true),
-      );
+      res =
+        this.tryUnwrapKeymap(tag.keymapArgs, () =>
+          this.tryUnwrapBasicTag(tag, node.children!, true),
+        ) && res;
+
+      if (!res) return false;
+
+      for (let i = 0; i < node.children!.length; i++) {
+        node.keymap!.set(node.children![i].key!, node.children![i]);
+      }
+      return true;
     }
     if (tag.condition && !skipCommands) {
       return this.tryUnwrapCondition(tag, tag.condition, dest, () =>
@@ -91,6 +101,7 @@ export class ComponentUnwrapper {
       type: 'Tag',
       tag: tag.id!.str,
       key: undefined,
+      ref: undefined,
       attrs: [],
       eventsMap: new Map(),
       children: [],
@@ -107,6 +118,20 @@ export class ComponentUnwrapper {
         return false;
       }
       node.key = key;
+    }
+
+    if (tag.ref) {
+      const ref: unknown = this.getVar(tag.ref);
+
+      if (
+        ref === null ||
+        typeof ref !== 'object' ||
+        !Object.hasOwn(ref, 'current')
+      ) {
+        this.logger.error(tag.ref.at(-1)!.pos, 'Invalid ref value');
+        return false;
+      }
+      node.ref = ref as { current: DomElem | null };
     }
 
     res = this.tryGetTagAttrs(tag.tagArgs!.attrs, node.attrs!) && res;
@@ -145,11 +170,20 @@ export class ComponentUnwrapper {
         type: 'GenKeymap',
         id: tagName,
         children: [],
+        keymap: new Map(),
       };
 
-      return this.tryUnwrapKeymap(tag.keymapArgs, () =>
-        this.tryUnwrapGenTag(tag, node.children!, true, tagName),
-      );
+      res =
+        this.tryUnwrapKeymap(tag.keymapArgs, () =>
+          this.tryUnwrapGenTag(tag, node.children!, true, tagName),
+        ) && res;
+
+      if (!res) return false;
+
+      for (let i = 0; i < node.children!.length; i++) {
+        node.keymap!.set(node.children![i].key!, node.children![i]);
+      }
+      return true;
     }
     if (tag.condition && !skipCommands) {
       return this.tryUnwrapCondition(tag, tag.condition, dest, () =>
@@ -161,6 +195,7 @@ export class ComponentUnwrapper {
       type: 'GenTag',
       tag: tagName,
       key: undefined,
+      ref: undefined,
       attrs: [],
       eventsMap: new Map(),
       children: [],
@@ -177,6 +212,20 @@ export class ComponentUnwrapper {
         return false;
       }
       node.key = key;
+    }
+
+    if (tag.ref) {
+      const ref: unknown = this.getVar(tag.ref);
+
+      if (
+        ref === null ||
+        typeof ref !== 'object' ||
+        !Object.hasOwn(ref, 'current')
+      ) {
+        this.logger.error(tag.ref.at(-1)!.pos, 'Invalid ref value');
+        return false;
+      }
+      node.ref = ref as { current: DomElem | null };
     }
 
     res = this.tryGetTagAttrs(tag.tagArgs!.attrs, node.attrs!) && res;
@@ -200,11 +249,20 @@ export class ComponentUnwrapper {
       const node: VdomNode = {
         type: 'Keymap',
         children: [],
+        keymap: new Map(),
       };
 
-      return this.tryUnwrapKeymap(tag.keymapArgs, () =>
-        this.tryUnwrapCompTag(tag, node.children!, true),
-      );
+      res =
+        this.tryUnwrapKeymap(tag.keymapArgs, () =>
+          this.tryUnwrapCompTag(tag, node.children!, true),
+        ) && res;
+
+      if (!res) return false;
+
+      for (let i = 0; i < node.children!.length; i++) {
+        node.keymap!.set(node.children![i].key!, node.children![i]);
+      }
+      return true;
     }
     if (tag.condition && !skipCommands) {
       return this.tryUnwrapCondition(tag, tag.condition, dest, () =>
@@ -296,11 +354,20 @@ export class ComponentUnwrapper {
         type: 'GenKeymap',
         id: compFunc.name,
         children: [],
+        keymap: new Map(),
       };
 
-      return this.tryUnwrapKeymap(tag.keymapArgs, () =>
-        this.tryUnwrapGenCompTag(tag, node.children!, true, compFunc),
-      );
+      res =
+        this.tryUnwrapKeymap(tag.keymapArgs, () =>
+          this.tryUnwrapGenCompTag(tag, node.children!, true, compFunc),
+        ) && res;
+
+      if (!res) return false;
+
+      for (let i = 0; i < node.children!.length; i++) {
+        node.keymap!.set(node.children![i].key!, node.children![i]);
+      }
+      return true;
     }
     if (tag.condition && !skipCommands) {
       return this.tryUnwrapCondition(tag, tag.condition, dest, () =>

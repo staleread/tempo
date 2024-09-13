@@ -233,19 +233,32 @@ export class Parser {
     res = this.tryParseTagArgs(node.id!.str, node.tagArgs!) && res;
 
     this.skipComments();
-    let hasIfOrKeymaps = false;
+    let hasCommand = false;
 
     while (!'eof/>'.includes(this.token().type)) {
       switch (this.token().type) {
-        case '$map':
-          if (hasIfOrKeymaps) {
+        case '$ref':
+          if (hasCommand) {
             this.logger.error(
               node.id!.pos,
-              'Cannot accept both $if and $map or more than one of them',
+              'Exeeded the limit of inline commands inside a tag',
             );
             return false;
           }
-          hasIfOrKeymaps = true;
+          hasCommand = true;
+
+          node.ref = [];
+          res = this.tryParseRef(node.ref);
+          continue;
+        case '$map':
+          if (hasCommand) {
+            this.logger.error(
+              node.id!.pos,
+              'Exeeded the limit of inline commands inside a tag',
+            );
+            return false;
+          }
+          hasCommand = true;
 
           node.keymapArgs = {
             key: [],
@@ -255,14 +268,14 @@ export class Parser {
           res = this.tryParseKeymapArgs(node.keymapArgs!) && res;
           continue;
         case '$if':
-          if (hasIfOrKeymaps) {
+          if (hasCommand) {
             this.logger.error(
               node.id!.pos,
-              'Cannot accept both $if and $map or more than one of them',
+              'Exeeded the limit of inline commands inside a tag',
             );
             return false;
           }
-          hasIfOrKeymaps = true;
+          hasCommand = true;
           node.condition = {
             invert: false,
             predicate: [],
@@ -296,46 +309,53 @@ export class Parser {
     node.props = [];
     res = this.tryParseProps(node.props!) && res;
 
-    let hasIfOrKeymaps = false;
+    let hasCommand = false;
 
     while (!'eof/>'.includes(this.token().type)) {
       switch (this.token().type) {
+        case '$ref':
+          this.logger.error(
+            this.token().pos,
+            '$ref inline command is not allowed in component-like tags',
+          );
+          this.panicInsideTag();
+          return false;
         case '$map':
-          if (hasIfOrKeymaps) {
+          if (hasCommand) {
             this.logger.error(
               node.id!.pos,
-              'Cannot accept both $if and $map or more than one of them',
+              'Exeeded the limit of inline commands inside a tag',
             );
             return false;
           }
-          hasIfOrKeymaps = true;
+          hasCommand = true;
           node.keymapArgs = {
             key: [],
             items: [],
             alias: { pos: -1, str: '' },
           };
           res = this.tryParseKeymapArgs(node.keymapArgs!) && res;
-          break;
+          continue;
         case '$if':
-          if (hasIfOrKeymaps) {
+          if (hasCommand) {
             this.logger.error(
               node.id!.pos,
-              'Cannot accept both $if and $map or more than one of them',
+              'Exeeded the limit of inline commands inside a tag',
             );
             return false;
           }
-          hasIfOrKeymaps = true;
+          hasCommand = true;
           node.condition = {
             invert: false,
             predicate: [],
           };
           res = this.tryParseCondition(node.condition!) && res;
-          break;
+          continue;
         case '$use':
           node.injections = [];
           res = this.tryParseInjections(node.injections!) && res;
           break;
-        default:
+          continue;
           res = false;
           this.logUnexpectedToken();
           this.panicInsideTag();
@@ -651,6 +671,21 @@ export class Parser {
     this.index++;
     this.skipComments();
     return true;
+  }
+
+  private tryParseRef(ref: Var): boolean {
+    this.index++;
+    this.skipComments();
+
+    if (this.token().type !== '=') {
+      this.logUnexpectedToken('=');
+      return false;
+    }
+
+    this.index++;
+    this.skipComments();
+
+    return this.tryParseVar(ref);
   }
 
   private tryParseVar(dest: Var): boolean {

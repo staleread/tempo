@@ -16,13 +16,11 @@ export type VdomNode = {
   tag?: string;
   key?: string | number;
   id?: string;
+  ref?: { current: DomElem | null };
   attrs?: TagAttr[];
   eventsMap?: Map<VdomEventType, EventHandler>;
-  componentId?: string;
   children?: VdomNode[];
-  domElemMap?: Map<string | number, DomElem>;
-  domElem?: DomElem;
-  domTextNode?: Text;
+  keymap?: Map<string | number, VdomNode>;
 };
 
 export type TagAttr = { id: string; value: string };

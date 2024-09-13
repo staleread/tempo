@@ -19,6 +19,7 @@ export type TokenType =
   | 'comp'
   | 'prop'
   | 'event'
+  | '$ref'
   | '$map'
   | '$to'
   | '$in'

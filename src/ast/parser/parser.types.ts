@@ -9,6 +9,7 @@ export type AstNode = {
   tagName?: Var;
   compFunc?: Var;
   tagArgs?: TagArgs;
+  ref?: Var;
   keymapArgs?: KeymapArgs;
   condition?: ConditionArgs;
   injections?: InjectionArg[];

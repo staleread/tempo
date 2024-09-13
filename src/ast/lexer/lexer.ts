@@ -222,6 +222,8 @@ export class Lexer {
     const keyword = this.buffer.substring(this.tokenStart, this.pos);
 
     switch (keyword) {
+      case 'ref':
+        return this.createToken('$ref');
       case 'map':
         return this.createToken('$map');
       case 'to':
