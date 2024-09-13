@@ -6,16 +6,16 @@ export class StateAllocator {
   private stateIndex = -1;
   private cellIndex = -1;
 
-  public readCell(): [number, any] {
+  public useCell<T>(): [() => T | undefined, (x: T) => void] {
     this.cellIndex++;
-    return [
-      this.cellIndex,
-      this.states[this.stateIndex].cells[this.cellIndex],
-    ];
-  }
 
-  public setCellValue(index: number, value: any): void {
-    this.states[this.stateIndex].cells[index] = value;
+    const stateIndex = this.stateIndex;
+    const cellIndex = this.cellIndex;
+
+    return [
+      () => this.states[stateIndex].cells[cellIndex] as T | undefined,
+      (x: T) => (this.states[stateIndex].cells[cellIndex] = x),
+    ];
   }
 
   public reset(): void {
