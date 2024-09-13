@@ -1,5 +1,5 @@
 {
-  "name": "serianilla",
+  "name": "tempo",
   "version": "0.0.1",
   "description": "Just another declarative way to update DOM",
   "main": "index.js",
