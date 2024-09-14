@@ -40,10 +40,12 @@ export class ComponentUnwrapper {
   ) {}
 
   public tryUnwrap(): boolean {
-    if (!this.root.children) {
+    const rootTagChild: AstNode | undefined = this.root.children?.[0];
+
+    if (!rootTagChild) {
       throw new Error('Incomplete root node');
     }
-    return this.tryUnwrapBasicTag(this.root.children[0], this.dest, false);
+    return this.tryUnwrapBasicTag(rootTagChild, this.dest, false);
   }
 
   private tryUnwrapNode(node: AstNode, dest: VdomNode[]): boolean {
@@ -73,21 +75,23 @@ export class ComponentUnwrapper {
     let res = true;
 
     if (tag.keymapArgs && !skipCommands) {
+      const children: VdomNode[] = [];
+
       const node: VdomNode = {
         type: 'Keymap',
-        children: [],
+        children,
         keymap: new Map(),
       };
 
       res =
         this.tryUnwrapKeymap(tag.keymapArgs, () =>
-          this.tryUnwrapBasicTag(tag, node.children!, true),
+          this.tryUnwrapBasicTag(tag, children, true),
         ) && res;
 
       if (!res) return false;
 
-      for (let i = 0; i < node.children!.length; i++) {
-        node.keymap!.set(node.children![i].key!, node.children![i]);
+      for (let i = 0; i < children.length; i++) {
+        node.keymap!.set(children[i]!.key!, children[i]!);
       }
       return true;
     }
@@ -97,6 +101,8 @@ export class ComponentUnwrapper {
       );
     }
 
+    const children: VdomNode[] = [];
+
     const node: VdomNode = {
       type: 'Tag',
       tag: tag.id!.str,
@@ -104,7 +110,7 @@ export class ComponentUnwrapper {
       ref: undefined,
       attrs: [],
       eventsMap: new Map(),
-      children: [],
+      children,
     };
 
     if (tag.keymapArgs?.key) {
@@ -137,8 +143,10 @@ export class ComponentUnwrapper {
     res = this.tryGetTagAttrs(tag.tagArgs!.attrs, node.attrs!) && res;
     res = this.tryGetEventsMap(tag.tagArgs!.events, node.eventsMap!) && res;
 
-    for (let i = 0; i < tag.children!.length; i++) {
-      res = this.tryUnwrapNode(tag.children![i], node.children!) && res;
+    const tagChildren = tag.children!;
+
+    for (let i = 0; i < tagChildren.length; i++) {
+      res = this.tryUnwrapNode(tagChildren[i]!, children) && res;
     }
     if (res) dest.push(node);
     return res;
@@ -166,22 +174,24 @@ export class ComponentUnwrapper {
     }
 
     if (tag.keymapArgs && !skipCommands) {
+      const children: VdomNode[] = [];
+
       const node: VdomNode = {
         type: 'GenKeymap',
         id: tagName,
-        children: [],
+        children,
         keymap: new Map(),
       };
 
       res =
         this.tryUnwrapKeymap(tag.keymapArgs, () =>
-          this.tryUnwrapGenTag(tag, node.children!, true, tagName),
+          this.tryUnwrapGenTag(tag, children, true, tagName),
         ) && res;
 
       if (!res) return false;
 
-      for (let i = 0; i < node.children!.length; i++) {
-        node.keymap!.set(node.children![i].key!, node.children![i]);
+      for (let i = 0; i < children.length; i++) {
+        node.keymap!.set(children[i]!.key!, children[i]!);
       }
       return true;
     }
@@ -191,6 +201,8 @@ export class ComponentUnwrapper {
       );
     }
 
+    const children: VdomNode[] = [];
+
     const node: VdomNode = {
       type: 'GenTag',
       tag: tagName,
@@ -198,7 +210,7 @@ export class ComponentUnwrapper {
       ref: undefined,
       attrs: [],
       eventsMap: new Map(),
-      children: [],
+      children,
     };
 
     if (tag.keymapArgs?.key) {
@@ -231,8 +243,10 @@ export class ComponentUnwrapper {
     res = this.tryGetTagAttrs(tag.tagArgs!.attrs, node.attrs!) && res;
     res = this.tryGetEventsMap(tag.tagArgs!.events, node.eventsMap!) && res;
 
-    for (let i = 0; i < tag.children!.length; i++) {
-      res = this.tryUnwrapNode(tag.children![i], node.children!) && res;
+    const tagChildren = tag.children!;
+
+    for (let i = 0; i < tagChildren.length; i++) {
+      res = this.tryUnwrapNode(tagChildren[i]!, children) && res;
     }
     if (res) dest.push(node);
     return res;
@@ -246,21 +260,23 @@ export class ComponentUnwrapper {
     let res = true;
 
     if (tag.keymapArgs && !skipCommands) {
+      const children: VdomNode[] = [];
+
       const node: VdomNode = {
         type: 'Keymap',
-        children: [],
+        children,
         keymap: new Map(),
       };
 
       res =
         this.tryUnwrapKeymap(tag.keymapArgs, () =>
-          this.tryUnwrapCompTag(tag, node.children!, true),
+          this.tryUnwrapCompTag(tag, children, true),
         ) && res;
 
       if (!res) return false;
 
-      for (let i = 0; i < node.children!.length; i++) {
-        node.keymap!.set(node.children![i].key!, node.children![i]);
+      for (let i = 0; i < children.length; i++) {
+        node.keymap!.set(children[i]!.key!, children[i]!);
       }
       return true;
     }
@@ -312,7 +328,7 @@ export class ComponentUnwrapper {
         let success = true;
 
         for (let i = 0; i < tagChildren.length; i++) {
-          success = this.tryUnwrapNode(tagChildren[i], dest) && success;
+          success = this.tryUnwrapNode(tagChildren[i]!, dest) && success;
         }
         return success;
       };
@@ -350,22 +366,24 @@ export class ComponentUnwrapper {
     }
 
     if (tag.keymapArgs && !skipCommands) {
+      const children: VdomNode[] = [];
+
       const node: VdomNode = {
         type: 'GenKeymap',
         id: compFunc.name,
-        children: [],
+        children,
         keymap: new Map(),
       };
 
       res =
         this.tryUnwrapKeymap(tag.keymapArgs, () =>
-          this.tryUnwrapGenCompTag(tag, node.children!, true, compFunc),
+          this.tryUnwrapGenCompTag(tag, children, true, compFunc),
         ) && res;
 
       if (!res) return false;
 
-      for (let i = 0; i < node.children!.length; i++) {
-        node.keymap!.set(node.children![i].key!, node.children![i]);
+      for (let i = 0; i < children.length; i++) {
+        node.keymap!.set(children[i]!.key!, children[i]!);
       }
       return true;
     }
@@ -399,7 +417,7 @@ export class ComponentUnwrapper {
         let success = true;
 
         for (let i = 0; i < tagChildren.length; i++) {
-          success = this.tryUnwrapNode(tagChildren[i], dest) && success;
+          success = this.tryUnwrapNode(tagChildren[i]!, dest) && success;
         }
         return success;
       };
@@ -485,27 +503,27 @@ export class ComponentUnwrapper {
     dest: Injection[],
   ): boolean {
     for (let i = 0; i < injections.length; i++) {
-      const value: unknown = this.getVar(injections[i].value);
+      const value: unknown = this.getVar(injections[i]!.value);
 
       if (!value) {
         this.logger.error(
-          injections[i].value.at(-1)!.pos,
+          injections[i]!.value.at(-1)!.pos,
           'Cannot find context value in attachments',
         );
         return false;
       }
 
-      const contextKey: unknown = this.getVar(injections[i].contextKey);
+      const contextKey: unknown = this.getVar(injections[i]!.contextKey);
 
       if (!contextKey) {
         this.logger.error(
-          injections[i].contextKey.at(-1)!.pos,
+          injections[i]!.contextKey.at(-1)!.pos,
           'Cannot find context key in attachments',
         );
         return false;
       } else if (typeof contextKey !== 'string') {
         this.logger.error(
-          injections[i].contextKey.at(-1)!.pos,
+          injections[i]!.contextKey.at(-1)!.pos,
           'The context key should be a string',
         );
         return false;
@@ -579,7 +597,7 @@ export class ComponentUnwrapper {
 
   private tryGetProps(tagProps: PropAttr[], dest: AnyObject): boolean {
     for (let i = 0; i < tagProps.length; i++) {
-      const prop: PropAttr = tagProps[i];
+      const prop: PropAttr = tagProps[i]!;
 
       if (prop.isSpread) {
         const value: unknown = this.getVar(prop.value!);
@@ -608,8 +626,8 @@ export class ComponentUnwrapper {
   private tryGetTagAttrs(attrs: StrAttr[], dest: TagAttr[]): boolean {
     for (let i = 0; i < attrs.length; i++) {
       dest.push({
-        id: attrs[i].attr,
-        value: this.getText(attrs[i].strValue),
+        id: attrs[i]!.attr,
+        value: this.getText(attrs[i]!.strValue),
       });
     }
     return true;
@@ -620,22 +638,22 @@ export class ComponentUnwrapper {
     dest: Map<VdomEventType, EventHandler>,
   ): boolean {
     for (let i = 0; i < events.length; i++) {
-      const handler: unknown = this.getVar(events[i].handler);
+      const handler: unknown = this.getVar(events[i]!.handler);
 
       if (!handler) {
         this.logger.error(
-          events[i].handler.at(-1)!.pos,
+          events[i]!.handler.at(-1)!.pos,
           'Cannot find event handler in attachments',
         );
         return false;
       } else if (typeof handler !== 'function' || handler.length !== 1) {
         this.logger.error(
-          events[i].handler.at(-1)!.pos,
+          events[i]!.handler.at(-1)!.pos,
           `Expected an event handler, got ${typeof handler}`,
         );
         return false;
       }
-      dest.set(events[i].event, handler as EventHandler);
+      dest.set(events[i]!.event, handler as EventHandler);
     }
     return true;
   }
@@ -644,7 +662,7 @@ export class ComponentUnwrapper {
     let str = '';
 
     for (let i = 0; i < interStr.length; i++) {
-      const chunk: StrPtr | Var = interStr[i];
+      const chunk: StrPtr | Var = interStr[i]!;
 
       if ('str' in chunk) {
         str += chunk.str;
@@ -668,7 +686,10 @@ export class ComponentUnwrapper {
   }
 
   private getVar(value: Var): unknown {
-    let result: unknown = this.context.attachMap.get(value[0].str);
+    if (value.length < 1) {
+      throw new Error('Variable should at least have one child');
+    }
+    let result: unknown = this.context.attachMap.get(value[0]!.str);
 
     if (value.length === 1) {
       return result;
@@ -677,12 +698,12 @@ export class ComponentUnwrapper {
     for (let i = 1; i < value.length; i++) {
       if (!result) {
         this.logger.error(
-          value[i - 1].pos,
+          value[i - 1]!.pos,
           'The value seems to be undefined',
         );
         return result;
       }
-      result = (result as AnyObject)[value[i].str];
+      result = (result as AnyObject)[value[i]!.str];
     }
     return result;
   }

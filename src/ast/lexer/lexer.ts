@@ -285,46 +285,40 @@ export class Lexer {
   }
 
   private peekChar(): string {
-    if (this.pos >= this.buffer.length) {
-      return Lexer.EOF;
-    }
-    return this.buffer[this.pos];
+    const char = this.buffer[this.pos];
+    return char ? char : Lexer.EOF;
   }
 
   private readChar(): string {
-    if (this.pos >= this.buffer.length) {
-      return Lexer.EOF;
-    }
-    return this.buffer[this.pos++];
+    const char = this.buffer[this.pos++];
+    return char ? char : Lexer.EOF;
   }
 
   private nextChar(): string {
-    if (this.pos >= this.buffer.length) {
-      return Lexer.EOF;
-    }
-    return this.buffer[++this.pos];
+    const char = this.buffer[++this.pos];
+    return char ? char : Lexer.EOF;
   }
 
   private skipRange(range: string): void {
-    while (
-      this.pos < this.buffer.length &&
-      range.includes(this.buffer[this.pos])
-    ) {
+    let char: string | undefined;
+
+    while ((char = this.buffer[this.pos]) && range.includes(char)) {
       this.pos++;
     }
   }
 
   private skipUntilRange(range: string): void {
-    while (
-      this.pos < this.buffer.length &&
-      !range.includes(this.buffer[this.pos])
-    ) {
+    let char: string | undefined;
+
+    while ((char = this.buffer[this.pos]) && !range.includes(char)) {
       this.pos++;
     }
   }
 
   private skipSpaces(): void {
-    while (/\s/.test(this.buffer[this.pos])) {
+    let char: string | undefined;
+
+    while ((char = this.buffer[this.pos]) && /\s/.test(char)) {
       this.pos++;
     }
   }

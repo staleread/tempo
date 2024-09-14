@@ -28,13 +28,16 @@ export class DomUpdater {
     oldNode: BridgeNode,
     newNode: VdomNode,
   ): void {
-    if (!oldNode.children) {
+    const oldChildren = oldNode.children;
+    const newChildren = newNode.children;
+
+    if (!oldChildren || !newChildren) {
       return;
     }
 
-    for (let i = 0; i < oldNode.children.length; i++) {
-      const oldCh = oldNode.children![i];
-      const newCh = newNode.children![i];
+    for (let i = 0; i < oldChildren.length; i++) {
+      const oldCh = oldChildren[i]!;
+      const newCh = newChildren[i]!;
 
       if (oldCh.type === 'Blank' && newCh.type === 'Blank') {
         continue;
@@ -60,7 +63,7 @@ export class DomUpdater {
       }
 
       if (i > 0) {
-        (oldNode.children![i - 1] as BridgeNode).domElem!.before(frag);
+        (oldChildren[i - 1] as BridgeNode).domElem!.before(frag);
         continue;
       }
       oldNode.domElem!.prepend(frag);
@@ -179,25 +182,28 @@ export class DomUpdater {
     oldNode: BridgeNode,
     newNode: VdomNode,
   ): boolean {
-    if (newNode.children!.length > 0 && oldNode.children!.length < 1) {
+    const oldChildren = oldNode.children!;
+    const newChildren = newNode.children!;
+
+    if (newChildren.length > 0 && oldChildren.length < 1) {
       return false;
     }
-    if (newNode.children!.length < 1 && oldNode.children!.length > 0) {
-      oldNode.children!.forEach((c: BridgeNode) => c.domElem!.remove());
+    if (newChildren.length < 1 && oldChildren.length > 0) {
+      oldChildren.forEach((c: BridgeNode) => c.domElem!.remove());
 
       oldNode.children = [];
       oldNode.keymap = new Map();
       return true;
     }
     if (oldNode.type === 'GenKeymap' && oldNode.id! !== newNode.id!) {
-      for (let i = 1; i < oldNode.children!.length; i++) {
-        (oldNode.children![i] as BridgeNode).domElem!.remove();
+      for (let i = 1; i < oldChildren.length; i++) {
+        (oldChildren[i] as BridgeNode).domElem!.remove();
       }
-      const firstElem = (oldNode.children![0] as BridgeNode).domElem!;
-      oldNode.children = newNode.children!;
+      const firstElem = (oldChildren[0] as BridgeNode).domElem!;
+      oldNode.children = newChildren;
 
       const frag = new DocumentFragment();
-      oldNode.children!.forEach((c: VdomNode) =>
+      oldChildren.forEach((c: VdomNode) =>
         this.attachSomeTag(c as BridgeNode, frag),
       );
 
@@ -207,12 +213,9 @@ export class DomUpdater {
 
     let index = 0;
 
-    while (
-      index < oldNode.children!.length &&
-      index < oldNode.children!.length
-    ) {
-      const oldCh = oldNode.children![index] as BridgeNode;
-      const newCh = newNode.children![index];
+    while (index < oldChildren.length && index < oldChildren.length) {
+      const oldCh = oldChildren[index] as BridgeNode;
+      const newCh = newChildren[index]!;
 
       if (oldCh.key! === newCh.key!) {
         this.tryResolveSomeTagDiff(oldCh, newCh);
@@ -225,10 +228,10 @@ export class DomUpdater {
       if (targetCh) {
         targetCh.domElem!.remove();
 
-        const chIndex = oldNode.children!.indexOf(targetCh);
+        const chIndex = oldChildren.indexOf(targetCh);
 
-        oldNode.children!.splice(chIndex, 1);
-        oldNode.children!.splice(index, 0, targetCh);
+        oldChildren.splice(chIndex, 1);
+        oldChildren.splice(index, 0, targetCh);
 
         oldCh.domElem!.replaceWith(targetCh.domElem!);
         this.tryResolveSomeTagDiff(targetCh, newCh);
@@ -237,7 +240,7 @@ export class DomUpdater {
         continue;
       }
 
-      oldNode.children!.splice(index, 0, newCh);
+      oldChildren.splice(index, 0, newCh);
 
       const frag = new DocumentFragment();
       this.attachSomeTag(newCh, frag);
@@ -246,23 +249,20 @@ export class DomUpdater {
       index++;
     }
 
-    if (index < oldNode.children!.length) {
+    if (index < oldChildren.length) {
       const tmpIndex = index;
 
-      for (index; index < oldNode.children!.length; index++) {
-        (oldNode.children![index] as BridgeNode).domElem!.remove();
+      for (index; index < oldChildren.length; index++) {
+        (oldChildren[index] as BridgeNode).domElem!.remove();
       }
 
-      oldNode.children!.splice(
-        tmpIndex,
-        oldNode.children!.length - tmpIndex,
-      );
-    } else if (index < newNode.children!.length) {
-      const lastElem = (oldNode.children!.at(-1)! as BridgeNode).domElem!;
+      oldChildren.splice(tmpIndex, oldChildren.length - tmpIndex);
+    } else if (index < newChildren.length) {
+      const lastElem = (oldChildren.at(-1)! as BridgeNode).domElem!;
 
       const frag = new DocumentFragment();
-      for (index; index < newNode.children!.length; index++) {
-        this.attachSomeTag(newNode.children![index], frag);
+      for (index; index < newChildren.length; index++) {
+        this.attachSomeTag(newChildren[index]!, frag);
       }
 
       lastElem.after(frag);

@@ -202,14 +202,31 @@ export class Parser {
 
     res = this.tryParseChildren(node) && res;
 
-    if (node.children && node.children.length > 0) {
+    const children: AstNode[] | undefined = node.children;
+
+    if (children && children.length > 0) {
       res = false;
-      const child = node.children[0];
-      const pos: number = child.id
-        ? child.id.pos
-        : Array.isArray(child.text![0])
-          ? child.text![0][0].pos
-          : child.text![0].pos;
+      const child: AstNode = children[0]!;
+
+      let pos: number;
+
+      if (child.id) {
+        pos = child.id.pos;
+      } else {
+        if (!child.text) {
+          throw new Error('AstNode must contain either id or text field');
+        }
+        const firstLiteral: StrPtr | undefined = Array.isArray(
+          child.text[0],
+        )
+          ? child.text[0][0]
+          : child.text[0];
+
+        if (!firstLiteral) {
+          throw new Error('StrPtr must contain at least one child');
+        }
+        pos = firstLiteral.pos;
+      }
 
       this.logger.error(
         pos,
@@ -825,6 +842,11 @@ export class Parser {
   }
 
   private token(): Token {
-    return this.tokens[this.index];
+    const token: Token | undefined = this.tokens[this.index];
+
+    if (!token) {
+      throw new RangeError();
+    }
+    return token;
   }
 }

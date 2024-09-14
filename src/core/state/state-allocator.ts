@@ -12,9 +12,13 @@ export class StateAllocator {
     const stateIndex = this.stateIndex;
     const cellIndex = this.cellIndex;
 
+    if (!this.states[stateIndex]) {
+      throw new RangeError('Trying to access state before loading it');
+    }
+
     return [
-      () => this.states[stateIndex].cells[cellIndex] as T | undefined,
-      (x: T) => (this.states[stateIndex].cells[cellIndex] = x),
+      () => this.states[stateIndex]!.cells[cellIndex] as T | undefined,
+      (x: T) => (this.states[stateIndex]!.cells[cellIndex] = x),
     ];
   }
 
@@ -43,11 +47,16 @@ export class StateAllocator {
   }
 
   public cleanState(): void {
-    this.states[this.stateIndex].cells = [];
+    const currState: State | undefined = this.states[this.stateIndex];
 
-    const nextState = this.states[this.stateIndex + 1];
+    if (!currState) {
+      throw new RangeError('Trying to access state before loading it');
+    }
+    currState.cells = [];
 
-    if (nextState && nextState.level > this.states[this.stateIndex].level) {
+    const nextState: State | undefined = this.states[this.stateIndex + 1];
+
+    if (nextState && nextState.level > currState.level) {
       this.stateIndex++;
       this.trimLevel();
       this.stateIndex--;
@@ -55,8 +64,14 @@ export class StateAllocator {
   }
 
   public injectContext(injections: Injection[]): void {
+    const currState: State | undefined = this.states[this.stateIndex];
+
+    if (!currState) {
+      throw new RangeError('Trying to access state before loading it');
+    }
+
     injections.forEach((i: Injection) => {
-      this.states[this.stateIndex].contextMap.set(i.contextKey, i.value);
+      currState.contextMap.set(i.contextKey, i.value);
     });
   }
 
@@ -65,12 +80,13 @@ export class StateAllocator {
     let index = this.stateIndex;
 
     while (index > 0) {
-      level = this.states[index].level;
+      const state = this.states[index]!;
+      level = state.level;
 
-      if (this.states[index].contextMap.has(contextKey)) {
-        return this.states[index].contextMap.get(contextKey);
+      if (state.contextMap.has(contextKey)) {
+        return state.contextMap.get(contextKey);
       }
-      while (this.states[index].level === level) {
+      while (state.level === level) {
         index--;
       }
     }
@@ -83,7 +99,7 @@ export class StateAllocator {
   }
 
   private trimLevel(): void {
-    const level = this.states[this.stateIndex].level;
+    const level = this.states[this.stateIndex]!.level;
 
     let index = this.stateIndex;
     let curr = this.states[index];
