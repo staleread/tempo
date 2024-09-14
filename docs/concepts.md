@@ -1,4 +1,4 @@
-# Serianilla 🍦
+# Tempo concepts
 
 > It was supposed to be a just lab on Web Programming, and ended up being
 something more interesting...
@@ -14,7 +14,7 @@ Super slow, not optimized, with many bugs, but still a wrapper around regular DO
 
 ## Divide and conquer ⚔
 
-Serianilla allows you to split the presentation logic into consistent components.
+Tempo allows you to split the presentation logic into consistent components.
 This gives you the confidence that if something brakes down it's more likely
 you to find that place. The component could be just a piece of UI like a
 button or dropdown but some may be _smart_ holding the state and managing the
@@ -30,7 +30,7 @@ you'll regret it. Trust me.
 > Imagine JSX was just a regular string...
 
 In order to archive the syntax clarity and flexibility of JSX without
-actually using any compiler, Serianilla splits it into 3 components.
+actually using any compiler, Tempo splits it into 3 components.
 
 * `template` - a static string written in XML-like syntax.
 * `imports` - a list of components referenced inside a `template`.
@@ -55,7 +55,7 @@ export const MyComponent = () => {
 }
 ```
 
-Under the hood, Serianilla takes template through some stages to actually
+Under the hood, Tempo takes template through some stages to actually
 render it.
 
 > Thanks to the [Super tiny compiler](https://github.com/jamiebuilds/the-super-tiny-compiler)
@@ -75,20 +75,20 @@ and generates an abstract syntax tree (AST).
 
 > At this stage the `attach` property comes into play
 
-At this stage Serianilla attaches actual values for `attrs`, `events`, `params`,
+At this stage Tempo attaches actual values for `attrs`, `events`, `params`,
 and `props` ("refs" for simplicity). The commands are also processed at this moment.
 
 ### 4. Unwrapping child components
 
 > At this stage the `imports` property comes into play
 
-At this stage Serianilla first retrieves all child component nodes inside
+At this stage Tempo first retrieves all child component nodes inside
 the template. For each of them it checks the `shouldRender` flag and either loads
 the stored state or cleans it if the component shouldn't be rendered.
 
 ## Commands
 
-In Serianilla commands are represented as HTML tags starting with `$`. In fact
+In Tempo commands are represented as HTML tags starting with `$`. In fact
 these serve as a replacement for common JS expressions used in JSX.
 
 ### `$if`
@@ -153,4 +153,4 @@ something impossible to implement. But after doing some research I encountered
 an article about [How do React hooks really work](https://www.netlify.com/blog/2019/03/11/deep-dive-how-do-react-hooks-really-work/),
 which helped me a lot to understand the concepts behind this.
 
-For now, Serianilla supports custom implementations of `useState`, `useRef` and `useEffect`.
+For now, Tempo supports custom implementations of `useState`, `useRef` and `useEffect`.

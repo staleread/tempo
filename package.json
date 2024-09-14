@@ -1,6 +1,6 @@
 {
-  "name": "serianilla",
-  "version": "0.0.1",
+  "name": "tempo",
+  "version": "1.0.0",
   "description": "Just another declarative way to update DOM",
   "main": "index.js",
   "author": "Mykola Ratushniak",
