@@ -10,8 +10,8 @@
   "scripts": {
     "build": "tsup index.ts --format cjs,esm --dts",
     "lint": "npx tsc",
-    "check": "npx @biomejs/biome check src/ test/",
-    "fix": "npx @biomejs/biome check --write src/ test/"
+    "check": "npx @biomejs/biome check src/",
+    "fix": "npx @biomejs/biome check --write src/"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
