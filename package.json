@@ -1,6 +1,6 @@
 {
-  "name": "tempo",
-  "version": "2.0.0",
+  "name": "@staleread/tempo",
+  "version": "2.0.0-beta",
   "description": "Template-based DOM Modifier",
   "author": "Mykola Ratushniak",
   "lisence": "MIT",
