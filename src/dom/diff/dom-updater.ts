@@ -13,15 +13,23 @@ export class DomUpdater {
   ) {}
 
   public updateDom(newVdom: VdomNode): void {
-    if (!this.vdomBridge) {
-      const frag = new DocumentFragment();
-
-      this.attachNode(newVdom as BridgeNode, frag);
-      this.rootDomElem.appendChild(frag);
+    if (this.vdomBridge) {
+      this.visitNodePairChildren(this.vdomBridge, newVdom);
+      this.eventRegister.removeUnused();
       return;
     }
-    this.visitNodePairChildren(this.vdomBridge, newVdom);
-    this.eventRegister.removeUnused();
+
+    this.vdomBridge = newVdom;
+    const rootTag = this.vdomBridge.children?.[0];
+
+    if (!rootTag) {
+      throw new Error('Vdom must contain a root tag');
+    }
+
+    const frag = new DocumentFragment();
+
+    this.attachNode(rootTag as BridgeNode, frag);
+    this.rootDomElem.appendChild(frag);
   }
 
   private visitNodePairChildren(
@@ -102,7 +110,6 @@ export class DomUpdater {
     }
 
     this.updateTagRef(node);
-
     parentNode.appendChild(node.domElem);
 
     node.children!.forEach((c: VdomNode) => {
