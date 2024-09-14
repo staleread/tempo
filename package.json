@@ -1,8 +1,21 @@
 {
-  "name": "tempo",
-  "version": "1.0.0",
-  "description": "Just another declarative way to update DOM",
-  "main": "index.js",
+  "name": "@staleread/tempo",
+  "version": "2.0.0-beta",
+  "description": "Template-based DOM Modifier",
   "author": "Mykola Ratushniak",
-  "license": "ISC"
+  "lisence": "MIT",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup index.ts --format cjs,esm --dts",
+    "lint": "npx tsc",
+    "check": "npx @biomejs/biome check src/",
+    "fix": "npx @biomejs/biome check --write src/"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.8.3",
+    "tsup": "^8.2.4",
+    "typescript": "^5.5.4"
+  }
 }
