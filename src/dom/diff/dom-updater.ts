@@ -51,7 +51,8 @@ export class DomUpdater {
         continue;
       }
       if (newCh.type === 'Blank') {
-        this.detachNode(oldCh, oldNode.domElem!);
+        this.detachNodeRef(oldCh, oldNode.domElem!);
+        oldChildren[i] = { type: 'Blank' };
         continue;
       }
       if (
@@ -60,21 +61,42 @@ export class DomUpdater {
       ) {
         continue;
       }
+
       const frag = new DocumentFragment();
 
       if (!'GenKeymap'.includes(oldCh.type)) {
         this.attachNode(newCh, frag);
       } else {
-        oldCh.children!.forEach((c: BridgeNode) =>
+        newCh.children!.forEach((c: BridgeNode) =>
           this.attachSomeTag(c, frag),
         );
       }
 
-      if (i > 0) {
-        (oldChildren[i - 1] as BridgeNode).domElem!.before(frag);
+      let nextDomElem: DomElem | undefined;
+
+      for (let j = i + 1; j < oldChildren.length; j++) {
+        const candidate = oldChildren[j] as BridgeNode;
+
+        if (
+          'GenKeymap'.includes(candidate.type) &&
+          candidate.children!.length > 0
+        ) {
+          nextDomElem = (candidate.children![0] as BridgeNode).domElem!;
+          break;
+        }
+        if (candidate.domElem) {
+          nextDomElem = candidate.domElem;
+          break;
+        }
+      }
+
+      oldChildren[i] = newCh;
+
+      if (nextDomElem) {
+        nextDomElem.before(frag);
         continue;
       }
-      oldNode.domElem!.prepend(frag);
+      oldNode.domElem!.appendChild(frag);
     }
   }
 
@@ -127,7 +149,7 @@ export class DomUpdater {
     });
   }
 
-  private detachNode(node: BridgeNode, parentDomElem: DomElem): void {
+  private detachNodeRef(node: BridgeNode, parentDomElem: DomElem): void {
     switch (node.type) {
       case 'Text':
         parentDomElem.removeChild(node.domTextNode!);
