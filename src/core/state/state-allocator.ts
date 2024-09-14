@@ -46,23 +46,6 @@ export class StateAllocator {
     this.allocateState(tag, level);
   }
 
-  public cleanState(): void {
-    const currState: State | undefined = this.states[this.stateIndex];
-
-    if (!currState) {
-      throw new RangeError('Trying to access state before loading it');
-    }
-    currState.cells = [];
-
-    const nextState: State | undefined = this.states[this.stateIndex + 1];
-
-    if (nextState && nextState.level > currState.level) {
-      this.stateIndex++;
-      this.trimLevel();
-      this.stateIndex--;
-    }
-  }
-
   public injectContext(injections: Injection[]): void {
     const currState: State | undefined = this.states[this.stateIndex];
 

@@ -49,6 +49,5 @@ export class VdomUnwrapper {
 
   public skipComponent(componentId: string, level: number): void {
     this.stateAllocator.loadState(componentId, level);
-    this.stateAllocator.cleanState();
   }
 }
