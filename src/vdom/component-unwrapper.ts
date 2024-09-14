@@ -646,7 +646,7 @@ export class ComponentUnwrapper {
           'Cannot find event handler in attachments',
         );
         return false;
-      } else if (typeof handler !== 'function' || handler.length !== 1) {
+      } else if (typeof handler !== 'function') {
         this.logger.error(
           events[i]!.handler.at(-1)!.pos,
           `Expected an event handler, got ${typeof handler}`,
