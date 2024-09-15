@@ -609,7 +609,9 @@ export class ComponentUnwrapper {
           );
           return false;
         }
-        dest = { ...dest, ...value };
+        for (const p in value) {
+          dest[p] = (value as { [key: string]: any })[p];
+        }
         continue;
       }
       const name: string = prop.prop;

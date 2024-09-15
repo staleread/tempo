@@ -454,6 +454,10 @@ export class Parser {
     let res = true;
 
     while (['spread', 'prop'].includes(this.token().type)) {
+      if (this.token().type === 'spread') {
+        res = this.tryParseSpreadPropAttr(props) && res;
+        continue;
+      }
       res = this.tryParsePropAttr(props) && res;
     }
     return res;
@@ -694,6 +698,7 @@ export class Parser {
 
     if (this.token().type !== '=') {
       this.logUnexpectedToken('=');
+      this.panicInsideTag();
       return false;
     }
 
