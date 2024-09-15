@@ -678,9 +678,17 @@ export class ComponentUnwrapper {
         case 'undefined':
           continue;
         case 'object':
+          this.logger.warning(
+            chunk.at(-1)!.pos,
+            'Inserting a JS object into a string may be unintentional',
+          );
           str += '{object}';
           continue;
         case 'function':
+          this.logger.warning(
+            chunk.at(-1)!.pos,
+            'Inserting a function into a string may be unintentional',
+          );
           str += '{function}';
           continue;
         default:
