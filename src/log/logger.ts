@@ -25,6 +25,16 @@ export class Logger {
     );
   }
 
+  public warning(at: number, message: string): void {
+    const lineNumber = this.calcCharLine(at);
+    const lineWithPointer = this.getLineWithPointer(at);
+
+    console.warn(
+      `(${this.componentName}) at line ${lineNumber}: ` +
+        `${message}\n${lineWithPointer}`,
+    );
+  }
+
   protected getLineWithPointer(pos: number): string {
     const column = this.calcCharColumn(pos);
     const errorLine = this.getLineWithCharAt(pos);

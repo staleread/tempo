@@ -124,6 +124,8 @@ export class Lexer {
         return this.createToken('>');
       case '=':
         return this.createToken('=');
+      case '?':
+        return this.createToken('?');
       case '*':
         return this.createToken('spread');
       case '/':

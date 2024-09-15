@@ -1,12 +1,16 @@
 {
   "name": "@staleread/tempo",
-  "version": "2.0.0-beta",
+  "version": "2.1.0-beta",
   "description": "Template-based DOM Modifier",
   "author": "Mykola Ratushniak",
   "lisence": "MIT",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/staleread/tempo.git"
+  },
   "scripts": {
     "build": "tsup index.ts --format cjs,esm --dts",
     "lint": "npx tsc",

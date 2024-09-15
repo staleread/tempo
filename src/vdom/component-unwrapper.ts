@@ -625,10 +625,10 @@ export class ComponentUnwrapper {
 
   private tryGetTagAttrs(attrs: StrAttr[], dest: TagAttr[]): boolean {
     for (let i = 0; i < attrs.length; i++) {
-      dest.push({
-        id: attrs[i]!.attr,
-        value: this.getText(attrs[i]!.strValue),
-      });
+      const attr = attrs[i]!;
+      const value = this.getText(attr.strValue).trim();
+
+      dest.push({ id: attr.attr, value });
     }
     return true;
   }
@@ -638,22 +638,26 @@ export class ComponentUnwrapper {
     dest: Map<VdomEventType, EventHandler>,
   ): boolean {
     for (let i = 0; i < events.length; i++) {
-      const handler: unknown = this.getVar(events[i]!.handler);
+      const event = events[i]!;
+      const handler: unknown = this.getVar(event.handler);
 
+      if (event.isOptional && handler === undefined) {
+        continue;
+      }
       if (!handler) {
         this.logger.error(
-          events[i]!.handler.at(-1)!.pos,
+          event.handler.at(-1)!.pos,
           'Cannot find event handler in attachments',
         );
         return false;
       } else if (typeof handler !== 'function') {
         this.logger.error(
-          events[i]!.handler.at(-1)!.pos,
+          event.handler.at(-1)!.pos,
           `Expected an event handler, got ${typeof handler}`,
         );
         return false;
       }
-      dest.set(events[i]!.event, handler as EventHandler);
+      dest.set(event.event, handler as EventHandler);
     }
     return true;
   }
@@ -671,10 +675,20 @@ export class ComponentUnwrapper {
       const value: unknown = this.getVar(chunk);
 
       switch (typeof value) {
+        case 'undefined':
+          continue;
         case 'object':
+          this.logger.warning(
+            chunk.at(-1)!.pos,
+            'Inserting a JS object into a string may be unintentional',
+          );
           str += '{object}';
           continue;
         case 'function':
+          this.logger.warning(
+            chunk.at(-1)!.pos,
+            'Inserting a function into a string may be unintentional',
+          );
           str += '{function}';
           continue;
         default:
