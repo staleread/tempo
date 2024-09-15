@@ -658,6 +658,7 @@ export class Parser {
 
     if (this.token().type !== '=') {
       this.logUnexpectedToken('=');
+      this.panicInsideTag();
       return false;
     }
 
