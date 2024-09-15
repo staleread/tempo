@@ -124,12 +124,12 @@ export class Lexer {
         return this.createToken('>');
       case '=':
         return this.createToken('=');
-      case '?':
-        return this.createToken('?');
       case '*':
         return this.createToken('spread');
       case '/':
         return this.createToken('/');
+      case '?':
+        return this.readBooleanAssignToken();
       case '!':
         return this.readCommentToken();
       case '.':
@@ -224,6 +224,10 @@ export class Lexer {
     const keyword = this.buffer.substring(this.tokenStart, this.pos);
 
     switch (keyword) {
+      case 'yes':
+        return this.createToken('$yes');
+      case 'no':
+        return this.createToken('$no');
       case 'ref':
         return this.createToken('$ref');
       case 'map':
@@ -270,6 +274,17 @@ export class Lexer {
 
     const prop = this.buffer.substring(this.tokenStart, this.pos);
     return this.createToken('vid', prop);
+  }
+
+  private readBooleanAssignToken(): Token {
+    const char = this.readChar();
+
+    if (char !== '=') {
+      return this.createIllegalToken(
+        'Expected "=" as a part of "?=" token"',
+      );
+    }
+    return this.createToken('?=');
   }
 
   private createToken(type: TokenType, literal?: string): Token {

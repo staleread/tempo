@@ -1,4 +1,4 @@
-import { TagAttr, VdomNode } from '../../vdom/vdom.types';
+import { VdomNode, VdomTagAttr } from '../../vdom/vdom.types';
 import { DomElem } from '../dom.types';
 import { DomEventRegister } from '../events/dom-event-register';
 import { VdomEventType } from '../events/event.types';
@@ -131,21 +131,18 @@ export class DomUpdater {
       node.ref.current = node.domElem!;
     }
 
-    this.updateTagRef(node);
-    parentNode.appendChild(node.domElem);
-
-    node.children!.forEach((c: VdomNode) => {
-      this.attachNode(c as BridgeNode, node.domElem!);
-    });
-  }
-
-  private updateTagRef(node: BridgeNode): void {
-    node.attrs!.forEach((a: TagAttr) => {
-      node.domElem!.setAttribute(a.id, a.value);
+    node.attrs!.forEach((a: VdomTagAttr) => {
+      if (a.shouldSet) node.domElem!.setAttribute(a.id, a.value);
     });
 
     [...node.eventsMap!.keys()].forEach((e: VdomEventType) => {
       this.eventRegister.register(e);
+    });
+
+    parentNode.appendChild(node.domElem);
+
+    node.children!.forEach((c: VdomNode) => {
+      this.attachNode(c as BridgeNode, node.domElem!);
     });
   }
 
@@ -201,7 +198,18 @@ export class DomUpdater {
     oldNode.attrs = newNode.attrs!;
     oldNode.eventsMap = newNode.eventsMap;
 
-    this.updateTagRef(oldNode);
+    oldNode.attrs!.forEach((a: VdomTagAttr) => {
+      if (a.shouldSet) {
+        oldNode.domElem!.setAttribute(a.id, a.value);
+      } else {
+        oldNode.domElem!.removeAttribute(a.id);
+      }
+    });
+
+    [...oldNode.eventsMap!.keys()].forEach((e: VdomEventType) => {
+      this.eventRegister.register(e);
+    });
+
     this.visitNodePairChildren(oldNode, newNode);
 
     return true;

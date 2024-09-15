@@ -7,9 +7,9 @@ import {
   ComponentUnwrapperContext,
   ComponentUnwrapperDto,
   Injection,
-  TagAttr,
   VdomNode,
   VdomNodeType,
+  VdomTagAttr,
 } from './vdom.types';
 
 import {
@@ -21,9 +21,9 @@ import {
   InterStr,
   KeymapArgs,
   PropAttr,
-  StrAttr,
   StrPtr,
   TagArgs,
+  TagAttr,
   Var,
 } from '../ast/parser/parser.types';
 import { Logger } from '../log/logger';
@@ -623,12 +623,33 @@ export class ComponentUnwrapper {
     return true;
   }
 
-  private tryGetTagAttrs(attrs: StrAttr[], dest: TagAttr[]): boolean {
+  private tryGetTagAttrs(attrs: TagAttr[], dest: VdomTagAttr[]): boolean {
     for (let i = 0; i < attrs.length; i++) {
       const attr = attrs[i]!;
-      const value = this.getText(attr.strValue).trim();
 
-      dest.push({ id: attr.attr, value });
+      if (attr.boolLiteral !== undefined) {
+        dest.push({
+          id: attr.attr,
+          shouldSet: attr.boolLiteral,
+          value: '',
+        });
+        continue;
+      } else if (attr.boolValue) {
+        const boolValue = !!this.getVar(attr.boolValue);
+
+        dest.push({ id: attr.attr, shouldSet: boolValue, value: '' });
+        continue;
+      } else if (attr.strValue) {
+        const value = this.getText(attr.strValue).trim();
+        let shouldSet = true;
+
+        if (value === '') {
+          shouldSet = false;
+        }
+        dest.push({ id: attr.attr, shouldSet, value });
+        continue;
+      }
+      throw new Error('Incomplete tag attribute');
     }
     return true;
   }
@@ -639,18 +660,22 @@ export class ComponentUnwrapper {
   ): boolean {
     for (let i = 0; i < events.length; i++) {
       const event = events[i]!;
-      const handler: unknown = this.getVar(event.handler);
 
-      if (event.isOptional && handler === undefined) {
-        continue;
-      }
-      if (!handler) {
+      if (!this.context.attachMap.has(event.handler[0]!.str)) {
         this.logger.error(
-          event.handler.at(-1)!.pos,
-          'Cannot find event handler in attachments',
+          event.handler[0]!.pos,
+          'Event handler is not included in attachments',
         );
         return false;
-      } else if (typeof handler !== 'function') {
+      }
+
+      const handler: unknown = this.getVar(event.handler);
+
+      if (!handler) {
+        continue;
+      }
+
+      if (typeof handler !== 'function') {
         this.logger.error(
           event.handler.at(-1)!.pos,
           `Expected an event handler, got ${typeof handler}`,

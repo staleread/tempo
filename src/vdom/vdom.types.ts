@@ -17,14 +17,19 @@ export type VdomNode = {
   key?: string | number;
   id?: string;
   ref?: { current: DomElem | null };
-  attrs?: TagAttr[];
+  attrs?: VdomTagAttr[];
   eventsMap?: Map<VdomEventType, EventHandler>;
   children?: VdomNode[];
   keymap?: Map<string | number, VdomNode>;
 };
 
-export type TagAttr = { id: string; value: string };
 export type AnyObject = { [key: string]: any };
+
+export type VdomTagAttr = {
+  id: string;
+  shouldSet: boolean;
+  value: string;
+};
 
 export type Injection = {
   contextKey: string;

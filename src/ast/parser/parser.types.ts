@@ -18,7 +18,7 @@ export type AstNode = {
 };
 
 export type TagArgs = {
-  attrs: StrAttr[];
+  attrs: TagAttr[];
   events: EventAttr[];
 };
 
@@ -38,16 +38,17 @@ export type InjectionArg = {
   contextKey: Var;
 };
 
-export type StrAttr = {
+export type TagAttr = {
   attr: string;
   pos: number;
-  strValue: InterStr;
+  strValue?: InterStr;
+  boolValue?: Var;
+  boolLiteral?: boolean;
 };
 
 export type EventAttr = {
   event: VdomEventType;
   pos: number;
-  isOptional: boolean;
   handler: Var;
 };
 

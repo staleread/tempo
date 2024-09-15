@@ -10,9 +10,9 @@ import {
   InterStr,
   KeymapArgs,
   PropAttr,
-  StrAttr,
   StrPtr,
   TagArgs,
+  TagAttr,
   Var,
 } from './parser.types';
 
@@ -445,7 +445,7 @@ export class Parser {
         res = this.tryParseEventAttr(nodeId, args.events) && res;
         continue;
       }
-      res = this.tryParseStringAttr(args.attrs) && res;
+      res = this.tryParseTagAttr(args.attrs) && res;
     }
     return res;
   }
@@ -540,7 +540,7 @@ export class Parser {
     return true;
   }
 
-  private tryParseStringAttr(dest: StrAttr[]): boolean {
+  private tryParseTagAttr(dest: TagAttr[]): boolean {
     let res = true;
 
     const attr = this.token().literal!;
@@ -549,21 +549,56 @@ export class Parser {
     this.index++;
     this.skipComments();
 
-    if (this.token().type !== '=') {
-      this.logUnexpectedToken('=');
-      this.panicInsideTag();
-      return false;
+    if (this.token().type === '?=') {
+      this.index++;
+      this.skipComments();
+
+      if (!['$yes', '$no', '{'].includes(this.token().type)) {
+        this.logger.error(
+          this.token().pos,
+          'Expected $yes, $no, or an attachment',
+        );
+        this.panicInsideTag();
+        return false;
+      }
+
+      if (this.token().type === '$yes') {
+        this.index++;
+        this.skipComments();
+
+        if (res) dest.push({ attr, pos, boolLiteral: true });
+        return res;
+      }
+      if (this.token().type === '$no') {
+        this.index++;
+        this.skipComments();
+
+        if (res) dest.push({ attr, pos, boolLiteral: false });
+        return res;
+      }
+      const boolValue: Var = [];
+
+      res = this.tryParseVar(boolValue) && res;
+
+      if (res) dest.push({ attr, pos, boolValue });
+      return res;
+    } else if (this.token().type === '=') {
+      this.index++;
+      this.skipComments();
+
+      const strValue: InterStr = [];
+
+      res = this.tryParseStringLiteral(strValue) && res;
+
+      if (res) dest.push({ attr, pos, strValue });
+      return res;
     }
-
-    this.index++;
-    this.skipComments();
-
-    const strValue: InterStr = [];
-
-    res = this.tryParseStringLiteral(strValue) && res;
-
-    if (res) dest.push({ attr, pos, strValue });
-    return res;
+    this.logger.error(
+      this.token().pos,
+      `"=" or "?=" expected, got "${this.token().type}"`,
+    );
+    this.panicInsideTag();
+    return false;
   }
 
   private tryParseEventAttr(nodeId: string, dest: EventAttr[]): boolean {
@@ -571,7 +606,6 @@ export class Parser {
 
     const event = this.token().literal! as VdomEventType;
     const pos = this.token().pos;
-    let isOptional = false;
 
     switch (event) {
       case 'click':
@@ -597,11 +631,6 @@ export class Parser {
     this.index++;
     this.skipComments();
 
-    if (this.token().type === '?') {
-      isOptional = true;
-      this.index++;
-    }
-
     if (this.token().type !== '=') {
       this.logUnexpectedToken('=');
       this.panicInsideTag();
@@ -614,7 +643,7 @@ export class Parser {
     const handler: Var = [];
     res = this.tryParseVar(handler) && res;
 
-    if (res) dest.push({ event, pos, isOptional, handler });
+    if (res) dest.push({ event, pos, handler });
     return res;
   }
 
