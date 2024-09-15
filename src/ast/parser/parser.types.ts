@@ -47,6 +47,7 @@ export type StrAttr = {
 export type EventAttr = {
   event: VdomEventType;
   pos: number;
+  isOptional: boolean;
   handler: Var;
 };
 

@@ -638,22 +638,26 @@ export class ComponentUnwrapper {
     dest: Map<VdomEventType, EventHandler>,
   ): boolean {
     for (let i = 0; i < events.length; i++) {
-      const handler: unknown = this.getVar(events[i]!.handler);
+      const event = events[i]!;
+      const handler: unknown = this.getVar(event.handler);
 
+      if (event.isOptional && handler === undefined) {
+        continue;
+      }
       if (!handler) {
         this.logger.error(
-          events[i]!.handler.at(-1)!.pos,
+          event.handler.at(-1)!.pos,
           'Cannot find event handler in attachments',
         );
         return false;
       } else if (typeof handler !== 'function') {
         this.logger.error(
-          events[i]!.handler.at(-1)!.pos,
+          event.handler.at(-1)!.pos,
           `Expected an event handler, got ${typeof handler}`,
         );
         return false;
       }
-      dest.set(events[i]!.event, handler as EventHandler);
+      dest.set(event.event, handler as EventHandler);
     }
     return true;
   }

@@ -571,6 +571,7 @@ export class Parser {
 
     const event = this.token().literal! as VdomEventType;
     const pos = this.token().pos;
+    let isOptional = false;
 
     switch (event) {
       case 'click':
@@ -596,6 +597,11 @@ export class Parser {
     this.index++;
     this.skipComments();
 
+    if (this.token().type === '?') {
+      isOptional = true;
+      this.index++;
+    }
+
     if (this.token().type !== '=') {
       this.logUnexpectedToken('=');
       this.panicInsideTag();
@@ -608,7 +614,7 @@ export class Parser {
     const handler: Var = [];
     res = this.tryParseVar(handler) && res;
 
-    if (res) dest.push({ event, pos, handler });
+    if (res) dest.push({ event, pos, isOptional, handler });
     return res;
   }
 

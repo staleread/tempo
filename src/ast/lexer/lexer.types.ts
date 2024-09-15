@@ -10,6 +10,7 @@ export type TokenType =
   | '"'
   | '/'
   | '='
+  | '?'
   | 'dot'
   | 'spread'
   | 'comment'
