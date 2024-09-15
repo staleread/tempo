@@ -625,10 +625,10 @@ export class ComponentUnwrapper {
 
   private tryGetTagAttrs(attrs: StrAttr[], dest: TagAttr[]): boolean {
     for (let i = 0; i < attrs.length; i++) {
-      dest.push({
-        id: attrs[i]!.attr,
-        value: this.getText(attrs[i]!.strValue),
-      });
+      const attr = attrs[i]!;
+      const value = this.getText(attr.strValue).trim();
+
+      dest.push({ id: attr.attr, value });
     }
     return true;
   }
@@ -675,6 +675,8 @@ export class ComponentUnwrapper {
       const value: unknown = this.getVar(chunk);
 
       switch (typeof value) {
+        case 'undefined':
+          continue;
         case 'object':
           str += '{object}';
           continue;
