@@ -50,4 +50,13 @@ export const eventStrategy: Record<VdomEventType, VdomEvent> = {
       domElem._ref.eventsMap!.get('input')?.(event);
     },
   },
+  blur: {
+    nativeEventName: 'focusout',
+    handler: (event: Event) => {
+      const domElem: DomElem | null = getEventTargetElem(event);
+      if (!domElem?._ref) return;
+
+      domElem._ref.eventsMap!.get('blur')?.(event);
+    },
+  },
 };

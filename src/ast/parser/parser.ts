@@ -578,6 +578,7 @@ export class Parser {
         break;
       case 'change':
       case 'input':
+      case 'blur':
         if (nodeId !== 'input') {
           res = false;
           this.logger.error(
