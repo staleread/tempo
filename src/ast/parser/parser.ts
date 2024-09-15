@@ -660,22 +660,46 @@ export class Parser {
     this.index++;
     this.skipComments();
 
+    let strValue: InterStr | undefined;
+    let value: Var | undefined;
+    let boolLiteral: boolean | undefined;
+
     switch (this.token().type) {
+      case '$yes':
+        this.index++;
+        this.skipComments();
+
+        boolLiteral = true;
+        break;
+      case '$no':
+        this.index++;
+        this.skipComments();
+
+        boolLiteral = false;
+        break;
       case '"':
-        const strValue: InterStr = [];
+        strValue = [];
         res = this.tryParseStringLiteral(strValue) && res;
-        if (res) dest.push({ prop, isSpread: false, pos, strValue });
-        return res;
+        break;
       case '{':
-        const value: Var = [];
+        value = [];
         res = this.tryParseVar(value) && res;
-        if (res) dest.push({ prop, isSpread: false, pos, value });
-        return res;
+        break;
       default:
         this.logUnexpectedToken();
         this.panicInsideTag();
         return false;
     }
+    if (res)
+      dest.push({
+        prop,
+        isSpread: false,
+        pos,
+        strValue,
+        value,
+        boolLiteral,
+      });
+    return res;
   }
 
   private tryParseSpreadPropAttr(dest: PropAttr[]): boolean {

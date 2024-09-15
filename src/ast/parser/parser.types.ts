@@ -58,6 +58,7 @@ export type PropAttr = {
   pos: number;
   strValue?: InterStr;
   value?: Var;
+  boolLiteral?: boolean;
 };
 
 export type InterStr = Array<StrPtr | Var>;

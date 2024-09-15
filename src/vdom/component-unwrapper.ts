@@ -620,7 +620,15 @@ export class ComponentUnwrapper {
         dest[name] = this.getText(prop.strValue);
         continue;
       }
-      dest[name] = this.getVar(prop.value!);
+      if (prop.value) {
+        dest[name] = this.getVar(prop.value);
+        continue;
+      }
+      if (prop.boolLiteral !== undefined) {
+        dest[name] = prop.boolLiteral;
+        continue;
+      }
+      throw new Error('Incomplete prop');
     }
     return true;
   }
@@ -636,12 +644,14 @@ export class ComponentUnwrapper {
           value: '',
         });
         continue;
-      } else if (attr.boolValue) {
+      }
+      if (attr.boolValue) {
         const boolValue = !!this.getVar(attr.boolValue);
 
         dest.push({ id: attr.attr, shouldSet: boolValue, value: '' });
         continue;
-      } else if (attr.strValue) {
+      }
+      if (attr.strValue) {
         const value = this.getText(attr.strValue).trim();
         let shouldSet = true;
 
