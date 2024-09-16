@@ -199,11 +199,15 @@ export class DomUpdater {
     oldNode.eventsMap = newNode.eventsMap;
 
     oldNode.attrs!.forEach((a: VdomTagAttr) => {
-      if (a.shouldSet) {
-        oldNode.domElem!.setAttribute(a.id, a.value);
-      } else {
+      if (!a.shouldSet) {
         oldNode.domElem!.removeAttribute(a.id);
+        return;
       }
+      if (oldNode.tag === 'input' && a.id === 'value') {
+        (oldNode.domElem as HTMLInputElement).value = a.value;
+        return;
+      }
+      oldNode.domElem!.setAttribute(a.id, a.value);
     });
 
     [...oldNode.eventsMap!.keys()].forEach((e: VdomEventType) => {

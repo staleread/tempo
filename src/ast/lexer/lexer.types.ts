@@ -19,19 +19,15 @@ export type TokenType =
   | 'comp'
   | 'prop'
   | 'event'
-  | '$yes'
-  | '$no'
-  | '$ref'
   | '$map'
-  | '$to'
-  | '$in'
+  | '$bind'
   | '$if'
-  | '$not'
-  | '$tag'
-  | '$cmp'
-  | '$use'
-  | '$as'
-  | '$children';
+  | '$set'
+  | '#tag'
+  | '#cmp'
+  | '#children'
+  | ':no'
+  | ':yes';
 
 export interface Token {
   type: TokenType;

@@ -4,7 +4,7 @@ import { Token, TokenType } from '../lexer/lexer.types';
 import {
   AstNode,
   AstNodeType,
-  ConditionArgs,
+  Condition,
   EventAttr,
   InjectionArg,
   InterStr,
@@ -78,13 +78,13 @@ export class Parser {
       case 'comp':
         res = this.tryParseCompTag(dest) && res;
         break;
-      case '$tag':
+      case '#tag':
         res = this.tryParseGenTag(dest) && res;
         break;
-      case '$cmp':
+      case '#cmp':
         res = this.tryParseGenCompTag(dest) && res;
         break;
-      case '$children':
+      case '#children':
         res = this.tryParseChildrenTag(dest) && res;
         break;
       case '/':
@@ -245,8 +245,8 @@ export class Parser {
       node.tagName = [];
       res = this.tryParseVar(node.tagName!) && res;
     }
-    node.tagArgs = { attrs: [], events: [] };
 
+    node.tagArgs = { attrs: [], events: [] };
     res = this.tryParseTagArgs(node.id!.str, node.tagArgs!) && res;
 
     this.skipComments();
@@ -254,7 +254,7 @@ export class Parser {
 
     while (!'eof/>'.includes(this.token().type)) {
       switch (this.token().type) {
-        case '$ref':
+        case '$bind':
           if (hasCommand) {
             this.logger.error(
               node.id!.pos,
@@ -264,8 +264,8 @@ export class Parser {
           }
           hasCommand = true;
 
-          node.ref = [];
-          res = this.tryParseRef(node.ref);
+          node.bind = [];
+          res = this.tryParseBind(node.bind) && res;
           continue;
         case '$map':
           if (hasCommand) {
@@ -279,8 +279,8 @@ export class Parser {
 
           node.keymapArgs = {
             key: [],
-            items: [],
             alias: { pos: -1, str: '' },
+            items: [],
           };
           res = this.tryParseKeymapArgs(node.keymapArgs!) && res;
           continue;
@@ -293,16 +293,17 @@ export class Parser {
             return false;
           }
           hasCommand = true;
+
           node.condition = {
             invert: false,
             predicate: [],
           };
           res = this.tryParseCondition(node.condition!) && res;
           continue;
-        case '$use':
+        case '$set':
           this.logger.error(
             this.token().pos,
-            '$use statement is not supported in tag-like tags',
+            '$set statement is not supported in tag-like tags',
           );
           this.panicInsideTag();
           return false;
@@ -330,13 +331,19 @@ export class Parser {
 
     while (!'eof/>'.includes(this.token().type)) {
       switch (this.token().type) {
-        case '$ref':
-          this.logger.error(
-            this.token().pos,
-            '$ref inline command is not allowed in component-like tags',
-          );
-          this.panicInsideTag();
-          return false;
+        case '$bind':
+          if (hasCommand) {
+            this.logger.error(
+              node.id!.pos,
+              'Exeeded the limit of inline commands inside a tag',
+            );
+            return false;
+          }
+          hasCommand = true;
+
+          node.bind = [];
+          res = this.tryParseBind(node.bind!) && res;
+          continue;
         case '$map':
           if (hasCommand) {
             this.logger.error(
@@ -346,10 +353,11 @@ export class Parser {
             return false;
           }
           hasCommand = true;
+
           node.keymapArgs = {
             key: [],
-            items: [],
             alias: { pos: -1, str: '' },
+            items: [],
           };
           res = this.tryParseKeymapArgs(node.keymapArgs!) && res;
           continue;
@@ -362,17 +370,20 @@ export class Parser {
             return false;
           }
           hasCommand = true;
+
           node.condition = {
             invert: false,
             predicate: [],
           };
           res = this.tryParseCondition(node.condition!) && res;
           continue;
-        case '$use':
-          node.injections = [];
-          res = this.tryParseInjections(node.injections!) && res;
-          break;
+        case '$set':
+          if (!node.injections) {
+            node.injections = [];
+          }
+          res = this.tryParseInjection(node.injections) && res;
           continue;
+        default:
           res = false;
           this.logUnexpectedToken();
           this.panicInsideTag();
@@ -463,24 +474,15 @@ export class Parser {
     return res;
   }
 
-  private tryParseKeymapArgs(keymapArgs: KeymapArgs): boolean {
+  private tryParseKeymapArgs(args: KeymapArgs): boolean {
     this.index++;
 
-    if (!this.tryParseVar(keymapArgs.key)) {
-      return false;
-    }
-
-    if (this.token().type === '$to') {
-      this.index++;
-      this.skipComments();
-    } else {
-      this.logUnexpectedToken('$to');
-      this.panicInsideTag();
+    if (!this.tryParseVar(args.key)) {
       return false;
     }
 
     if (this.token().type === 'prop') {
-      keymapArgs.alias = {
+      args.alias = {
         pos: this.token().pos,
         str: this.token().literal!,
       };
@@ -492,54 +494,46 @@ export class Parser {
       return false;
     }
 
-    if (this.token().type === '$in') {
-      this.index++;
-      this.skipComments();
-    } else {
-      this.logUnexpectedToken('$in');
-      this.panicInsideTag();
-      return false;
-    }
-
-    return this.tryParseVar(keymapArgs.items);
+    return this.tryParseVar(args.items);
   }
 
-  private tryParseCondition(condition: ConditionArgs): boolean {
+  private tryParseCondition(condition: Condition): boolean {
     this.index++;
 
-    if (this.token().type === '$not') {
-      condition.invert = true;
-      this.index++;
-      this.skipComments();
+    switch (this.token().type) {
+      case ':yes':
+        condition.invert = false;
+        break;
+      case ':no':
+        condition.invert = true;
+        break;
+      default:
+        this.logger.error(this.token().pos, ':yes or :no expected');
+        this.panicInsideTag();
+        return false;
     }
+    this.index++;
+    this.skipComments();
 
     return this.tryParseVar(condition.predicate);
   }
 
-  private tryParseInjections(dest: InjectionArg[]): boolean {
+  private tryParseInjection(dest: InjectionArg[]): boolean {
     this.index++;
 
     const injection: InjectionArg = {
-      value: [],
       contextKey: [],
+      value: [],
     };
+
+    if (!this.tryParseVar(injection.contextKey)) {
+      return false;
+    }
 
     if (!this.tryParseVar(injection.value)) {
       return false;
     }
 
-    if (this.token().type === '$as') {
-      this.index++;
-      this.skipComments();
-    } else {
-      this.logUnexpectedToken('$as');
-      this.panicInsideTag();
-      return false;
-    }
-
-    if (!this.tryParseVar(injection.contextKey)) {
-      return false;
-    }
     dest.push(injection);
     return true;
   }
@@ -567,13 +561,13 @@ export class Parser {
     let boolLiteral: boolean | undefined;
 
     switch (this.token().type) {
-      case '$yes':
+      case ':yes':
         this.index++;
         this.skipComments();
 
         boolLiteral = true;
         break;
-      case '$no':
+      case ':no':
         this.index++;
         this.skipComments();
 
@@ -665,13 +659,13 @@ export class Parser {
     let boolLiteral: boolean | undefined;
 
     switch (this.token().type) {
-      case '$yes':
+      case ':yes':
         this.index++;
         this.skipComments();
 
         boolLiteral = true;
         break;
-      case '$no':
+      case ':no':
         this.index++;
         this.skipComments();
 
@@ -747,19 +741,11 @@ export class Parser {
     return true;
   }
 
-  private tryParseRef(ref: Var): boolean {
+  private tryParseBind(bind: Var): boolean {
     this.index++;
     this.skipComments();
 
-    if (this.token().type !== '=') {
-      this.logUnexpectedToken('=');
-      return false;
-    }
-
-    this.index++;
-    this.skipComments();
-
-    return this.tryParseVar(ref);
+    return this.tryParseVar(bind);
   }
 
   private tryParseVar(dest: Var): boolean {

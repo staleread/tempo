@@ -15,7 +15,7 @@ import {
 import {
   AstNode,
   AstNodeType,
-  ConditionArgs,
+  Condition,
   EventAttr,
   InjectionArg,
   InterStr,
@@ -126,18 +126,18 @@ export class ComponentUnwrapper {
       node.key = key;
     }
 
-    if (tag.ref) {
-      const ref: unknown = this.getVar(tag.ref);
+    if (tag.bind) {
+      const bind: unknown = this.getVar(tag.bind);
 
       if (
-        ref === null ||
-        typeof ref !== 'object' ||
-        !Object.hasOwn(ref, 'current')
+        bind === null ||
+        typeof bind !== 'object' ||
+        !Object.hasOwn(bind, 'current')
       ) {
-        this.logger.error(tag.ref.at(-1)!.pos, 'Invalid ref value');
+        this.logger.error(tag.bind.at(-1)!.pos, 'Invalid bind value');
         return false;
       }
-      node.ref = ref as { current: DomElem | null };
+      node.ref = bind as { current: DomElem | null };
     }
 
     res = this.tryGetTagAttrs(tag.tagArgs!.attrs, node.attrs!) && res;
@@ -226,18 +226,18 @@ export class ComponentUnwrapper {
       node.key = key;
     }
 
-    if (tag.ref) {
-      const ref: unknown = this.getVar(tag.ref);
+    if (tag.bind) {
+      const bind: unknown = this.getVar(tag.bind);
 
       if (
-        ref === null ||
-        typeof ref !== 'object' ||
-        !Object.hasOwn(ref, 'current')
+        bind === null ||
+        typeof bind !== 'object' ||
+        !Object.hasOwn(bind, 'current')
       ) {
-        this.logger.error(tag.ref.at(-1)!.pos, 'Invalid ref value');
+        this.logger.error(tag.bind.at(-1)!.pos, 'Invalid bind value');
         return false;
       }
-      node.ref = ref as { current: DomElem | null };
+      node.ref = bind as { current: DomElem | null };
     }
 
     res = this.tryGetTagAttrs(tag.tagArgs!.attrs, node.attrs!) && res;
@@ -321,6 +321,20 @@ export class ComponentUnwrapper {
       res = this.tryGetInjections(tag.injections!, injections);
     }
 
+    let stateKey: any;
+
+    if (tag.bind) {
+      const key: unknown = this.getVar(tag.bind);
+
+      if (typeof key === 'object' && key !== null) {
+        this.logger.warning(
+          tag.bind.at(-1)!.pos,
+          'Раssing an object as a state bound key is not preferable',
+        );
+      }
+      stateKey = key;
+    }
+
     const tagChildren = tag.children!;
 
     if (tagChildren.length > 0) {
@@ -334,7 +348,7 @@ export class ComponentUnwrapper {
       };
     }
 
-    if (res) this.vdomUnwrapper.unwrapComponent(dto, injections);
+    if (res) this.vdomUnwrapper.unwrapComponent(dto, injections, stateKey);
     return res;
   }
 
@@ -410,6 +424,20 @@ export class ComponentUnwrapper {
       res = this.tryGetInjections(tag.injections!, injections);
     }
 
+    let stateKey: any;
+
+    if (tag.bind) {
+      const key: unknown = this.getVar(tag.bind);
+
+      if (typeof key === 'object' && key !== null) {
+        this.logger.warning(
+          tag.bind.at(-1)!.pos,
+          'Раssing an object as a state bound key is not preferable',
+        );
+      }
+      stateKey = key;
+    }
+
     const tagChildren = tag.children!;
 
     if (tagChildren.length > 0) {
@@ -423,7 +451,7 @@ export class ComponentUnwrapper {
       };
     }
 
-    if (res) this.vdomUnwrapper.unwrapComponent(dto, injections);
+    if (res) this.vdomUnwrapper.unwrapComponent(dto, injections, stateKey);
     return res;
   }
 
@@ -464,7 +492,7 @@ export class ComponentUnwrapper {
 
   private tryUnwrapCondition(
     tag: AstNode,
-    condition: ConditionArgs,
+    condition: Condition,
     dest: VdomNode[],
     unwrapNode: () => boolean,
   ): boolean {
@@ -569,7 +597,23 @@ export class ComponentUnwrapper {
       );
       return false;
     }
-    if (res) this.vdomUnwrapper.skipComponent(func.name, this.level + 1);
+
+    let stateKey: any;
+
+    if (tag.bind) {
+      const key: unknown = this.getVar(tag.bind);
+
+      if (typeof key === 'object' && key !== null) {
+        this.logger.warning(
+          tag.bind.at(-1)!.pos,
+          'Раssing an object as a state bound key is not preferable',
+        );
+      }
+      stateKey = key;
+    }
+
+    if (res)
+      this.vdomUnwrapper.skipComponent(func.name, this.level + 1, stateKey);
     return res;
   }
 
@@ -591,7 +635,22 @@ export class ComponentUnwrapper {
       return false;
     }
 
-    if (res) this.vdomUnwrapper.skipComponent(func.name, this.level + 1);
+    let stateKey: any;
+
+    if (tag.bind) {
+      const key: unknown = this.getVar(tag.bind);
+
+      if (typeof key === 'object' && key !== null) {
+        this.logger.warning(
+          tag.bind.at(-1)!.pos,
+          'Раssing an object as a state bound key is not preferable',
+        );
+      }
+      stateKey = key;
+    }
+
+    if (res)
+      this.vdomUnwrapper.skipComponent(func.name, this.level + 1, stateKey);
     return res;
   }
 
@@ -652,13 +711,9 @@ export class ComponentUnwrapper {
         continue;
       }
       if (attr.strValue) {
-        const value = this.getText(attr.strValue).trim();
-        let shouldSet = true;
+        const value = this.getText(attr.strValue);
 
-        if (value === '') {
-          shouldSet = false;
-        }
-        dest.push({ id: attr.attr, shouldSet, value });
+        dest.push({ id: attr.attr, shouldSet: true, value });
         continue;
       }
       throw new Error('Incomplete tag attribute');

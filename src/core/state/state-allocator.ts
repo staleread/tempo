@@ -27,23 +27,26 @@ export class StateAllocator {
     this.cellIndex = -1;
   }
 
-  public loadState(tag: string, level: number): void {
+  public loadState(tag: string, level: number, stateKey: any): void {
     this.stateIndex++;
     this.cellIndex = -1;
 
     const state = this.states[this.stateIndex];
 
     if (!state || state.level < level) {
-      this.allocateState(tag, level);
+      this.allocateState(tag, level, stateKey);
       return;
     }
-
-    if (state.tag === tag && state.level === level) {
+    if (state.tag !== tag || state.level !== level) {
+      this.trimLevel();
+      this.allocateState(tag, level, stateKey);
       return;
     }
-
-    this.trimLevel();
-    this.allocateState(tag, level);
+    if (state.key !== stateKey) {
+      state.cells = [];
+      state.key = stateKey;
+      return;
+    }
   }
 
   public injectContext(injections: Injection[]): void {
@@ -76,8 +79,14 @@ export class StateAllocator {
     return undefined;
   }
 
-  private allocateState(tag: string, level: number): void {
-    const state: State = { tag, level, contextMap: new Map(), cells: [] };
+  private allocateState(tag: string, level: number, stateKey: any): void {
+    const state: State = {
+      tag,
+      level,
+      key: stateKey,
+      contextMap: new Map(),
+      cells: [],
+    };
     this.states.splice(this.stateIndex, 0, state);
   }
 

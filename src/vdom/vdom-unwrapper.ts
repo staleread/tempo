@@ -24,19 +24,21 @@ export class VdomUnwrapper {
     };
 
     const injections: Injection[] = [];
+    const stateKey = undefined;
 
-    this.unwrapComponent(dto, injections);
+    this.unwrapComponent(dto, injections, stateKey);
     return root;
   }
 
   public unwrapComponent(
     dto: ComponentUnwrapperDto,
     injections: Injection[],
+    stateKey: any,
   ): void {
     if (dto.level === 0) {
       this.stateAllocator.reset();
     }
-    this.stateAllocator.loadState(dto.componentId, dto.level);
+    this.stateAllocator.loadState(dto.componentId, dto.level, stateKey);
     this.stateAllocator.injectContext(injections);
 
     const unwrapper =
@@ -47,7 +49,11 @@ export class VdomUnwrapper {
     }
   }
 
-  public skipComponent(componentId: string, level: number): void {
-    this.stateAllocator.loadState(componentId, level);
+  public skipComponent(
+    componentId: string,
+    level: number,
+    stateKey: any,
+  ): void {
+    this.stateAllocator.loadState(componentId, level, stateKey);
   }
 }

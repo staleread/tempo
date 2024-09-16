@@ -135,7 +135,11 @@ export class Lexer {
       case '@':
         return this.readEventTokenName();
       case '$':
-        return this.readKeywordTokenName();
+        return this.readCommandTokenName();
+      case '#':
+        return this.readHashTagTokenName();
+      case ':':
+        return this.readLiteralTokenName();
       case Lexer.EOF:
         return this.createToken('eof');
     }
@@ -209,47 +213,75 @@ export class Lexer {
     return this.createToken('event', name);
   }
 
-  private readKeywordTokenName(): Token {
+  private readCommandTokenName(): Token {
     this.tokenStart = this.pos;
 
     if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
       return this.createIllegalToken(
-        'Keyword must start with lowercase letter',
+        'Command must start with lowercase letter',
       );
     }
     this.skipRange(Lexer.LOWER_LETTERS);
 
-    const keyword = this.buffer.substring(this.tokenStart, this.pos);
+    const command = this.buffer.substring(this.tokenStart, this.pos);
 
-    switch (keyword) {
-      case 'yes':
-        return this.createToken('$yes');
-      case 'no':
-        return this.createToken('$no');
-      case 'ref':
-        return this.createToken('$ref');
+    switch (command) {
       case 'map':
         return this.createToken('$map');
-      case 'to':
-        return this.createToken('$to');
-      case 'in':
-        return this.createToken('$in');
+      case 'bind':
+        return this.createToken('$bind');
       case 'if':
         return this.createToken('$if');
-      case 'not':
-        return this.createToken('$not');
-      case 'tag':
-        return this.createToken('$tag');
-      case 'cmp':
-        return this.createToken('$cmp');
-      case 'use':
-        return this.createToken('$use');
-      case 'as':
-        return this.createToken('$as');
-      case 'children':
-        return this.createToken('$children');
+      case 'set':
+        return this.createToken('$set');
       default:
-        return this.createIllegalToken('Unknown keyword');
+        return this.createIllegalToken('Unknown command');
+    }
+  }
+
+  private readHashTagTokenName(): Token {
+    this.tokenStart = this.pos;
+
+    if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
+      return this.createIllegalToken(
+        'Hash tag must start with lowercase letter',
+      );
+    }
+    this.skipRange(Lexer.LOWER_LETTERS);
+
+    const tag = this.buffer.substring(this.tokenStart, this.pos);
+
+    switch (tag) {
+      case 'tag':
+        return this.createToken('#tag');
+      case 'cmp':
+        return this.createToken('#cmp');
+      case 'children':
+        return this.createToken('#children');
+      default:
+        return this.createIllegalToken('Unknown hash tag');
+    }
+  }
+
+  private readLiteralTokenName(): Token {
+    this.tokenStart = this.pos;
+
+    if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
+      return this.createIllegalToken(
+        'Literal must start with lowercase letter',
+      );
+    }
+    this.skipRange(Lexer.LOWER_LETTERS);
+
+    const literal = this.buffer.substring(this.tokenStart, this.pos);
+
+    switch (literal) {
+      case 'yes':
+        return this.createToken(':yes');
+      case 'no':
+        return this.createToken(':no');
+      default:
+        return this.createIllegalToken('Unknown literal');
     }
   }
 

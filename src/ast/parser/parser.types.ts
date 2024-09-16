@@ -7,11 +7,11 @@ export type AstNode = {
   id?: StrPtr;
   text?: InterStr;
   tagName?: Var;
+  bind?: Var;
   compFunc?: Var;
   tagArgs?: TagArgs;
-  ref?: Var;
   keymapArgs?: KeymapArgs;
-  condition?: ConditionArgs;
+  condition?: Condition;
   injections?: InjectionArg[];
   props?: PropAttr[];
   children?: AstNode[];
@@ -28,14 +28,14 @@ export type KeymapArgs = {
   items: Var;
 };
 
-export type ConditionArgs = {
+export type Condition = {
   invert: boolean;
   predicate: Var;
 };
 
 export type InjectionArg = {
-  value: Var;
   contextKey: Var;
+  value: Var;
 };
 
 export type TagAttr = {
