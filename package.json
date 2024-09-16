@@ -13,8 +13,7 @@
   },
   "scripts": {
     "build": "tsup index.ts --format cjs,esm --dts",
-    "lint": "npx tsc",
-    "check": "npx @biomejs/biome check src/",
+    "lint": "npx tsc && npx @biomejs/biome check src/",
     "fix": "npx @biomejs/biome check --write src/"
   },
   "devDependencies": {
