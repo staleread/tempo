@@ -184,6 +184,7 @@ export class DomUpdater {
   ): boolean {
     if (oldNode.text! !== newNode.text!) {
       oldNode.domTextNode!.nodeValue = newNode.text!;
+      oldNode.text = newNode.text!;
     }
     return true;
   }
