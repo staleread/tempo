@@ -196,20 +196,30 @@ export class DomUpdater {
     if (oldNode.type === 'GenTag' && oldNode.id! !== newNode.id!) {
       return false;
     }
-    oldNode.attrs = newNode.attrs!;
-    oldNode.eventsMap = newNode.eventsMap;
 
-    oldNode.attrs!.forEach((a: VdomTagAttr) => {
-      if (!a.shouldSet) {
-        oldNode.domElem!.removeAttribute(a.id);
-        return;
+    for (let i = 0; i < oldNode.attrs!.length; i++) {
+      const oldAttr = oldNode.attrs![i]!;
+      const newAttr = newNode.attrs![i]!;
+
+      if (
+        oldAttr.value === newAttr.value &&
+        oldAttr.shouldSet === newAttr.shouldSet
+      ) {
+        continue;
       }
-      if (oldNode.tag === 'input' && a.id === 'value') {
-        (oldNode.domElem as HTMLInputElement).value = a.value;
-        return;
+      if (!newAttr.shouldSet) {
+        oldNode.domElem!.removeAttribute(newAttr.id);
+        continue;
       }
-      oldNode.domElem!.setAttribute(a.id, a.value);
-    });
+      if (oldNode.tag === 'input' && newAttr.id === 'value') {
+        (oldNode.domElem as HTMLInputElement).value = newAttr.value;
+        continue;
+      }
+      oldNode.domElem!.setAttribute(newAttr.id, newAttr.value);
+    }
+
+    oldNode.attrs = newNode.attrs;
+    oldNode.eventsMap = newNode.eventsMap;
 
     [...oldNode.eventsMap!.keys()].forEach((e: VdomEventType) => {
       this.eventRegister.register(e);
