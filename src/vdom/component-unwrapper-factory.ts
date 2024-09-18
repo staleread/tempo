@@ -5,8 +5,8 @@ import { VdomUnwrapper } from './vdom-unwrapper';
 import {
   ComponentFunc,
   ComponentResult,
+  ComponentUnwrapDto,
   ComponentUnwrapperContext,
-  ComponentUnwrapperDto,
   VdomNode,
 } from './vdom.types';
 
@@ -17,12 +17,12 @@ export class ComponentUnwrapperFactory {
   ) {}
 
   public createComponentUnwrapper(
-    dto: ComponentUnwrapperDto,
+    dto: ComponentUnwrapDto,
     vdomUnwrapper: VdomUnwrapper,
   ): ComponentUnwrapper {
-    const result: ComponentResult = dto.func(dto.props);
+    const result: ComponentResult = dto.componentFunc(dto.props);
     const logger = this.loggerFactory.createLogger(
-      dto.componentId,
+      dto.componentFunc.name,
       result.template,
     );
     const ast = this.astProvider.getAst(result.template, logger);
@@ -38,11 +38,11 @@ export class ComponentUnwrapperFactory {
     const context: ComponentUnwrapperContext = {
       importsMap,
       attachMap,
-      unwrapChildren: dto.unwrapChildren,
+      unwrapChildrenCallback: dto.unwrapChildrenCallback,
     };
 
     return new ComponentUnwrapper(
-      dto.level,
+      dto.stateLevel,
       ast,
       dto.dest,
       logger,

@@ -5,14 +5,7 @@ import { DomEventRegister } from '../dom/events/dom-event-register';
 import { LoggerFactory } from '../log/logger-factory';
 import { ComponentUnwrapperFactory } from '../vdom/component-unwrapper-factory';
 import { VdomUnwrapper } from '../vdom/vdom-unwrapper';
-import {
-  AnyObject,
-  ComponentFunc,
-  ComponentResult,
-  ComponentUnwrapperDto,
-  Injection,
-  VdomNode,
-} from '../vdom/vdom.types';
+import { AnyObject, ComponentFunc } from '../vdom/vdom.types';
 import { HooksDispatcher } from './hooks/hooks-dispatcher';
 import { StateAllocator } from './state/state-allocator';
 

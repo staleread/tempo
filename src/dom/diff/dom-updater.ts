@@ -64,12 +64,10 @@ export class DomUpdater {
 
       const frag = new DocumentFragment();
 
-      if (!'GenKeymap'.includes(oldCh.type)) {
+      if (oldCh.type === 'Keymap') {
         this.attachNode(newCh, frag);
       } else {
-        newCh.children!.forEach((c: BridgeNode) =>
-          this.attachSomeTag(c, frag),
-        );
+        newCh.children!.forEach((c: BridgeNode) => this.attachTag(c, frag));
       }
 
       let nextDomElem: DomElem | undefined;
@@ -77,10 +75,7 @@ export class DomUpdater {
       for (let j = i + 1; j < oldChildren.length; j++) {
         const candidate = oldChildren[j] as BridgeNode;
 
-        if (
-          'GenKeymap'.includes(candidate.type) &&
-          candidate.children!.length > 0
-        ) {
+        if (candidate.type === 'Keymap' && candidate.children!.length > 0) {
           nextDomElem = (candidate.children![0] as BridgeNode).domElem!;
           break;
         }
@@ -105,12 +100,10 @@ export class DomUpdater {
       case 'Text':
         return this.attachText(node, parentNode);
       case 'Tag':
-      case 'GenTag':
-        return this.attachSomeTag(node, parentNode);
+        return this.attachTag(node, parentNode);
       case 'Keymap':
-      case 'GenKeymap':
         node.children!.forEach((c: BridgeNode) =>
-          this.attachSomeTag(c, parentNode),
+          this.attachTag(c, parentNode),
         );
         return;
       default:
@@ -123,7 +116,7 @@ export class DomUpdater {
     parentNode.appendChild(node.domTextNode!);
   }
 
-  private attachSomeTag(node: BridgeNode, parentNode: Node): void {
+  private attachTag(node: BridgeNode, parentNode: Node): void {
     node.domElem = document.createElement(node.tag!);
     node.domElem._ref = node;
 
@@ -152,7 +145,6 @@ export class DomUpdater {
         parentDomElem.removeChild(node.domTextNode!);
         return;
       case 'Tag':
-      case 'GenTag':
         node.domElem!.remove();
         return;
       default:
@@ -168,11 +160,9 @@ export class DomUpdater {
       case 'Text':
         return this.tryResolveTextDiff(oldNode, newNode);
       case 'Tag':
-      case 'GenTag':
-        return this.tryResolveSomeTagDiff(oldNode, newNode);
+        return this.tryResolveTagDiff(oldNode, newNode);
       case 'Keymap':
-      case 'GenKeymap':
-        return this.tryResolveSomeKeymapDiff(oldNode, newNode);
+        return this.tryResolveKeymapDiff(oldNode, newNode);
       default:
         throw new Error('Unexpected node');
     }
@@ -189,11 +179,11 @@ export class DomUpdater {
     return true;
   }
 
-  private tryResolveSomeTagDiff(
+  private tryResolveTagDiff(
     oldNode: BridgeNode,
     newNode: VdomNode,
   ): boolean {
-    if (oldNode.type === 'GenTag' && oldNode.id! !== newNode.id!) {
+    if (oldNode.tag! !== newNode.tag!) {
       return false;
     }
 
@@ -230,24 +220,24 @@ export class DomUpdater {
     return true;
   }
 
-  private tryResolveSomeKeymapDiff(
+  private tryResolveKeymapDiff(
     oldNode: BridgeNode,
     newNode: VdomNode,
   ): boolean {
     const oldChildren = oldNode.children!;
     const newChildren = newNode.children!;
 
-    if (newChildren.length > 0 && oldChildren.length < 1) {
+    if (newChildren.length > 0 && oldChildren.length === 0) {
       return false;
     }
-    if (newChildren.length < 1 && oldChildren.length > 0) {
+    if (newChildren.length === 0 && oldChildren.length > 0) {
       oldChildren.forEach((c: BridgeNode) => c.domElem!.remove());
 
       oldNode.children = [];
-      oldNode.keymap = new Map();
+      oldNode.childMap = new Map();
       return true;
     }
-    if (oldNode.type === 'GenKeymap' && oldNode.id! !== newNode.id!) {
+    if (oldNode.keymapId! !== newNode.keymapId!) {
       for (let i = 1; i < oldChildren.length; i++) {
         (oldChildren[i] as BridgeNode).domElem!.remove();
       }
@@ -256,7 +246,7 @@ export class DomUpdater {
 
       const frag = new DocumentFragment();
       oldChildren.forEach((c: VdomNode) =>
-        this.attachSomeTag(c as BridgeNode, frag),
+        this.attachTag(c as BridgeNode, frag),
       );
 
       firstElem.replaceWith(frag);
@@ -269,13 +259,15 @@ export class DomUpdater {
       const oldCh = oldChildren[index] as BridgeNode;
       const newCh = newChildren[index]!;
 
-      if (oldCh.key! === newCh.key!) {
-        this.tryResolveSomeTagDiff(oldCh, newCh);
+      if (oldCh.keymapKey! === newCh.keymapKey!) {
+        this.tryResolveTagDiff(oldCh, newCh);
 
         index++;
         continue;
       }
-      const targetCh = oldNode.keymap!.get(newCh.key!) as BridgeNode;
+      const targetCh = oldNode.childMap!.get(
+        newCh.keymapKey!,
+      ) as BridgeNode;
 
       if (targetCh) {
         targetCh.domElem!.remove();
@@ -286,7 +278,7 @@ export class DomUpdater {
         oldChildren.splice(index, 0, targetCh);
 
         oldCh.domElem!.replaceWith(targetCh.domElem!);
-        this.tryResolveSomeTagDiff(targetCh, newCh);
+        this.tryResolveTagDiff(targetCh, newCh);
 
         index++;
         continue;
@@ -295,7 +287,7 @@ export class DomUpdater {
       oldChildren.splice(index, 0, newCh);
 
       const frag = new DocumentFragment();
-      this.attachSomeTag(newCh, frag);
+      this.attachTag(newCh, frag);
       oldCh.domElem!.before(frag);
 
       index++;
@@ -314,7 +306,7 @@ export class DomUpdater {
 
       const frag = new DocumentFragment();
       for (index; index < newChildren.length; index++) {
-        this.attachSomeTag(newChildren[index]!, frag);
+        this.attachTag(newChildren[index]!, frag);
       }
 
       lastElem.after(frag);

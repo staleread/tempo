@@ -1,6 +1,6 @@
 import { StateAllocator } from '../core/state/state-allocator';
 import { ComponentUnwrapperFactory } from './component-unwrapper-factory';
-import { ComponentUnwrapperDto, Injection } from './vdom.types';
+import { ComponentUnwrapDto, Injection } from './vdom.types';
 import { AnyObject, ComponentFunc, VdomNode } from './vdom.types';
 
 export class VdomUnwrapper {
@@ -15,45 +15,43 @@ export class VdomUnwrapper {
       children: [],
     };
 
-    const dto: ComponentUnwrapperDto = {
-      level: 0,
+    const dto: ComponentUnwrapDto = {
       dest: root.children!,
-      componentId: compFunc.name,
-      func: compFunc,
+      stateLevel: 0,
+      componentFunc: compFunc,
       props: props ? props : {},
     };
 
     const injections: Injection[] = [];
-    const stateKey = undefined;
+    const componentId = compFunc.name;
 
-    this.unwrapComponent(dto, injections, stateKey);
+    this.unwrapComponent(dto, injections, componentId);
     return root;
   }
 
   public unwrapComponent(
-    dto: ComponentUnwrapperDto,
+    dto: ComponentUnwrapDto,
     injections: Injection[],
-    stateKey: any,
+    componentId: string | number,
   ): void {
-    if (dto.level === 0) {
+    if (dto.stateLevel === 0) {
       this.stateAllocator.reset();
     }
-    this.stateAllocator.loadState(dto.componentId, dto.level, stateKey);
+    this.stateAllocator.loadState(dto.stateLevel, componentId);
     this.stateAllocator.injectContext(injections);
 
     const unwrapper =
       this.componentUnwrapperFactory.createComponentUnwrapper(dto, this);
 
     if (!unwrapper.tryUnwrap()) {
-      throw new Error('Failed to unwrap ' + dto.componentId);
+      throw new Error('Failed to unwrap ' + dto.componentFunc.name);
     }
   }
 
   public skipComponent(
-    componentId: string,
-    level: number,
-    stateKey: any,
+    stateLevel: number,
+    componentId: string | number,
   ): void {
-    this.stateAllocator.loadState(componentId, level, stateKey);
+    this.stateAllocator.loadState(stateLevel, componentId);
   }
 }

@@ -1,7 +1,6 @@
 export type State = {
-  tag: string;
+  componentId: string | number;
   level: number;
-  key: any;
-  contextMap: Map<string, unknown>;
   cells: any[];
+  contextMap?: Map<string, unknown>;
 };
