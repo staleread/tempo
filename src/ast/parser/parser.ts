@@ -30,8 +30,9 @@ export class Parser {
       throw new Error('Root node must have children defined');
     }
 
-    this.skipTextNode();
-
+    if (!this.trySkipTextNode()) {
+      return false;
+    }
     if (!this.tryParseChildNode(this.root.children)) {
       return false;
     }
@@ -49,8 +50,9 @@ export class Parser {
       return false;
     }
 
-    this.skipTextNode();
-
+    if (!this.trySkipTextNode()) {
+      return false;
+    }
     if (this.token().type !== 'eof') {
       this.logger.error(
         this.token().pos,
@@ -788,7 +790,11 @@ export class Parser {
       return false;
     }
 
-    while (this.tryParseChunk(dest)) {}
+    while (['{', 'str'].includes(this.token().type)) {
+      if (!this.tryParseChunk(dest)) {
+        return false;
+      }
+    }
 
     if (!this.tryReadExpectedTokenInsideTag('"')) {
       return false;
@@ -825,30 +831,60 @@ export class Parser {
       text: [],
     };
 
-    while (this.tryParseChunk(node.text!) || this.trySkipCommentTag()) {}
+    while (['{', 'str', '<'].includes(this.token().type)) {
+      if (this.token().type === '<' && !this.trySkipCommentTag()) {
+        break;
+      }
+      if (!this.tryParseChunk(node.text!)) {
+        return false;
+      }
+    }
 
     if (node.text!.length > 0) {
       dest.push(node);
-      return true;
     }
-    return false;
+    return true;
+  }
+
+  private trySkipTextNode(): boolean {
+    while (['{', 'str'].includes(this.token().type)) {
+      if (!this.tryParseChunk([])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private tryParseChunk(dest: InterStr): boolean {
-    switch (this.token().type) {
+    const token = this.token();
+
+    switch (token.type) {
       case 'str':
         dest.push({
-          pos: this.token().pos,
-          str: this.token().literal!,
+          pos: token.pos,
+          str: token.literal!,
         });
         this.index++;
         return true;
       case '{':
+        this.index++;
+
         const value: Var = [];
-        const res = this.tryParseVar(value);
-        if (res) dest.push(value);
-        return res;
+
+        if (!this.tryParseVar(value)) {
+          return false;
+        }
+        if (!this.tryReadExpectedTokenInsideTag('}')) {
+          return false;
+        }
+
+        dest.push(value);
+        return true;
       default:
+        this.logger.error(
+          token.pos,
+          `Str chunk or "{" expected, got ${token.type}`,
+        );
         return false;
     }
   }
@@ -875,10 +911,6 @@ export class Parser {
     }
     this.index++;
     return true;
-  }
-
-  private skipTextNode(): void {
-    while (this.tryParseChunk([]) || this.trySkipCommentTag()) {}
   }
 
   private skipComments(): void {
