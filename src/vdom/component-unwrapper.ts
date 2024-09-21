@@ -143,6 +143,7 @@ export class ComponentUnwrapper {
     dest: VdomNode[],
     skipCommands: boolean,
     compFunc?: ComponentFunc,
+    keymapKey?: string | number,
   ): boolean {
     const node: ComponentNode = {};
 
@@ -155,8 +156,14 @@ export class ComponentUnwrapper {
       astNode,
       dest,
       skipCommands,
-      (mapDest) =>
-        this.tryUnwrapComp(astNode, mapDest, true, node.componentFunc!),
+      (mapDest, kmapKey) =>
+        this.tryUnwrapComp(
+          astNode,
+          mapDest,
+          true,
+          node.componentFunc!,
+          kmapKey,
+        ),
     );
 
     switch (keymapRes) {
@@ -236,37 +243,43 @@ export class ComponentUnwrapper {
     astNode: AstNode,
     dest: VdomNode[],
     skipCommands: boolean,
-    unwrapNodeCallback: (dest: VdomNode[]) => boolean,
+    unwrapNodeCallback: (
+      dest: VdomNode[],
+      kmapKey: string | number,
+    ) => boolean,
   ): 'success' | 'error' | 'continue' {
     if (!astNode.keymapArgs) {
       throw new Error('Keymap args not defined');
     }
-    if (astNode.keymapArgs.key.length === 0) {
+    if (skipCommands || astNode.keymapArgs.key.length === 0) {
       return 'continue';
     }
-    if (skipCommands) {
-      return 'success';
-    }
 
-    const kmapNode: VdomNode = {
-      type: 'Keymap',
-      childMap: new Map(),
-    };
+    let id: string | number;
 
     switch (astNode.type) {
       case 'Bt':
       case 'Gt':
-        kmapNode.keymapId = (node as VdomNode).tag!;
+        id = (node as VdomNode).tag!;
         break;
       case 'Cp':
       case 'Gc':
-        kmapNode.keymapId = (node as ComponentNode).componentFunc!.name;
+        id = (node as ComponentNode).componentFunc!.name;
         break;
       default:
         throw new Error('Unexpected node type');
     }
 
-    const children: VdomNode[] = [];
+    const kmapNode: VdomNode = {
+      type: 'Keymap',
+      keymapCtx: {
+        id,
+        nodeMap: new Map(),
+        keys: [],
+      },
+    };
+
+    const childNodes: VdomNode[] = [];
     const args = astNode.keymapArgs!;
     const alias = args.alias.str;
 
@@ -291,10 +304,6 @@ export class ComponentUnwrapper {
     for (let i = 0; i < items.length; i++) {
       this.context.attachMap.set(alias, items[i]);
 
-      if (!unwrapNodeCallback(children)) {
-        return 'error';
-      }
-      const child = children[i]!;
       const kmapKey: unknown = this.getVar(args.key);
 
       if (typeof kmapKey !== 'string' && typeof kmapKey !== 'number') {
@@ -305,8 +314,14 @@ export class ComponentUnwrapper {
         return 'error';
       }
 
+      if (!unwrapNodeCallback(childNodes, kmapKey)) {
+        return 'error';
+      }
+      const child = childNodes[i]!;
       child.keymapKey = kmapKey;
-      kmapNode.childMap!.set(kmapKey, child);
+
+      kmapNode.keymapCtx!.nodeMap.set(kmapKey, child);
+      kmapNode.keymapCtx!.keys.push(kmapKey);
     }
     this.context.attachMap.delete(alias);
 

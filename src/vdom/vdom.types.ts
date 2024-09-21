@@ -9,11 +9,14 @@ export type VdomNode = {
   tag?: string;
   ref?: Ref;
   keymapKey?: string | number;
-  keymapId?: string | number;
   attrs?: VdomTagAttr[];
   eventsMap?: Map<VdomEventType, EventHandler>;
   children?: VdomNode[];
-  childMap?: Map<string | number, VdomNode>;
+  keymapCtx?: {
+    id: string | number;
+    nodeMap: Map<string | number, VdomNode>;
+    keys: Array<string | number>;
+  };
 };
 
 export type Ref = { current: DomElem | null };
