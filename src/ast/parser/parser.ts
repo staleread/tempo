@@ -44,7 +44,7 @@ export class Parser {
     ) {
       this.logger.error(
         child.id!.pos,
-        'The root node must not contain :map or :if commands',
+        'The root tag must not contain :kmap or :if commands',
       );
       return false;
     }
