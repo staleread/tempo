@@ -641,6 +641,8 @@ export class Parser {
       );
       return false;
     }
+    this.index++;
+
     if (this.token().type === 'true') {
       boolLiteral = true;
       this.index++;
@@ -732,13 +734,13 @@ export class Parser {
 
       dest.push({ prop, isSpread: false, pos, strValue });
       return true;
-    } else if (this.token().type !== '{') {
-      this.logger.error(
-        this.token().pos,
-        'String literal or value refernce expected',
-      );
+    }
+    if (this.token().type !== '{') {
+      this.logger.error(this.token().pos, '" or { expected');
       return false;
     }
+    this.index++;
+
     if (this.token().type === 'true') {
       boolLiteral = true;
       this.index++;
@@ -898,7 +900,7 @@ export class Parser {
     this.index++;
 
     if (this.token().type !== 'comment') {
-      this.index--;
+      this.index = tmpIndex;
       return false;
     }
     while (this.token().type === 'comment') {
