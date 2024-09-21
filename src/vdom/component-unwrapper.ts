@@ -428,15 +428,6 @@ export class ComponentUnwrapper {
 
     for (let i = 0; i < astNode.events.length; i++) {
       const event = astNode.events[i]!;
-
-      if (!this.context.attachMap.has(event.handler[0]!.str)) {
-        this.logger.error(
-          event.handler[0]!.pos,
-          'Event handler is not included in attachments',
-        );
-        return false;
-      }
-
       const handler: unknown = this.getVar(event.handler);
 
       if (!handler) {
@@ -704,7 +695,18 @@ export class ComponentUnwrapper {
     if (value.length < 1) {
       throw new Error('Variable should at least have one child');
     }
-    let result: unknown = this.context.attachMap.get(value[0]!.str);
+
+    const firstVarChunk = value[0]!;
+
+    if (!this.context.attachMap.has(firstVarChunk.str)) {
+      this.logger.error(
+        firstVarChunk.pos,
+        'The variable cannot be found in attachments',
+      );
+      return undefined;
+    }
+
+    let result: unknown = this.context.attachMap.get(firstVarChunk.str);
 
     if (value.length === 1) {
       return result;
