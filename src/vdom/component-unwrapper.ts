@@ -297,7 +297,7 @@ export class ComponentUnwrapper {
       const child = children[i]!;
       const kmapKey: unknown = this.getVar(args.key);
 
-      if (typeof kmapKey !== 'string' || typeof kmapKey !== 'number') {
+      if (typeof kmapKey !== 'string' && typeof kmapKey !== 'number') {
         this.logger.error(
           args.key.at(-1)!.pos,
           `Keymap key must be a string or number, got ${typeof kmapKey}`,
