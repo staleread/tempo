@@ -152,7 +152,7 @@ export class Lexer {
       return this.readComponentTokenName();
     }
     if (Lexer.LOWER_LETTERS.includes(char)) {
-      return this.readAttrToken();
+      return this.readIdToken();
     }
     return this.createIllegalToken('Illegal char in tag expression');
   }
@@ -277,18 +277,18 @@ export class Lexer {
     }
   }
 
-  private readAttrToken(): Token {
+  private readIdToken(): Token {
     this.skipRange(Lexer.ALPHANUMERICS);
 
     while (this.peekChar() === '-') {
       if (!Lexer.ALPHANUMERICS.includes(this.nextChar())) {
-        return this.createIllegalToken('Illegal char in attribute');
+        return this.createIllegalToken('Illegal char in id');
       }
       this.skipRange(Lexer.ALPHANUMERICS);
     }
 
     const name = this.buffer.substring(this.tokenStart, this.pos);
-    return this.createToken('attr', name);
+    return this.createToken('id', name);
   }
 
   private readVarIdToken(): Token {

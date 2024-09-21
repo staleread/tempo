@@ -21,7 +21,7 @@ type TagTokenType =
   | '*'
   | 'comp'
   | 'event'
-  | 'attr'
+  | 'id'
   | 'prop'
   | 'comment'
   | ':kmap'

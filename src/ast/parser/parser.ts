@@ -81,7 +81,7 @@ export class Parser {
     this.skipComments();
 
     switch (this.token().type) {
-      case 'attr':
+      case 'id':
         res = this.tryParseBasicTag(dest) && res;
         break;
       case 'comp':
@@ -287,7 +287,7 @@ export class Parser {
 
     while (!'eof/>'.includes(this.token().type)) {
       switch (this.token().type) {
-        case 'attr':
+        case 'id':
           if (!node.attrs) {
             this.logger.error(
               node.id!.pos,
