@@ -4,7 +4,7 @@ import { Token, TokenType } from '../lexer/lexer.types';
 import {
   AstNode,
   AstNodeType,
-  ConditionArgs,
+  Condition,
   EventAttr,
   InjectionArg,
   InterStr,
@@ -26,30 +26,41 @@ export class Parser {
   ) {}
 
   public tryParse(): boolean {
-    let res = true;
-
-    this.skipTextNode();
-
-    res = this.tryParseChildNode(this.root.children!) && res;
-    const child = this.root.children![0];
-
-    if (child && child.type !== 'Bt') {
-      res = false;
-      this.logger.error(
-        child.id!.pos,
-        'The root tag should be a basic tag',
-      );
+    if (!this.root.children) {
+      throw new Error('Root node must have children defined');
     }
 
-    this.skipTextNode();
+    if (!this.trySkipTextNode()) {
+      return false;
+    }
+    if (!this.tryParseChildNode(this.root.children)) {
+      return false;
+    }
+
+    const child = this.root.children[0]!;
+
+    if (
+      (child.keymapArgs && child.keymapArgs.key.length > 0) ||
+      (child.condition && child.condition.predicate.length > 0)
+    ) {
+      this.logger.error(
+        child.id!.pos,
+        'The root tag must not contain :kmap or :if commands',
+      );
+      return false;
+    }
+
+    if (!this.trySkipTextNode()) {
+      return false;
+    }
     if (this.token().type !== 'eof') {
-      res = false;
       this.logger.error(
         this.token().pos,
         'Templete cannot contain more than one root tag',
       );
+      return false;
     }
-    return res;
+    return true;
   }
 
   private tryParseChildNode(dest: AstNode[]): boolean {
@@ -78,13 +89,13 @@ export class Parser {
       case 'comp':
         res = this.tryParseCompTag(dest) && res;
         break;
-      case '$tag':
+      case '?tag':
         res = this.tryParseGenTag(dest) && res;
         break;
-      case '$cmp':
+      case '?comp':
         res = this.tryParseGenCompTag(dest) && res;
         break;
-      case '$children':
+      case '#children':
         res = this.tryParseChildrenTag(dest) && res;
         break;
       case '/':
@@ -110,9 +121,22 @@ export class Parser {
     const node: AstNode = {
       type: 'Bt',
       id,
+      ref: [],
+      attrs: [],
+      events: [],
+      keymapArgs: {
+        key: [],
+        alias: { pos: -1, str: '' },
+        items: [],
+      },
+      condition: {
+        invert: false,
+        predicate: [],
+      },
+      children: [],
     };
 
-    res = this.tryParseTagLikeMetadata(node) && res;
+    res = this.tryParseMetadata(node) && res;
     res = this.tryParseChildren(node) && res;
 
     if (res) dest.push(node);
@@ -132,9 +156,23 @@ export class Parser {
     const node: AstNode = {
       type: 'Gt',
       id,
+      tagName: [],
+      ref: [],
+      attrs: [],
+      events: [],
+      keymapArgs: {
+        key: [],
+        alias: { pos: -1, str: '' },
+        items: [],
+      },
+      condition: {
+        invert: false,
+        predicate: [],
+      },
+      children: [],
     };
 
-    res = this.tryParseTagLikeMetadata(node) && res;
+    res = this.tryParseMetadata(node) && res;
     res = this.tryParseChildren(node) && res;
 
     if (res) dest.push(node);
@@ -154,9 +192,22 @@ export class Parser {
     const node: AstNode = {
       type: 'Cp',
       id,
+      stateKey: [],
+      props: [],
+      keymapArgs: {
+        key: [],
+        alias: { pos: -1, str: '' },
+        items: [],
+      },
+      condition: {
+        invert: false,
+        predicate: [],
+      },
+      injections: [],
+      children: [],
     };
 
-    res = this.tryParseCompLikeMetadata(node) && res;
+    res = this.tryParseMetadata(node) && res;
     res = this.tryParseChildren(node) && res;
 
     if (res) dest.push(node);
@@ -176,9 +227,23 @@ export class Parser {
     const node: AstNode = {
       type: 'Gc',
       id,
+      compFunc: [],
+      stateKey: [],
+      props: [],
+      keymapArgs: {
+        key: [],
+        alias: { pos: -1, str: '' },
+        items: [],
+      },
+      condition: {
+        invert: false,
+        predicate: [],
+      },
+      injections: [],
+      children: [],
     };
 
-    res = this.tryParseCompLikeMetadata(node) && res;
+    res = this.tryParseMetadata(node) && res;
     res = this.tryParseChildren(node) && res;
 
     if (res) dest.push(node);
@@ -195,188 +260,159 @@ export class Parser {
     this.index++;
     this.skipComments();
 
+    // reading children for better error recovery
     const node: AstNode = {
       type: 'Ch',
       id,
+      children: [],
     };
 
     res = this.tryParseChildren(node) && res;
 
-    const children: AstNode[] | undefined = node.children;
+    const childrenCount = node.children!.length;
 
-    if (children && children.length > 0) {
-      res = false;
-      const child: AstNode = children[0]!;
-
-      let pos: number;
-
-      if (child.id) {
-        pos = child.id.pos;
-      } else {
-        if (!child.text) {
-          throw new Error('AstNode must contain either id or text field');
-        }
-        const firstLiteral: StrPtr | undefined = Array.isArray(
-          child.text[0],
-        )
-          ? child.text[0][0]
-          : child.text[0];
-
-        if (!firstLiteral) {
-          throw new Error('StrPtr must contain at least one child');
-        }
-        pos = firstLiteral.pos;
-      }
-
+    if (childrenCount > 0) {
       this.logger.error(
-        pos,
-        'Children tag does not support any children tags',
+        id.pos,
+        `Children tag must have no children tags, got ${childrenCount}`,
       );
+      return false;
     }
 
     if (res) dest.push(node);
     return res;
   }
 
-  private tryParseTagLikeMetadata(node: AstNode): boolean {
+  private tryParseMetadata(node: AstNode): boolean {
     let res = true;
-
-    if (node.type === 'Gt') {
-      node.tagName = [];
-      res = this.tryParseVar(node.tagName!) && res;
-    }
-    node.tagArgs = { attrs: [], events: [] };
-
-    res = this.tryParseTagArgs(node.id!.str, node.tagArgs!) && res;
-
-    this.skipComments();
     let hasCommand = false;
 
     while (!'eof/>'.includes(this.token().type)) {
       switch (this.token().type) {
-        case '$ref':
+        case 'id':
+          if (!node.attrs) {
+            this.logger.error(
+              node.id!.pos,
+              'The attribute is not allowed here',
+            );
+            return false;
+          }
+          res = this.tryParseTagAttr(node.attrs) && res;
+          continue;
+        case 'event':
+          if (!node.events) {
+            this.logger.error(
+              node.id!.pos,
+              'The event is not allowed here',
+            );
+            return false;
+          }
+          res = this.tryParseEventAttr(node.id!.str!, node.events) && res;
+          continue;
+        case 'prop':
+          if (!node.props) {
+            this.logger.error(node.id!.pos, 'The prop is not allowed here');
+            return false;
+          }
+          res = this.tryParsePropAttr(node.props) && res;
+          continue;
+        case '*':
+          if (!node.props) {
+            this.logger.error(
+              node.id!.pos,
+              'The spread prop is not allowed here',
+            );
+            return false;
+          }
+          res = this.tryParseSpreadPropAttr(node.props) && res;
+          continue;
+        case ':kmap':
+          if (!node.keymapArgs) {
+            this.logger.error(
+              node.id!.pos,
+              'The command is not allowed here',
+            );
+            return false;
+          }
           if (hasCommand) {
             this.logger.error(
               node.id!.pos,
-              'Exeeded the limit of inline commands inside a tag',
+              'The command is a conflicting one',
             );
             return false;
           }
           hasCommand = true;
-
-          node.ref = [];
+          res = this.tryParseKeymapArgs(node.keymapArgs) && res;
+          continue;
+        case ':if':
+          if (!node.condition) {
+            this.logger.error(
+              node.id!.pos,
+              'The command is not allowed here',
+            );
+            return false;
+          }
+          if (hasCommand) {
+            this.logger.error(
+              node.id!.pos,
+              'The command is a conflicting one',
+            );
+            return false;
+          }
+          hasCommand = true;
+          res = this.tryParseCondition(node.condition) && res;
+          continue;
+        case ':bind':
+          if (!node.stateKey) {
+            this.logger.error(
+              node.id!.pos,
+              'The command is not allowed here',
+            );
+            return false;
+          }
+          if (hasCommand) {
+            this.logger.error(
+              node.id!.pos,
+              'The command is a conflicting one',
+            );
+            return false;
+          }
+          hasCommand = true;
+          res = this.tryParseStateKey(node.stateKey);
+          continue;
+        case ':ref':
+          if (!node.ref) {
+            this.logger.error(
+              node.id!.pos,
+              'The command is not allowed here',
+            );
+            return false;
+          }
+          if (hasCommand) {
+            this.logger.error(
+              node.id!.pos,
+              'The command is a conflicting one',
+            );
+            return false;
+          }
+          hasCommand = true;
           res = this.tryParseRef(node.ref);
           continue;
-        case '$map':
-          if (hasCommand) {
+        case ':use':
+          if (!node.injections) {
             this.logger.error(
               node.id!.pos,
-              'Exeeded the limit of inline commands inside a tag',
+              'The command is not allowed here',
             );
             return false;
           }
-          hasCommand = true;
-
-          node.keymapArgs = {
-            key: [],
-            items: [],
-            alias: { pos: -1, str: '' },
-          };
-          res = this.tryParseKeymapArgs(node.keymapArgs!) && res;
+          res = this.tryParseInjection(node.injections) && res;
           continue;
-        case '$if':
-          if (hasCommand) {
-            this.logger.error(
-              node.id!.pos,
-              'Exeeded the limit of inline commands inside a tag',
-            );
-            return false;
-          }
-          hasCommand = true;
-          node.condition = {
-            invert: false,
-            predicate: [],
-          };
-          res = this.tryParseCondition(node.condition!) && res;
-          continue;
-        case '$use':
-          this.logger.error(
-            this.token().pos,
-            '$use statement is not supported in tag-like tags',
-          );
-          this.panicInsideTag();
-          return false;
         default:
           res = false;
           this.logUnexpectedToken();
           this.panicInsideTag();
           continue;
-      }
-    }
-    return res;
-  }
-
-  private tryParseCompLikeMetadata(node: AstNode): boolean {
-    let res = true;
-
-    if (node.type === 'Gc') {
-      node.compFunc = [];
-      res = this.tryParseVar(node.compFunc!) && res;
-    }
-    node.props = [];
-    res = this.tryParseProps(node.props!) && res;
-
-    let hasCommand = false;
-
-    while (!'eof/>'.includes(this.token().type)) {
-      switch (this.token().type) {
-        case '$ref':
-          this.logger.error(
-            this.token().pos,
-            '$ref inline command is not allowed in component-like tags',
-          );
-          this.panicInsideTag();
-          return false;
-        case '$map':
-          if (hasCommand) {
-            this.logger.error(
-              node.id!.pos,
-              'Exeeded the limit of inline commands inside a tag',
-            );
-            return false;
-          }
-          hasCommand = true;
-          node.keymapArgs = {
-            key: [],
-            items: [],
-            alias: { pos: -1, str: '' },
-          };
-          res = this.tryParseKeymapArgs(node.keymapArgs!) && res;
-          continue;
-        case '$if':
-          if (hasCommand) {
-            this.logger.error(
-              node.id!.pos,
-              'Exeeded the limit of inline commands inside a tag',
-            );
-            return false;
-          }
-          hasCommand = true;
-          node.condition = {
-            invert: false,
-            predicate: [],
-          };
-          res = this.tryParseCondition(node.condition!) && res;
-          continue;
-        case '$use':
-          node.injections = [];
-          res = this.tryParseInjections(node.injections!) && res;
-          break;
-          continue;
-          res = false;
-          this.logUnexpectedToken();
-          this.panicInsideTag();
-          break;
       }
     }
     return res;
@@ -437,163 +473,193 @@ export class Parser {
     return res;
   }
 
-  private tryParseTagArgs(nodeId: string, args: TagArgs): boolean {
-    let res = true;
-
-    while (['event', 'id'].includes(this.token().type)) {
-      if (this.token().type === 'event') {
-        res = this.tryParseEventAttr(nodeId, args.events) && res;
-        continue;
-      }
-      res = this.tryParseTagAttr(args.attrs) && res;
-    }
-    return res;
-  }
-
-  private tryParseProps(props: PropAttr[]): boolean {
-    let res = true;
-
-    while (['spread', 'prop'].includes(this.token().type)) {
-      if (this.token().type === 'spread') {
-        res = this.tryParseSpreadPropAttr(props) && res;
-        continue;
-      }
-      res = this.tryParsePropAttr(props) && res;
-    }
-    return res;
-  }
-
-  private tryParseKeymapArgs(keymapArgs: KeymapArgs): boolean {
+  private tryParseKeymapArgs(args: KeymapArgs): boolean {
     this.index++;
 
-    if (!this.tryParseVar(keymapArgs.key)) {
+    if (!this.tryReadExpectedTokenInsideTag('=')) {
       return false;
     }
-
-    if (this.token().type === '$to') {
-      this.index++;
-      this.skipComments();
-    } else {
-      this.logUnexpectedToken('$to');
-      this.panicInsideTag();
+    if (!this.tryReadExpectedTokenInsideTag('{')) {
       return false;
     }
-
-    if (this.token().type === 'prop') {
-      keymapArgs.alias = {
+    if (this.token().type === 'vid') {
+      args.alias = {
         pos: this.token().pos,
         str: this.token().literal!,
       };
-      this.index++;
-      this.skipComments();
     } else {
-      this.logUnexpectedToken('prop');
+      this.logUnexpectedToken('vid');
       this.panicInsideTag();
       return false;
     }
-
-    if (this.token().type === '$in') {
-      this.index++;
-      this.skipComments();
-    } else {
-      this.logUnexpectedToken('$in');
-      this.panicInsideTag();
-      return false;
-    }
-
-    return this.tryParseVar(keymapArgs.items);
-  }
-
-  private tryParseCondition(condition: ConditionArgs): boolean {
     this.index++;
 
-    if (this.token().type === '$not') {
+    if (!this.tryReadExpectedTokenInsideTag('in')) {
+      return false;
+    }
+    if (!this.tryParseVar(args.items)) {
+      return false;
+    }
+    if (!this.tryReadExpectedTokenInsideTag('by')) {
+      return false;
+    }
+    if (!this.tryParseVar(args.key)) {
+      return false;
+    }
+    if (!this.tryReadExpectedTokenInsideTag('}')) {
+      return false;
+    }
+    this.skipComments();
+    return true;
+  }
+
+  private tryParseCondition(condition: Condition): boolean {
+    this.index++;
+
+    if (!this.tryReadExpectedTokenInsideTag('=')) {
+      return false;
+    }
+    if (!this.tryReadExpectedTokenInsideTag('{')) {
+      return false;
+    }
+    if (this.token().type === 'not') {
       condition.invert = true;
       this.index++;
-      this.skipComments();
     }
-
-    return this.tryParseVar(condition.predicate);
+    if (!this.tryParseVar(condition.predicate)) {
+      return false;
+    }
+    if (!this.tryReadExpectedTokenInsideTag('}')) {
+      return false;
+    }
+    this.skipComments();
+    return true;
   }
 
-  private tryParseInjections(dest: InjectionArg[]): boolean {
-    this.index++;
-
+  private tryParseInjection(dest: InjectionArg[]): boolean {
     const injection: InjectionArg = {
-      value: [],
       contextKey: [],
+      value: [],
     };
 
+    this.index++;
+
+    if (!this.tryReadExpectedTokenInsideTag('=')) {
+      return false;
+    }
+    if (!this.tryReadExpectedTokenInsideTag('{')) {
+      return false;
+    }
     if (!this.tryParseVar(injection.value)) {
       return false;
     }
-
-    if (this.token().type === '$as') {
-      this.index++;
-      this.skipComments();
-    } else {
-      this.logUnexpectedToken('$as');
-      this.panicInsideTag();
+    if (!this.tryReadExpectedTokenInsideTag('as')) {
       return false;
     }
-
     if (!this.tryParseVar(injection.contextKey)) {
       return false;
     }
+    if (!this.tryReadExpectedTokenInsideTag('}')) {
+      return false;
+    }
+
     dest.push(injection);
+
+    this.skipComments();
+    return true;
+  }
+
+  private tryParseStateKey(bind: Var): boolean {
+    this.index++;
+    this.skipComments();
+
+    if (!this.tryReadExpectedTokenInsideTag('=')) {
+      return false;
+    }
+    if (!this.tryReadExpectedTokenInsideTag('{')) {
+      return false;
+    }
+    if (!this.tryParseVar(bind)) {
+      return false;
+    }
+    if (!this.tryReadExpectedTokenInsideTag('}')) {
+      return false;
+    }
+
+    this.skipComments();
+    return true;
+  }
+
+  private tryParseRef(ref: Var): boolean {
+    this.index++;
+    this.skipComments();
+
+    if (!this.tryReadExpectedTokenInsideTag('=')) {
+      return false;
+    }
+    if (!this.tryReadExpectedTokenInsideTag('{')) {
+      return false;
+    }
+    if (!this.tryParseVar(ref)) {
+      return false;
+    }
+    if (!this.tryReadExpectedTokenInsideTag('}')) {
+      return false;
+    }
+
+    this.skipComments();
     return true;
   }
 
   private tryParseTagAttr(dest: TagAttr[]): boolean {
-    let res = true;
-
     const attr = this.token().literal!;
     const pos = this.token().pos;
 
     this.index++;
-    this.skipComments();
 
-    if (this.token().type !== '=') {
-      this.logUnexpectedToken('=');
-      this.panicInsideTag();
+    if (!this.tryReadExpectedTokenInsideTag('=')) {
       return false;
     }
-
-    this.index++;
-    this.skipComments();
 
     let strValue: InterStr | undefined;
     let boolValue: Var | undefined;
     let boolLiteral: boolean | undefined;
 
-    switch (this.token().type) {
-      case '$yes':
-        this.index++;
-        this.skipComments();
+    if (this.token().type === '"') {
+      strValue = [];
 
-        boolLiteral = true;
-        break;
-      case '$no':
-        this.index++;
-        this.skipComments();
-
-        boolLiteral = false;
-        break;
-      case '{':
-        boolValue = [];
-        res = this.tryParseVar(boolValue) && res;
-        break;
-      case '"':
-        strValue = [];
-        res = this.tryParseStringLiteral(strValue) && res;
-        break;
-      default:
-        this.logUnexpectedToken();
-        this.panicInsideTag();
+      if (!this.tryParseStringLiteral(strValue)) {
         return false;
+      }
+
+      dest.push({ attr, pos, strValue });
+      return true;
+    } else if (this.token().type !== '{') {
+      this.logger.error(
+        this.token().pos,
+        'String literal or value refernce expected',
+      );
+      return false;
     }
-    if (res) dest.push({ attr, pos, strValue, boolValue, boolLiteral });
-    return res;
+    this.index++;
+
+    if (this.token().type === 'true') {
+      boolLiteral = true;
+      this.index++;
+    } else if (this.token().type === 'false') {
+      boolLiteral = false;
+      this.index++;
+    } else {
+      boolValue = [];
+      if (!this.tryParseVar(boolValue)) {
+        return false;
+      }
+    }
+    if (!this.tryReadExpectedTokenInsideTag('}')) {
+      return false;
+    }
+    dest.push({ attr, pos, boolValue, boolLiteral });
+    return true;
   }
 
   private tryParseEventAttr(nodeId: string, dest: EventAttr[]): boolean {
@@ -624,126 +690,124 @@ export class Parser {
     }
 
     this.index++;
-    this.skipComments();
 
-    if (this.token().type !== '=') {
-      this.logUnexpectedToken('=');
-      this.panicInsideTag();
+    if (!this.tryReadExpectedTokenInsideTag('=')) {
+      return false;
+    }
+    if (!this.tryReadExpectedTokenInsideTag('{')) {
       return false;
     }
 
-    this.index++;
-    this.skipComments();
-
     const handler: Var = [];
-    res = this.tryParseVar(handler) && res;
+
+    if (!this.tryParseVar(handler)) {
+      return false;
+    }
+    if (!this.tryReadExpectedTokenInsideTag('}')) {
+      return false;
+    }
 
     if (res) dest.push({ event, pos, handler });
     return res;
   }
 
   private tryParsePropAttr(dest: PropAttr[]): boolean {
-    let res = true;
-
     const prop = this.token().literal!;
     const pos = this.token().pos;
 
     this.index++;
-    this.skipComments();
 
-    if (this.token().type !== '=') {
-      this.logUnexpectedToken('=');
-      this.panicInsideTag();
+    if (!this.tryReadExpectedTokenInsideTag('=')) {
       return false;
     }
 
-    this.index++;
-    this.skipComments();
+    let strValue: InterStr | undefined;
+    let value: Var | undefined;
+    let boolLiteral: boolean | undefined;
 
-    switch (this.token().type) {
-      case '"':
-        const strValue: InterStr = [];
-        res = this.tryParseStringLiteral(strValue) && res;
-        if (res) dest.push({ prop, isSpread: false, pos, strValue });
-        return res;
-      case '{':
-        const value: Var = [];
-        res = this.tryParseVar(value) && res;
-        if (res) dest.push({ prop, isSpread: false, pos, value });
-        return res;
-      default:
-        this.logUnexpectedToken();
-        this.panicInsideTag();
+    if (this.token().type === '"') {
+      strValue = [];
+
+      if (!this.tryParseStringLiteral(strValue)) {
         return false;
+      }
+
+      dest.push({ prop, isSpread: false, pos, strValue });
+      return true;
     }
+    if (this.token().type !== '{') {
+      this.logger.error(this.token().pos, '" or { expected');
+      return false;
+    }
+    this.index++;
+
+    if (this.token().type === 'true') {
+      boolLiteral = true;
+      this.index++;
+    } else if (this.token().type === 'false') {
+      boolLiteral = false;
+      this.index++;
+    } else {
+      value = [];
+      if (!this.tryParseVar(value)) {
+        return false;
+      }
+    }
+    if (!this.tryReadExpectedTokenInsideTag('}')) {
+      return false;
+    }
+
+    dest.push({ prop, isSpread: false, pos, value, boolLiteral });
+    return true;
   }
 
   private tryParseSpreadPropAttr(dest: PropAttr[]): boolean {
-    let res = true;
-
     const prop = '*';
     const pos = this.token().pos;
 
     this.index++;
-    this.skipComments();
 
-    if (this.token().type !== '=') {
-      this.logUnexpectedToken('=');
-      this.panicInsideTag();
+    if (!this.tryReadExpectedTokenInsideTag('=')) {
+      return false;
+    }
+    if (!this.tryReadExpectedTokenInsideTag('{')) {
       return false;
     }
 
-    this.index++;
-    this.skipComments();
-
     const value: Var = [];
-    res = this.tryParseVar(value) && res;
 
-    if (res) dest.push({ prop, isSpread: true, pos, value });
-    return res;
+    if (!this.tryParseVar(value)) {
+      return false;
+    }
+    if (!this.tryReadExpectedTokenInsideTag('}')) {
+      return false;
+    }
+
+    dest.push({ prop, isSpread: true, pos, value });
+    return true;
   }
 
   private tryParseStringLiteral(dest: InterStr): boolean {
-    if (this.token().type !== '"') {
-      this.logUnexpectedToken('"');
-      this.panicInsideTag();
-
+    if (!this.tryReadExpectedTokenInsideTag('"')) {
       return false;
     }
-    this.index++;
 
-    while (this.tryParseChunk(dest)) {}
+    while (['{', 'str'].includes(this.token().type)) {
+      if (!this.tryParseChunk(dest)) {
+        return false;
+      }
+    }
 
-    if (this.token().type !== '"') {
-      this.logUnexpectedToken('"');
+    if (!this.tryReadExpectedTokenInsideTag('"')) {
       return false;
     }
-    this.index++;
+
     this.skipComments();
     return true;
   }
 
-  private tryParseRef(ref: Var): boolean {
-    this.index++;
-    this.skipComments();
-
-    if (this.token().type !== '=') {
-      this.logUnexpectedToken('=');
-      return false;
-    }
-
-    this.index++;
-    this.skipComments();
-
-    return this.tryParseVar(ref);
-  }
-
   private tryParseVar(dest: Var): boolean {
-    if (this.token().type !== '{') {
-      this.logUnexpectedToken('{');
-      this.panicInsideTag();
-      return false;
-    }
+    this.index--;
 
     do {
       this.index++;
@@ -760,13 +824,6 @@ export class Parser {
       this.index++;
     } while (this.token().type === 'dot');
 
-    if (this.token().type !== '}') {
-      this.logUnexpectedToken('}');
-      this.panicInsideTag();
-      return false;
-    }
-    this.index++;
-    this.skipComments();
     return true;
   }
 
@@ -776,30 +833,60 @@ export class Parser {
       text: [],
     };
 
-    while (this.tryParseChunk(node.text!) || this.trySkipCommentTag()) {}
+    while (['{', 'str', '<'].includes(this.token().type)) {
+      if (this.token().type === '<' && !this.trySkipCommentTag()) {
+        break;
+      }
+      if (!this.tryParseChunk(node.text!)) {
+        return false;
+      }
+    }
 
     if (node.text!.length > 0) {
       dest.push(node);
-      return true;
     }
-    return false;
+    return true;
+  }
+
+  private trySkipTextNode(): boolean {
+    while (['{', 'str'].includes(this.token().type)) {
+      if (!this.tryParseChunk([])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private tryParseChunk(dest: InterStr): boolean {
-    switch (this.token().type) {
+    const token = this.token();
+
+    switch (token.type) {
       case 'str':
         dest.push({
-          pos: this.token().pos,
-          str: this.token().literal!,
+          pos: token.pos,
+          str: token.literal!,
         });
         this.index++;
         return true;
       case '{':
+        this.index++;
+
         const value: Var = [];
-        const res = this.tryParseVar(value);
-        if (res) dest.push(value);
-        return res;
+
+        if (!this.tryParseVar(value)) {
+          return false;
+        }
+        if (!this.tryReadExpectedTokenInsideTag('}')) {
+          return false;
+        }
+
+        dest.push(value);
+        return true;
       default:
+        this.logger.error(
+          token.pos,
+          `Str chunk or "{" expected, got ${token.type}`,
+        );
         return false;
     }
   }
@@ -813,7 +900,7 @@ export class Parser {
     this.index++;
 
     if (this.token().type !== 'comment') {
-      this.index--;
+      this.index = tmpIndex;
       return false;
     }
     while (this.token().type === 'comment') {
@@ -826,10 +913,6 @@ export class Parser {
     }
     this.index++;
     return true;
-  }
-
-  private skipTextNode(): void {
-    while (this.tryParseChunk([]) || this.trySkipCommentTag()) {}
   }
 
   private skipComments(): void {
@@ -855,6 +938,17 @@ export class Parser {
     while (!'eof/>'.includes(this.token().type)) {
       this.index++;
     }
+  }
+
+  private tryReadExpectedTokenInsideTag(tokenType: TokenType) {
+    if (this.token().type !== tokenType) {
+      this.logUnexpectedToken(tokenType);
+      this.panicInsideTag();
+      return false;
+    }
+
+    this.index++;
+    return true;
   }
 
   private logUnexpectedToken(expectedType?: TokenType): void {

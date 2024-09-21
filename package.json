@@ -1,6 +1,6 @@
 {
   "name": "@staleread/tempo",
-  "version": "2.2.2",
+  "version": "3.0.0",
   "description": "Template-based DOM Modifier",
   "author": "Mykola Ratushniak",
   "lisence": "MIT",
@@ -13,8 +13,7 @@
   },
   "scripts": {
     "build": "tsup index.ts --format cjs,esm --dts",
-    "lint": "npx tsc",
-    "check": "npx @biomejs/biome check src/",
+    "lint": "npx tsc && npx @biomejs/biome check src/",
     "fix": "npx @biomejs/biome check --write src/"
   },
   "devDependencies": {

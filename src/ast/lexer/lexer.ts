@@ -71,6 +71,7 @@ export class Lexer {
     this.tokenStart = this.pos;
 
     const char = this.readChar();
+
     switch (char) {
       case '.':
         return this.createToken('dot');
@@ -80,6 +81,7 @@ export class Lexer {
       case Lexer.EOF:
         return this.createToken('eof');
     }
+
     if (Lexer.LOWER_LETTERS.includes(char)) {
       return this.readVarIdToken();
     }
@@ -91,6 +93,7 @@ export class Lexer {
     this.tokenStart = this.pos;
 
     const char = this.readChar();
+
     switch (char) {
       case '.':
         return this.createToken('dot');
@@ -100,6 +103,7 @@ export class Lexer {
       case Lexer.EOF:
         return this.createToken('eof');
     }
+
     if (Lexer.LOWER_LETTERS.includes(char)) {
       return this.readVarIdToken();
     }
@@ -125,7 +129,7 @@ export class Lexer {
       case '=':
         return this.createToken('=');
       case '*':
-        return this.createToken('spread');
+        return this.createToken('*');
       case '/':
         return this.createToken('/');
       case '!':
@@ -134,8 +138,12 @@ export class Lexer {
         return this.readPropToken();
       case '@':
         return this.readEventTokenName();
-      case '$':
-        return this.readKeywordTokenName();
+      case ':':
+        return this.readCommandTokenName();
+      case '?':
+        return this.readGenTokenName();
+      case '#':
+        return this.readHashTagTokenName();
       case Lexer.EOF:
         return this.createToken('eof');
     }
@@ -209,47 +217,63 @@ export class Lexer {
     return this.createToken('event', name);
   }
 
-  private readKeywordTokenName(): Token {
-    this.tokenStart = this.pos;
-
+  private readCommandTokenName(): Token {
     if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
       return this.createIllegalToken(
-        'Keyword must start with lowercase letter',
+        'Command must start with lowercase letter',
       );
     }
     this.skipRange(Lexer.LOWER_LETTERS);
 
-    const keyword = this.buffer.substring(this.tokenStart, this.pos);
+    const command = this.buffer.substring(
+      this.tokenStart,
+      this.pos,
+    ) as TokenType;
 
-    switch (keyword) {
-      case 'yes':
-        return this.createToken('$yes');
-      case 'no':
-        return this.createToken('$no');
-      case 'ref':
-        return this.createToken('$ref');
-      case 'map':
-        return this.createToken('$map');
-      case 'to':
-        return this.createToken('$to');
-      case 'in':
-        return this.createToken('$in');
-      case 'if':
-        return this.createToken('$if');
-      case 'not':
-        return this.createToken('$not');
-      case 'tag':
-        return this.createToken('$tag');
-      case 'cmp':
-        return this.createToken('$cmp');
-      case 'use':
-        return this.createToken('$use');
-      case 'as':
-        return this.createToken('$as');
+    const COMMANDS: TokenType[] = [':kmap', ':if', ':bind', ':ref', ':use'];
+
+    return COMMANDS.includes(command)
+      ? this.createToken(command)
+      : this.createIllegalToken('Unknown command');
+  }
+
+  private readGenTokenName(): Token {
+    if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
+      return this.createIllegalToken(
+        'Generic tag type must start with lowercase letter',
+      );
+    }
+    this.skipRange(Lexer.LOWER_LETTERS);
+
+    const type = this.buffer.substring(
+      this.tokenStart,
+      this.pos,
+    ) as TokenType;
+
+    const GEN_TYPES: TokenType[] = ['?tag', '?comp'];
+
+    return GEN_TYPES.includes(type)
+      ? this.createToken(type)
+      : this.createIllegalToken('Unknown generic tag type');
+  }
+
+  private readHashTagTokenName(): Token {
+    this.tokenStart = this.pos;
+
+    if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
+      return this.createIllegalToken(
+        'Hash tag must start with lowercase letter',
+      );
+    }
+    this.skipRange(Lexer.LOWER_LETTERS);
+
+    const tag = this.buffer.substring(this.tokenStart, this.pos);
+
+    switch (tag) {
       case 'children':
-        return this.createToken('$children');
+        return this.createToken('#children');
       default:
-        return this.createIllegalToken('Unknown keyword');
+        return this.createIllegalToken('Unknown hash tag');
     }
   }
 
@@ -270,8 +294,23 @@ export class Lexer {
   private readVarIdToken(): Token {
     this.skipRange(Lexer.LETTERS);
 
-    const prop = this.buffer.substring(this.tokenStart, this.pos);
-    return this.createToken('vid', prop);
+    const prop = this.buffer.substring(
+      this.tokenStart,
+      this.pos,
+    ) as TokenType;
+
+    const RESERVED: TokenType[] = [
+      'true',
+      'false',
+      'not',
+      'in',
+      'as',
+      'by',
+    ];
+
+    return RESERVED.includes(prop)
+      ? this.createToken(prop)
+      : this.createToken('vid', prop);
   }
 
   private createToken(type: TokenType, literal?: string): Token {

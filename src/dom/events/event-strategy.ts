@@ -13,7 +13,11 @@ export const eventStrategy: Record<VdomEventType, VdomEvent> = {
     handler: (event: Event) => {
       let domElem: DomElem | null = getEventTargetElem(event);
 
-      while (domElem?._ref && !event.defaultPrevented) {
+      while (
+        domElem?._ref &&
+        !event.defaultPrevented &&
+        !event.cancelBubble
+      ) {
         domElem._ref.eventsMap!.get('click')?.(event);
         domElem = domElem.parentElement;
       }
@@ -24,7 +28,11 @@ export const eventStrategy: Record<VdomEventType, VdomEvent> = {
     handler: (event: Event) => {
       let domElem: DomElem | null = getEventTargetElem(event);
 
-      while (domElem?._ref && !event.defaultPrevented) {
+      while (
+        domElem?._ref &&
+        !event.defaultPrevented &&
+        !event.cancelBubble
+      ) {
         if (domElem._ref.tag === 'form') {
           domElem._ref.eventsMap!.get('submit')?.(event);
         }

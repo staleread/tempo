@@ -27,34 +27,35 @@ export class StateAllocator {
     this.cellIndex = -1;
   }
 
-  public loadState(tag: string, level: number): void {
+  public loadState(level: number, componentId: string | number): void {
     this.stateIndex++;
     this.cellIndex = -1;
 
     const state = this.states[this.stateIndex];
 
     if (!state || state.level < level) {
-      this.allocateState(tag, level);
+      this.allocateState(level, componentId);
       return;
     }
-
-    if (state.tag === tag && state.level === level) {
+    if (state.componentId !== componentId || state.level !== level) {
+      this.deallocateState();
+      this.allocateState(level, componentId);
       return;
     }
-
-    this.trimLevel();
-    this.allocateState(tag, level);
   }
 
   public injectContext(injections: Injection[]): void {
-    const currState: State | undefined = this.states[this.stateIndex];
+    const currState = this.states[this.stateIndex];
 
     if (!currState) {
       throw new RangeError('Trying to access state before loading it');
     }
+    if (!currState.contextMap) {
+      currState.contextMap = new Map();
+    }
 
     injections.forEach((i: Injection) => {
-      currState.contextMap.set(i.contextKey, i.value);
+      currState.contextMap!.set(i.contextKey, i.value);
     });
   }
 
@@ -66,8 +67,8 @@ export class StateAllocator {
       const state = this.states[index]!;
       level = state.level;
 
-      if (state.contextMap.has(contextKey)) {
-        return state.contextMap.get(contextKey);
+      if (state.contextMap?.has(contextKey)) {
+        return state.contextMap!.get(contextKey);
       }
       while (state.level === level) {
         index--;
@@ -76,18 +77,22 @@ export class StateAllocator {
     return undefined;
   }
 
-  private allocateState(tag: string, level: number): void {
-    const state: State = { tag, level, contextMap: new Map(), cells: [] };
+  private allocateState(level: number, componentId: string | number): void {
+    const state: State = {
+      componentId,
+      level,
+      cells: [],
+    };
     this.states.splice(this.stateIndex, 0, state);
   }
 
-  private trimLevel(): void {
+  private deallocateState(): void {
     const level = this.states[this.stateIndex]!.level;
 
-    let index = this.stateIndex;
+    let index = this.stateIndex + 1;
     let curr = this.states[index];
 
-    while (curr && curr.level >= level) {
+    while (curr && curr.level > level) {
       curr = this.states[++index];
     }
     this.states.splice(this.stateIndex, index - this.stateIndex);

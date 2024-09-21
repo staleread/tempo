@@ -1,37 +1,44 @@
 export type LexerMode = 'TAG' | 'TXT' | 'VAR' | 'TXT_VAR';
 
-export type TokenType =
-  | 'ILLEGAL'
-  | 'eof'
-  | '<'
-  | '>'
-  | '{'
-  | '}'
-  | '"'
+type TransitionTokenType = 'eof' | '<' | '>' | '{' | '}' | '"';
+
+type VarTokenType =
+  | 'dot'
+  | 'in'
+  | 'by'
+  | 'as'
+  | 'in'
+  | 'true'
+  | 'false'
+  | 'not'
+  | 'vid';
+
+type TextTokenType = 'str';
+
+type TagTokenType =
   | '/'
   | '='
-  | 'dot'
-  | 'spread'
-  | 'comment'
-  | 'str'
-  | 'id'
-  | 'vid'
+  | '*'
   | 'comp'
-  | 'prop'
   | 'event'
-  | '$yes'
-  | '$no'
-  | '$ref'
-  | '$map'
-  | '$to'
-  | '$in'
-  | '$if'
-  | '$not'
-  | '$tag'
-  | '$cmp'
-  | '$use'
-  | '$as'
-  | '$children';
+  | 'id'
+  | 'prop'
+  | 'comment'
+  | ':kmap'
+  | ':if'
+  | ':bind'
+  | ':ref'
+  | ':use'
+  | '?comp'
+  | '?tag'
+  | '#children';
+
+export type TokenType =
+  | 'ILLEGAL'
+  | TransitionTokenType
+  | TextTokenType
+  | TagTokenType
+  | VarTokenType;
 
 export interface Token {
   type: TokenType;

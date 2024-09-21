@@ -1,29 +1,25 @@
 import { DomElem } from '../dom/dom.types';
 import { EventHandler, VdomEventType } from '../dom/events/event.types';
 
-export type VdomNodeType =
-  | 'Root'
-  | 'Text'
-  | 'Tag'
-  | 'GenTag'
-  | 'Keymap'
-  | 'GenKeymap'
-  | 'Blank';
+export type VdomNodeType = 'Root' | 'Text' | 'Tag' | 'Keymap' | 'Blank';
 
 export type VdomNode = {
   type: VdomNodeType;
   text?: string;
   tag?: string;
-  key?: string | number;
-  id?: string;
-  ref?: { current: DomElem | null };
+  ref?: Ref;
+  keymapKey?: string | number;
   attrs?: VdomTagAttr[];
   eventsMap?: Map<VdomEventType, EventHandler>;
   children?: VdomNode[];
-  keymap?: Map<string | number, VdomNode>;
+  keymapCtx?: {
+    id: string | number;
+    nodeMap: Map<string | number, VdomNode>;
+    keys: Array<string | number>;
+  };
 };
 
-export type AnyObject = { [key: string]: any };
+export type Ref = { current: DomElem | null };
 
 export type VdomTagAttr = {
   id: string;
@@ -36,6 +32,7 @@ export type Injection = {
   value: unknown;
 };
 
+export type AnyObject = { [key: string]: any };
 export type ComponentFunc = (props?: AnyObject) => ComponentResult;
 
 export type ComponentResult = {
@@ -44,17 +41,24 @@ export type ComponentResult = {
   attach?: AnyObject;
 };
 
-export type ComponentUnwrapperDto = {
-  level: number;
+export type ComponentUnwrapDto = {
   dest: VdomNode[];
-  componentId: string;
-  func: ComponentFunc;
+  stateLevel: number;
+  componentFunc: ComponentFunc;
   props: AnyObject;
-  unwrapChildren?: (dest: VdomNode[]) => boolean;
+  unwrapChildrenCallback?: (dest: VdomNode[]) => boolean;
+};
+
+export type ComponentNode = {
+  componentId?: string | number;
+  componentFunc?: ComponentFunc;
+  props?: AnyObject;
+  injections?: Injection[];
+  unwrapChildrenCallback?: (dest: VdomNode[]) => boolean;
 };
 
 export type ComponentUnwrapperContext = {
   importsMap: Map<string, ComponentFunc>;
   attachMap: Map<string, unknown>;
-  unwrapChildren?: (dest: VdomNode[]) => boolean;
+  unwrapChildrenCallback?: (dest: VdomNode[]) => boolean;
 };
