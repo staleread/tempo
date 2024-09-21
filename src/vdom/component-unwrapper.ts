@@ -176,7 +176,7 @@ export class ComponentUnwrapper {
     }
 
     const compSetupChain: Array<() => boolean> = [
-      () => this.trySetComponentId(node, astNode),
+      () => this.trySetComponentId(node, astNode, keymapKey),
       () => this.trySetProps(node, astNode),
       () => this.trySetInjections(node, astNode),
       () => this.trySetUnwrapChildrenCallback(node, astNode),
@@ -522,14 +522,23 @@ export class ComponentUnwrapper {
   private trySetComponentId(
     node: ComponentNode,
     astNode: AstNode,
+    keymapKey?: string | number,
   ): boolean {
-    if (!astNode.compFunc || !node.componentFunc) {
+    if (!node.componentFunc) {
       throw new Error('Component function not defined');
     }
     if (!astNode.stateKey) {
+      throw new Error('State key not defined');
+    }
+    if (astNode.stateKey.length === 0 && !keymapKey) {
       node.componentId = node.componentFunc.name;
       return true;
     }
+    if (keymapKey) {
+      node.componentId = keymapKey;
+      return true;
+    }
+
     const stateKey: unknown = this.getVar(astNode.stateKey);
 
     if (typeof stateKey !== 'string' && typeof stateKey !== 'number') {
