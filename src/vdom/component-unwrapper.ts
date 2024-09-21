@@ -343,8 +343,8 @@ export class ComponentUnwrapper {
         const compNode: ComponentNode = {};
 
         if (
-          !this.trySetCompFunc(compNode, astNode) ||
-          !this.trySetComponentId(compNode, astNode)
+          !this.trySetCompFunc(compNode, an) ||
+          !this.trySetComponentId(compNode, an)
         ) {
           res = false;
           return;
