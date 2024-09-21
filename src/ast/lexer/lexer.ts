@@ -105,7 +105,7 @@ export class Lexer {
     }
 
     if (Lexer.LOWER_LETTERS.includes(char)) {
-      return this.readVarToken();
+      return this.readVarIdToken();
     }
     return this.createIllegalToken('Illegal char in txt-var expression');
   }
