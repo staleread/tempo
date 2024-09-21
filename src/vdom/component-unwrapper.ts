@@ -72,10 +72,14 @@ export class ComponentUnwrapper {
       throw new Error('Text is not defined');
     }
 
-    const node: VdomNode = {
-      type: 'Text',
-      text: this.getText(astNode.text),
-    };
+    const outStr = { str: undefined };
+
+    if (!this.tryGetText(astNode.text, outStr)) {
+      return false;
+    }
+
+    const text = outStr.str!;
+    const node: VdomNode = { type: 'Text', text };
 
     dest.push(node);
     return true;
@@ -219,7 +223,13 @@ export class ComponentUnwrapper {
       return true;
     }
     if (astNode.tagName) {
-      const tagName: unknown = this.getVar(astNode.tagName);
+      const outValue = { value: undefined };
+
+      if (!this.tryGetVar(astNode.tagName, outValue)) {
+        return false;
+      }
+
+      const tagName: unknown = outValue.value;
 
       if (typeof tagName !== 'string') {
         this.logger.error(
@@ -291,7 +301,12 @@ export class ComponentUnwrapper {
       return 'error';
     }
 
-    const items: unknown = this.getVar(args.items);
+    const outValue = { value: undefined };
+
+    if (!this.tryGetVar(args.items, outValue)) {
+      return 'error';
+    }
+    const items: unknown = outValue.value;
 
     if (!Array.isArray(items)) {
       this.logger.error(
@@ -304,7 +319,12 @@ export class ComponentUnwrapper {
     for (let i = 0; i < items.length; i++) {
       this.context.attachMap.set(alias, items[i]);
 
-      const kmapKey: unknown = this.getVar(args.key);
+      const outValue = { value: undefined };
+
+      if (!this.tryGetVar(args.key, outValue)) {
+        return 'error';
+      }
+      const kmapKey: unknown = outValue.value;
 
       if (typeof kmapKey !== 'string' && typeof kmapKey !== 'number') {
         this.logger.error(
@@ -340,7 +360,12 @@ export class ComponentUnwrapper {
       return 'continue';
     }
 
-    let predicate: boolean = !!this.getVar(astNode.condition.predicate);
+    const outValue = { value: undefined };
+
+    if (!this.tryGetVar(astNode.condition.predicate, outValue)) {
+      return 'error';
+    }
+    let predicate: boolean = !!outValue.value;
 
     predicate = astNode.condition.invert ? !predicate : predicate;
 
@@ -387,7 +412,13 @@ export class ComponentUnwrapper {
     if (astNode.ref.length === 0) {
       return true;
     }
-    const ref: unknown = this.getVar(astNode.ref);
+    const outValue = { value: undefined };
+
+    if (!this.tryGetVar(astNode.ref, outValue)) {
+      return false;
+    }
+
+    const ref: unknown = outValue.value;
 
     if (!isRef(ref)) {
       this.logger.error(astNode.ref.at(-1)!.pos, 'Invalid ref value');
@@ -416,13 +447,25 @@ export class ComponentUnwrapper {
         continue;
       }
       if (attr.boolValue) {
-        const boolValue = !!this.getVar(attr.boolValue);
+        const outValue = { value: undefined };
+
+        if (!this.tryGetVar(attr.boolValue, outValue)) {
+          return false;
+        }
+
+        const boolValue = !!outValue.value;
 
         dest.push({ id: attr.attr, shouldSet: boolValue, value: '' });
         continue;
       }
       if (attr.strValue) {
-        const value = this.getText(attr.strValue);
+        const outStr = { str: undefined };
+
+        if (!this.tryGetText(attr.strValue, outStr)) {
+          return false;
+        }
+
+        const value = outStr.str!;
 
         dest.push({ id: attr.attr, shouldSet: true, value });
         continue;
@@ -443,7 +486,13 @@ export class ComponentUnwrapper {
 
     for (let i = 0; i < astNode.events.length; i++) {
       const event = astNode.events[i]!;
-      const handler: unknown = this.getVar(event.handler);
+      const outValue = { value: undefined };
+
+      if (!this.tryGetVar(event.handler, outValue)) {
+        return false;
+      }
+
+      const handler: unknown = outValue.value;
 
       if (!handler) {
         continue;
@@ -492,7 +541,13 @@ export class ComponentUnwrapper {
       throw new Error('Id not defined');
     }
     if (astNode.compFunc) {
-      const func: unknown = this.getVar(astNode.compFunc);
+      const outValue = { value: undefined };
+
+      if (!this.tryGetVar(astNode.compFunc, outValue)) {
+        return false;
+      }
+
+      const func: unknown = outValue.value;
 
       if (!func) {
         this.logger.error(
@@ -554,7 +609,13 @@ export class ComponentUnwrapper {
       return true;
     }
 
-    const stateKey: unknown = this.getVar(astNode.stateKey);
+    const outValue = { value: undefined };
+
+    if (!this.tryGetVar(astNode.stateKey, outValue)) {
+      return false;
+    }
+
+    const stateKey: unknown = outValue.value;
 
     if (typeof stateKey !== 'string' && typeof stateKey !== 'number') {
       this.logger.error(
@@ -578,7 +639,13 @@ export class ComponentUnwrapper {
       const prop: PropAttr = astNode.props[i]!;
 
       if (prop.isSpread) {
-        const value: unknown = this.getVar(prop.value!);
+        const outValue = { value: undefined };
+
+        if (!this.tryGetVar(prop.value!, outValue)) {
+          return false;
+        }
+
+        const value: unknown = outValue.value;
 
         if (typeof value !== 'object' || value === null) {
           this.logger.error(
@@ -595,11 +662,23 @@ export class ComponentUnwrapper {
       const name: string = prop.prop;
 
       if (prop.strValue) {
-        props[name] = this.getText(prop.strValue);
+        const outStr = { str: undefined };
+
+        if (!this.tryGetText(prop.strValue, outStr)) {
+          return false;
+        }
+
+        props[name] = outStr.str!;
         continue;
       }
       if (prop.value) {
-        props[name] = this.getVar(prop.value);
+        const outValue = { value: undefined };
+
+        if (!this.tryGetVar(prop.value, outValue)) {
+          return false;
+        }
+
+        props[name] = outValue.value;
         continue;
       }
       if (prop.boolLiteral !== undefined) {
@@ -622,17 +701,31 @@ export class ComponentUnwrapper {
 
     for (let i = 0; i < astNode.injections.length; i++) {
       const injection = astNode.injections[i]!;
-      const value: unknown = this.getVar(injection.value);
+      const outInjValue = { value: undefined };
 
-      if (!value) {
+      if (!this.tryGetVar(injection.value, outInjValue)) {
+        return false;
+      }
+
+      const value: unknown = outInjValue.value;
+
+      if (typeof value !== 'object' || value === null) {
+        const got = value === null ? 'null' : typeof value;
+
         this.logger.error(
           injection.value.at(-1)!.pos,
-          'Cannot find context value in attachments',
+          `Context value must be an object, got ${got}`,
         );
         return false;
       }
 
-      const contextKey: unknown = this.getVar(injection.contextKey);
+      const outCtxValue = { value: undefined };
+
+      if (!this.tryGetVar(injection.contextKey, outCtxValue)) {
+        return false;
+      }
+
+      const contextKey: unknown = outCtxValue.value;
 
       if (!contextKey) {
         this.logger.error(
@@ -678,7 +771,10 @@ export class ComponentUnwrapper {
     return true;
   }
 
-  private getText(interStr: InterStr): string {
+  private tryGetText(
+    interStr: InterStr,
+    outString: { str?: string },
+  ): boolean {
     let str = '';
 
     for (let i = 0; i < interStr.length; i++) {
@@ -688,7 +784,12 @@ export class ComponentUnwrapper {
         str += chunk.str;
         continue;
       }
-      const value: unknown = this.getVar(chunk);
+      const outValue = { value: undefined };
+
+      if (!this.tryGetVar(chunk, outValue)) {
+        return false;
+      }
+      const value: unknown = outValue.value;
 
       switch (typeof value) {
         case 'undefined':
@@ -696,7 +797,7 @@ export class ComponentUnwrapper {
         case 'object':
           this.logger.warning(
             chunk.at(-1)!.pos,
-            'Inserting a JS object into a string may be unintentional',
+            'Inserting an object/null into a string may be unintentional',
           );
           str += '{object}';
           continue;
@@ -712,10 +813,12 @@ export class ComponentUnwrapper {
           continue;
       }
     }
-    return str;
+
+    outString.str = str;
+    return true;
   }
 
-  private getVar(value: Var): unknown {
+  private tryGetVar(value: Var, outValue: { value: unknown }): boolean {
     if (value.length < 1) {
       throw new Error('Variable should at least have one child');
     }
@@ -725,27 +828,27 @@ export class ComponentUnwrapper {
     if (!this.context.attachMap.has(firstVarChunk.str)) {
       this.logger.error(
         firstVarChunk.pos,
-        'The variable cannot be found in attachments',
+        `Cannot find "${firstVarChunk.str}" in attachments`,
       );
-      return undefined;
+      return false;
     }
 
     let result: unknown = this.context.attachMap.get(firstVarChunk.str);
 
-    if (value.length === 1) {
-      return result;
-    }
-
     for (let i = 1; i < value.length; i++) {
-      if (!result) {
+      const varChunk = value[i]!;
+
+      if (typeof result !== 'object' || result === null) {
         this.logger.error(
-          value[i - 1]!.pos,
-          'The value seems to be undefined',
+          varChunk.pos,
+          'The property is not reachible. The one before is not an object',
         );
-        return result;
+        return false;
       }
       result = (result as AnyObject)[value[i]!.str];
     }
-    return result;
+
+    outValue.value = result;
+    return true;
   }
 }
