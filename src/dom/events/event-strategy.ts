@@ -8,7 +8,7 @@ function getEventTargetElem(event: Event): DomElem | null {
 }
 
 export const eventStrategy: Record<VdomEventType, VdomEvent> = {
-  click: {
+  '@click': {
     nativeEventName: 'click',
     handler: (event: Event) => {
       let domElem: DomElem | null = getEventTargetElem(event);
@@ -18,12 +18,12 @@ export const eventStrategy: Record<VdomEventType, VdomEvent> = {
         !event.defaultPrevented &&
         !event.cancelBubble
       ) {
-        domElem._ref.eventsMap!.get('click')?.(event);
+        domElem._ref.eventsMap!.get('@click')?.(event);
         domElem = domElem.parentElement;
       }
     },
   },
-  submit: {
+  '@submit': {
     nativeEventName: 'submit',
     handler: (event: Event) => {
       let domElem: DomElem | null = getEventTargetElem(event);
@@ -34,37 +34,37 @@ export const eventStrategy: Record<VdomEventType, VdomEvent> = {
         !event.cancelBubble
       ) {
         if (domElem._ref.tag === 'form') {
-          domElem._ref.eventsMap!.get('submit')?.(event);
+          domElem._ref.eventsMap!.get('@submit')?.(event);
         }
         domElem = domElem.parentElement;
       }
     },
   },
-  change: {
+  '@change': {
     nativeEventName: 'change',
     handler: (event: Event) => {
       const domElem: DomElem | null = getEventTargetElem(event);
       if (!domElem?._ref) return;
 
-      domElem._ref.eventsMap!.get('change')?.(event);
+      domElem._ref.eventsMap!.get('@change')?.(event);
     },
   },
-  input: {
+  '@input': {
     nativeEventName: 'input',
     handler: (event: Event) => {
       const domElem: DomElem | null = getEventTargetElem(event);
       if (!domElem?._ref) return;
 
-      domElem._ref.eventsMap!.get('input')?.(event);
+      domElem._ref.eventsMap!.get('@input')?.(event);
     },
   },
-  blur: {
+  '@blur': {
     nativeEventName: 'focusout',
     handler: (event: Event) => {
       const domElem: DomElem | null = getEventTargetElem(event);
       if (!domElem?._ref) return;
 
-      domElem._ref.eventsMap!.get('blur')?.(event);
+      domElem._ref.eventsMap!.get('@blur')?.(event);
     },
   },
 };

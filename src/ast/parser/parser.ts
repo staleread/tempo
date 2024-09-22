@@ -669,17 +669,17 @@ export class Parser {
     const pos = this.token().pos;
 
     switch (event) {
-      case 'click':
-      case 'submit':
+      case '@click':
+      case '@submit':
         break;
-      case 'change':
-      case 'input':
-      case 'blur':
-        if (!['input', 'select'].includes(nodeId)) {
+      case '@change':
+      case '@input':
+      case '@blur':
+        if (!['input', 'select', 'textarea'].includes(nodeId)) {
           res = false;
           this.logger.error(
             pos,
-            'The event is only supported by explicit input/select tag',
+            `Expected <input>, <select> or <textarea>, got <${nodeId}>`,
           );
         }
         break;
