@@ -675,11 +675,11 @@ export class Parser {
       case 'change':
       case 'input':
       case 'blur':
-        if (nodeId !== 'input') {
+        if (!['input', 'select'].includes(nodeId)) {
           res = false;
           this.logger.error(
             pos,
-            'The event is only supported by explicit <input> tag',
+            'The event is only supported by explicit input/select tag',
           );
         }
         break;
