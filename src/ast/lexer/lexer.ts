@@ -204,8 +204,6 @@ export class Lexer {
   }
 
   private readEventTokenName(): Token {
-    this.tokenStart = this.pos;
-
     if (!Lexer.LOWER_LETTERS.includes(this.readChar())) {
       return this.createIllegalToken(
         'Event must start with lowercase letter',

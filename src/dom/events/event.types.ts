@@ -1,10 +1,11 @@
-export type EventHandler = (e?: Event) => void;
 export type VdomEventType =
-  | 'click'
-  | 'submit'
-  | 'change'
-  | 'input'
-  | 'blur';
+  | '@click'
+  | '@submit'
+  | '@change'
+  | '@input'
+  | '@blur';
+
+export type EventHandler = (e?: Event) => void;
 
 export type VdomEvent = {
   nativeEventName: string;
