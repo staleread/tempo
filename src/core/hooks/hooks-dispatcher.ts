@@ -44,7 +44,7 @@ export class HooksDispatcher {
     return readRef()!;
   }
 
-  public useEffect(callback: () => void, deps: any[] | undefined): void {
+  public useEffect(callback: () => void, deps?: any[]): void {
     const [readDeps, writeDeps] = this.stateAllocator.useCell<
       any[] | undefined
     >();

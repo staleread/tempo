@@ -68,7 +68,7 @@ class Tempo {
     return this.hooksDispatcher.useRef(initialValue);
   }
 
-  public useEffect(callback: () => void, deps: any[] | undefined): void {
+  public useEffect(callback: () => void, deps?: any[]): void {
     if (!this.hooksDispatcher) {
       throw new Error('Forbiden hook call outside component function');
     }

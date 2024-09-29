@@ -2,7 +2,7 @@ import { LexerMode, Token, TokenType } from './lexer.types';
 
 export class Lexer {
   static EOF = 'EOF';
-  static STOP_CHARS = '{}<>"';
+  static TRANSITION_CHARS = '{}<>"';
   static LOWER_LETTERS = 'qwertyuioipasdfghjklzxcvbnm';
   static UPPER_LETTERS = 'QWERTYUIOIPASDFGHJKLZXCVBNM';
   static DIGITS = '0123456789';
@@ -42,10 +42,41 @@ export class Lexer {
 
   private readTextToken(): Token {
     this.tokenStart = this.pos;
-    this.skipUntilRange(Lexer.STOP_CHARS);
 
-    if (this.tokenStart < this.pos) {
-      const text = this.buffer.substring(this.tokenStart, this.pos);
+    let text = '';
+    let char: string | undefined;
+    let isEscape = false;
+
+    while ((char = this.buffer[this.pos])) {
+      const isTransition = Lexer.TRANSITION_CHARS.includes(char);
+
+      if (!isEscape && isTransition) {
+        break;
+      }
+      this.pos++;
+
+      if (!isEscape && char === '/') {
+        isEscape = true;
+        continue;
+      }
+
+      if (!isEscape) {
+        text += char;
+        continue;
+      }
+
+      if (!isTransition && char !== '/') {
+        return this.createIllegalToken('Invalid escape char');
+      }
+
+      isEscape = false;
+      text += char;
+    }
+
+    if (isEscape) {
+      return this.createIllegalToken('Incomplete escape char');
+    }
+    if (text !== '') {
       return this.createToken('str', text);
     }
 
