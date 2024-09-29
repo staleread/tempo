@@ -291,42 +291,101 @@ export class DomUpdater {
     let i = 0;
 
     for (i; i < oldKeys.length && i < newKeys.length; i++) {
-      const oldCh = oldNodeMap.get(oldKeys[i]!) as BridgeNode & {
+      const oldKey = oldKeys[i]!;
+      const oldCh = oldNodeMap.get(oldKey) as BridgeNode & {
         domElem: DomElem;
       };
-      const newCh = newNodeMap.get(newKeys[i]!)!;
 
-      if (oldKeys[i] === newKeys[i]) {
+      const newKey = newKeys[i]!;
+      const newCh = newNodeMap.get(newKey)!;
+
+      if (oldKey === newKey) {
         this.tryResolveTagDiff(oldCh, newCh);
         continue;
       }
 
-      const targetKey = newKeys[i]!;
-      const targetCh = oldNodeMap.get(targetKey) as
+      const isOldKeyInNewKeys = newNodeMap.has(oldKey);
+      const expectedCh = oldNodeMap.get(newKey) as
         | (BridgeNode & { domElem: DomElem })
         | undefined;
 
-      if (targetCh) {
-        targetCh.domElem.remove();
+      // Rearranged nodes
+      //
+      // OLD | {A} .. {B} |
+      // ----+------------+  =>  {B} .. {A}
+      // NEW |  B  ..  A  |       ^
+      //        ^
+      if (expectedCh && isOldKeyInNewKeys) {
+        const expectedChIndex = oldKeys.indexOf(newKey);
 
-        const targetIndex = oldKeys.indexOf(targetKey);
+        oldKeys.splice(i, 1, newKey);
+        oldKeys.splice(expectedChIndex, 1, oldKey);
 
-        oldKeys.splice(targetIndex, 1);
-        oldKeys.splice(i, 0, targetKey);
+        const beforeExpectedDomElem =
+          expectedCh.domElem!.previousElementSibling!;
 
-        oldCh.domElem.before(targetCh.domElem);
-        this.tryResolveTagDiff(targetCh, newCh);
+        if (beforeExpectedDomElem === oldCh.domElem) {
+          oldCh.domElem!.before(expectedCh.domElem!);
+        } else {
+          oldCh.domElem!.replaceWith(expectedCh.domElem!);
+          beforeExpectedDomElem.after(oldCh.domElem!);
+        }
 
+        this.tryResolveTagDiff(expectedCh, newCh);
         continue;
       }
 
-      oldKeys.splice(i, 0, targetKey);
-      oldNodeMap.set(targetKey, newCh);
+      // New node
+      //
+      // OLD | {A} ..    |
+      // ----+-----------+  =>  {B} {A} ..
+      // NEW |  B  ..  A |       ^
+      //        ^
+      if (!expectedCh && isOldKeyInNewKeys) {
+        const frag = new DocumentFragment();
+        this.attachTag(newCh, frag);
 
+        oldKeys.splice(i, 0, newKey);
+        oldCh.domElem!.before(frag);
+
+        oldNodeMap.set(newKey, newCh);
+        continue;
+      }
+
+      // Deleted node
+      //
+      // OLD | {A} .. {B} |
+      // ----+------------+  =>  {B} ..
+      // NEW |  B  ..     |       ^
+      //        ^
+      if (expectedCh) {
+        oldCh.domElem!.replaceWith(expectedCh.domElem!);
+
+        const expectedChIndex = oldKeys.indexOf(newKey);
+
+        oldKeys.splice(expectedChIndex, 1);
+        oldKeys.splice(i, 1, newKey);
+
+        oldNodeMap.delete(oldKey);
+
+        this.tryResolveTagDiff(expectedCh, newCh);
+        continue;
+      }
+
+      // Replaced
+      //
+      // OLD | {A} .. |
+      // ----+--------+  =>  {B}
+      // NEW |  B  .. |
+      //        ^
       const frag = new DocumentFragment();
-
       this.attachTag(newCh, frag);
-      oldCh.domElem!.before(frag);
+
+      oldKeys.splice(i, 1, newKey);
+      oldCh.domElem!.replaceWith(frag);
+
+      oldNodeMap.delete(oldKey);
+      oldNodeMap.set(newKey, newCh);
     }
 
     if (i < oldKeys.length) {
