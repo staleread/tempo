@@ -151,7 +151,6 @@ export class Parser {
       str: this.token().type,
     };
     this.index++;
-    this.skipComments();
 
     const node: AstNode = {
       type: 'Gt',
@@ -172,6 +171,7 @@ export class Parser {
       children: [],
     };
 
+    res = this.tryParseGenMetadata(node) && res;
     res = this.tryParseMetadata(node) && res;
     res = this.tryParseChildren(node) && res;
 
@@ -222,7 +222,6 @@ export class Parser {
       str: this.token().type,
     };
     this.index++;
-    this.skipComments();
 
     const node: AstNode = {
       type: 'Gc',
@@ -243,6 +242,7 @@ export class Parser {
       children: [],
     };
 
+    res = this.tryParseGenMetadata(node) && res;
     res = this.tryParseMetadata(node) && res;
     res = this.tryParseChildren(node) && res;
 
@@ -784,6 +784,29 @@ export class Parser {
     }
 
     dest.push({ prop, isSpread: true, pos, value });
+    return true;
+  }
+
+  private tryParseGenMetadata(node: AstNode): boolean {
+    if (!this.tryReadExpectedTokenInsideTag('=')) {
+      return false;
+    }
+
+    if (!this.tryReadExpectedTokenInsideTag('{')) {
+      return false;
+    }
+
+    const dest = node.type === 'Gt' ? node.tagName! : node.compFunc!;
+
+    if (!this.tryParseVar(dest)) {
+      return false;
+    }
+
+    if (!this.tryReadExpectedTokenInsideTag('}')) {
+      return false;
+    }
+
+    this.skipComments();
     return true;
   }
 
