@@ -7,7 +7,6 @@ import {
   ComponentResult,
   ComponentUnwrapDto,
   ComponentUnwrapperContext,
-  Injection,
   VdomNode,
   VdomNodeType,
   VdomTagAttr,
@@ -18,7 +17,6 @@ import {
   AstNodeType,
   Condition,
   EventAttr,
-  InjectionArg,
   InterStr,
   KeymapArgs,
   PropAttr,
@@ -189,7 +187,6 @@ export class ComponentUnwrapper {
     const compSetupChain: Array<() => boolean> = [
       () => this.trySetComponentId(node, astNode, keymapKey),
       () => this.trySetProps(node, astNode),
-      () => this.trySetInjections(node, astNode),
       () => this.trySetUnwrapChildrenCallback(node, astNode),
     ];
 
@@ -205,11 +202,7 @@ export class ComponentUnwrapper {
       unwrapChildrenCallback: node.unwrapChildrenCallback,
     };
 
-    this.vdomUnwrapper.unwrapComponent(
-      dto,
-      node.injections!,
-      node.componentId!,
-    );
+    this.vdomUnwrapper.unwrapComponent(dto, node.componentId!);
     return true;
   }
 
@@ -689,61 +682,6 @@ export class ComponentUnwrapper {
     }
 
     node.props = props;
-    return true;
-  }
-
-  private trySetInjections(node: ComponentNode, astNode: AstNode): boolean {
-    if (!astNode.injections) {
-      throw new Error('Injections not defined');
-    }
-
-    const dest: Injection[] = [];
-
-    for (let i = 0; i < astNode.injections.length; i++) {
-      const injection = astNode.injections[i]!;
-      const outInjValue = { value: undefined };
-
-      if (!this.tryGetVar(injection.value, outInjValue)) {
-        return false;
-      }
-
-      const value: unknown = outInjValue.value;
-
-      if (typeof value !== 'object' || value === null) {
-        const got = value === null ? 'null' : typeof value;
-
-        this.logger.error(
-          injection.value.at(-1)!.pos,
-          `Context value must be an object, got ${got}`,
-        );
-        return false;
-      }
-
-      const outCtxValue = { value: undefined };
-
-      if (!this.tryGetVar(injection.contextKey, outCtxValue)) {
-        return false;
-      }
-
-      const contextKey: unknown = outCtxValue.value;
-
-      if (!contextKey) {
-        this.logger.error(
-          injection.contextKey.at(-1)!.pos,
-          'Cannot find context key in attachments',
-        );
-        return false;
-      } else if (typeof contextKey !== 'string') {
-        this.logger.error(
-          injection.contextKey.at(-1)!.pos,
-          'The context key must be a string',
-        );
-        return false;
-      }
-
-      dest.push({ contextKey, value });
-    }
-    node.injections = dest;
     return true;
   }
 

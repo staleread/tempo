@@ -5,6 +5,7 @@ export function isRef(ref: unknown): ref is Ref {
     return false;
   }
   return (
-    'current' in ref && (ref.current instanceof Element || ref.current === null)
+    'current' in ref &&
+    (ref.current instanceof Element || ref.current === null)
   );
 }

@@ -259,7 +259,7 @@ export class Lexer {
       this.pos,
     ) as TokenType;
 
-    const COMMANDS: TokenType[] = [':kmap', ':if', ':bind', ':ref', ':use'];
+    const COMMANDS: TokenType[] = [':kmap', ':if', ':bind', ':ref'];
 
     return COMMANDS.includes(command)
       ? this.createToken(command)

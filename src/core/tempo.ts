@@ -74,13 +74,6 @@ class Tempo {
     }
     return this.hooksDispatcher.useEffect(callback, deps);
   }
-
-  public useContext(contextKey: string): unknown {
-    if (!this.hooksDispatcher) {
-      throw new Error('Forbiden hook call outside component function');
-    }
-    return this.hooksDispatcher.useContext(contextKey);
-  }
 }
 
 export default new Tempo();
