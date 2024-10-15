@@ -1,6 +1,6 @@
 import { StateAllocator } from '../core/state/state-allocator';
 import { ComponentUnwrapperFactory } from './component-unwrapper-factory';
-import { ComponentUnwrapDto, Injection } from './vdom.types';
+import { ComponentUnwrapDto } from './vdom.types';
 import { AnyObject, ComponentFunc, VdomNode } from './vdom.types';
 
 export class VdomUnwrapper {
@@ -22,23 +22,20 @@ export class VdomUnwrapper {
       props: props ? props : {},
     };
 
-    const injections: Injection[] = [];
     const componentId = compFunc.name;
 
-    this.unwrapComponent(dto, injections, componentId);
+    this.unwrapComponent(dto, componentId);
     return root;
   }
 
   public unwrapComponent(
     dto: ComponentUnwrapDto,
-    injections: Injection[],
     componentId: string | number,
   ): void {
     if (dto.stateLevel === 0) {
       this.stateAllocator.reset();
     }
     this.stateAllocator.loadState(dto.stateLevel, componentId);
-    this.stateAllocator.injectContext(injections);
 
     const unwrapper =
       this.componentUnwrapperFactory.createComponentUnwrapper(dto, this);

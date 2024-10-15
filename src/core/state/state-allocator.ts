@@ -1,4 +1,3 @@
-import { Injection } from '../../vdom/vdom.types';
 import { State } from './state.types';
 
 export class StateAllocator {
@@ -42,39 +41,6 @@ export class StateAllocator {
       this.allocateState(level, componentId);
       return;
     }
-  }
-
-  public injectContext(injections: Injection[]): void {
-    const currState = this.states[this.stateIndex];
-
-    if (!currState) {
-      throw new RangeError('Trying to access state before loading it');
-    }
-    if (!currState.contextMap) {
-      currState.contextMap = new Map();
-    }
-
-    injections.forEach((i: Injection) => {
-      currState.contextMap!.set(i.contextKey, i.value);
-    });
-  }
-
-  public getContext(contextKey: string): unknown | undefined {
-    let level: number;
-    let index = this.stateIndex;
-
-    while (index > 0) {
-      const state = this.states[index]!;
-      level = state.level;
-
-      if (state.contextMap?.has(contextKey)) {
-        return state.contextMap!.get(contextKey);
-      }
-      while (state.level === level) {
-        index--;
-      }
-    }
-    return undefined;
   }
 
   private allocateState(level: number, componentId: string | number): void {

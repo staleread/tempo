@@ -28,7 +28,6 @@ type TagTokenType =
   | ':if'
   | ':bind'
   | ':ref'
-  | ':use'
   | '?comp'
   | '?tag'
   | '#children';

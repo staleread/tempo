@@ -60,13 +60,4 @@ export class HooksDispatcher {
       writeDeps(deps);
     }
   }
-
-  public useContext(contextKey: string): unknown {
-    const maybeContext = this.stateAllocator.getContext(contextKey);
-
-    if (maybeContext === undefined) {
-      throw new Error(`Context with key "${contextKey}" is not reachable`);
-    }
-    return maybeContext;
-  }
 }

@@ -27,11 +27,6 @@ export type VdomTagAttr = {
   value: string;
 };
 
-export type Injection = {
-  contextKey: string;
-  value: unknown;
-};
-
 export type AnyObject = { [key: string]: any };
 export type ComponentFunc = (props?: AnyObject) => ComponentResult;
 
@@ -53,7 +48,6 @@ export type ComponentNode = {
   componentId?: string | number;
   componentFunc?: ComponentFunc;
   props?: AnyObject;
-  injections?: Injection[];
   unwrapChildrenCallback?: (dest: VdomNode[]) => boolean;
 };
 

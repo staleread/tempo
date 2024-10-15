@@ -6,7 +6,6 @@ import {
   AstNodeType,
   Condition,
   EventAttr,
-  InjectionArg,
   InterStr,
   KeymapArgs,
   PropAttr,
@@ -203,7 +202,6 @@ export class Parser {
         invert: false,
         predicate: [],
       },
-      injections: [],
       children: [],
     };
 
@@ -238,7 +236,6 @@ export class Parser {
         invert: false,
         predicate: [],
       },
-      injections: [],
       children: [],
     };
 
@@ -398,16 +395,6 @@ export class Parser {
           hasCommand = true;
           res = this.tryParseRef(node.ref);
           continue;
-        case ':use':
-          if (!node.injections) {
-            this.logger.error(
-              node.id!.pos,
-              'The command is not allowed here',
-            );
-            return false;
-          }
-          res = this.tryParseInjection(node.injections) && res;
-          continue;
         default:
           res = false;
           this.logUnexpectedToken();
@@ -532,39 +519,6 @@ export class Parser {
     if (!this.tryReadExpectedTokenInsideTag('}')) {
       return false;
     }
-    this.skipComments();
-    return true;
-  }
-
-  private tryParseInjection(dest: InjectionArg[]): boolean {
-    const injection: InjectionArg = {
-      contextKey: [],
-      value: [],
-    };
-
-    this.index++;
-
-    if (!this.tryReadExpectedTokenInsideTag('=')) {
-      return false;
-    }
-    if (!this.tryReadExpectedTokenInsideTag('{')) {
-      return false;
-    }
-    if (!this.tryParseVar(injection.value)) {
-      return false;
-    }
-    if (!this.tryReadExpectedTokenInsideTag('as')) {
-      return false;
-    }
-    if (!this.tryParseVar(injection.contextKey)) {
-      return false;
-    }
-    if (!this.tryReadExpectedTokenInsideTag('}')) {
-      return false;
-    }
-
-    dest.push(injection);
-
     this.skipComments();
     return true;
   }

@@ -15,7 +15,6 @@ export type AstNode = {
   props?: PropAttr[];
   keymapArgs?: KeymapArgs;
   condition?: Condition;
-  injections?: InjectionArg[];
   children?: AstNode[];
 };
 
@@ -33,11 +32,6 @@ export type KeymapArgs = {
 export type Condition = {
   invert: boolean;
   predicate: Var;
-};
-
-export type InjectionArg = {
-  contextKey: Var;
-  value: Var;
 };
 
 export type TagAttr = {
