@@ -3,7 +3,7 @@ import { EventHandler, VdomEventType } from '../dom/events/event.types';
 import {
   AnyObject,
   ComponentFunc,
-  ComponentNode,
+  ComponentInfo,
   ComponentResult,
   ComponentUnwrapDto,
   ComponentUnwrapperContext,
@@ -147,14 +147,23 @@ export class ComponentUnwrapper {
     compFunc?: ComponentFunc,
     keymapKey?: string | number,
   ): boolean {
-    const node: ComponentNode = {};
+    const node: VdomNode = {
+      type: 'Comp',
+      children: [],
+    };
 
-    if (!this.trySetCompFunc(node, astNode, compFunc)) {
+    const compInfo: ComponentInfo = {};
+
+    if (!this.trySetCompFunc(compInfo, astNode, compFunc)) {
       return false;
     }
 
+    node.compName = compInfo.componentFunc!.name;
+
+    // when inside keymap, the component VdomNode wrapper is not needed
+    // so passing dest, not node.children
     const keymapRes = this.trySetKeymap(
-      node,
+      compInfo,
       astNode,
       dest,
       skipCommands,
@@ -163,7 +172,7 @@ export class ComponentUnwrapper {
           astNode,
           mapDest,
           true,
-          node.componentFunc!,
+          compInfo.componentFunc!,
           kmapKey,
         ),
     );
@@ -175,7 +184,7 @@ export class ComponentUnwrapper {
         return true;
     }
 
-    const conditionRes = this.trySetCondition(astNode, dest);
+    const conditionRes = this.trySetCondition(astNode, node.children!);
 
     switch (conditionRes) {
       case 'error':
@@ -185,9 +194,9 @@ export class ComponentUnwrapper {
     }
 
     const compSetupChain: Array<() => boolean> = [
-      () => this.trySetComponentId(node, astNode, keymapKey),
-      () => this.trySetProps(node, astNode),
-      () => this.trySetUnwrapChildrenCallback(node, astNode),
+      () => this.trySetComponentId(compInfo, astNode, keymapKey),
+      () => this.trySetProps(compInfo, astNode),
+      () => this.trySetUnwrapChildrenCallback(compInfo, astNode),
     ];
 
     if (compSetupChain.some((func) => !func())) {
@@ -195,14 +204,16 @@ export class ComponentUnwrapper {
     }
 
     const dto: ComponentUnwrapDto = {
-      dest,
+      dest: node.children!,
       stateLevel: this.stateLevel + 1,
-      componentFunc: node.componentFunc!,
-      props: node.props!,
-      unwrapChildrenCallback: node.unwrapChildrenCallback,
+      componentFunc: compInfo.componentFunc!,
+      props: compInfo.props!,
+      unwrapChildrenCallback: compInfo.unwrapChildrenCallback,
     };
 
-    this.vdomUnwrapper.unwrapComponent(dto, node.componentId!);
+    this.vdomUnwrapper.unwrapComponent(dto, compInfo.componentId!);
+
+    dest.push(node);
     return true;
   }
 
@@ -242,7 +253,7 @@ export class ComponentUnwrapper {
   }
 
   private trySetKeymap(
-    node: VdomNode | ComponentNode,
+    node: VdomNode | ComponentInfo,
     astNode: AstNode,
     dest: VdomNode[],
     skipCommands: boolean,
@@ -267,7 +278,7 @@ export class ComponentUnwrapper {
         break;
       case 'Cp':
       case 'Gc':
-        id = (node as ComponentNode).componentFunc!.name;
+        id = (node as ComponentInfo).componentFunc!.name;
         break;
       default:
         throw new Error('Unexpected node type');
@@ -373,7 +384,7 @@ export class ComponentUnwrapper {
         return;
       }
       if (['Cp', 'Gc'].includes(an.type)) {
-        const compNode: ComponentNode = {};
+        const compNode: ComponentInfo = {};
 
         if (
           !this.trySetCompFunc(compNode, an) ||
@@ -522,7 +533,7 @@ export class ComponentUnwrapper {
   }
 
   private trySetCompFunc(
-    node: ComponentNode,
+    node: ComponentInfo,
     astNode: AstNode,
     compFunc?: ComponentFunc,
   ): boolean {
@@ -583,7 +594,7 @@ export class ComponentUnwrapper {
   }
 
   private trySetComponentId(
-    node: ComponentNode,
+    node: ComponentInfo,
     astNode: AstNode,
     keymapKey?: string | number,
   ): boolean {
@@ -621,7 +632,7 @@ export class ComponentUnwrapper {
     return true;
   }
 
-  private trySetProps(node: ComponentNode, astNode: AstNode): boolean {
+  private trySetProps(node: ComponentInfo, astNode: AstNode): boolean {
     if (!astNode.props) {
       throw new Error('Props are not defined');
     }
@@ -686,7 +697,7 @@ export class ComponentUnwrapper {
   }
 
   private trySetUnwrapChildrenCallback(
-    node: ComponentNode,
+    node: ComponentInfo,
     astNode: AstNode,
   ): boolean {
     if (!astNode.children) {

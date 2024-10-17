@@ -9,71 +9,56 @@ import { AnyObject, ComponentFunc } from '../vdom/vdom.types';
 import { HooksDispatcher } from './hooks/hooks-dispatcher';
 import { StateAllocator } from './state/state-allocator';
 
-class Tempo {
-  private readonly vdomUnwrapper: VdomUnwrapper;
-  private readonly stateAllocator: StateAllocator;
+const loggerFactory = new LoggerFactory();
+const astProvider = new AstProvider();
 
-  private updateDom: () => void = () => {};
-  private hooksDispatcher?: HooksDispatcher;
+const compUnwrapperFactory = new ComponentUnwrapperFactory(
+  loggerFactory,
+  astProvider,
+);
 
-  constructor() {
-    const loggerFactory = new LoggerFactory();
-    const astProvider = new AstProvider();
+const stateAllocator = new StateAllocator();
+const vdomUnwrapper = new VdomUnwrapper(
+  stateAllocator,
+  compUnwrapperFactory,
+);
 
-    const componentUnwrapperFactory = new ComponentUnwrapperFactory(
-      loggerFactory,
-      astProvider,
-    );
+let hooksDispatcher: HooksDispatcher;
 
-    this.stateAllocator = new StateAllocator();
+export function render(
+  rootNode: DomElem,
+  compFunc: ComponentFunc,
+  props?: AnyObject,
+): void {
+  const eventRegister = new DomEventRegister(rootNode);
+  const domUpdater = new DomUpdater(rootNode, eventRegister);
 
-    this.vdomUnwrapper = new VdomUnwrapper(
-      this.stateAllocator,
-      componentUnwrapperFactory,
-    );
-  }
+  const updateDom = () => {
+    const vdom = vdomUnwrapper.unwrapVdom(compFunc, props);
+    domUpdater.updateDom(vdom);
+  };
 
-  public render(
-    rootNode: DomElem,
-    compFunc: ComponentFunc,
-    props?: AnyObject,
-  ): void {
-    const eventRegister = new DomEventRegister(rootNode);
-    const domUpdater = new DomUpdater(rootNode, eventRegister);
-
-    this.updateDom = () => {
-      const vdom = this.vdomUnwrapper.unwrapVdom(compFunc, props);
-      domUpdater.updateDom(vdom);
-    };
-
-    this.hooksDispatcher = new HooksDispatcher(
-      this.stateAllocator,
-      this.updateDom,
-    );
-
-    this.updateDom();
-  }
-
-  public useState<T>(initialValue: T): [T, (value: T) => void] {
-    if (!this.hooksDispatcher) {
-      throw new Error('Forbiden hook call outside component function');
-    }
-    return this.hooksDispatcher.useState(initialValue);
-  }
-
-  public useRef<T>(initialValue: T | null): { current: T | null } {
-    if (!this.hooksDispatcher) {
-      throw new Error('Forbiden hook call outside component function');
-    }
-    return this.hooksDispatcher.useRef(initialValue);
-  }
-
-  public useEffect(callback: () => void, deps?: any[]): void {
-    if (!this.hooksDispatcher) {
-      throw new Error('Forbiden hook call outside component function');
-    }
-    return this.hooksDispatcher.useEffect(callback, deps);
-  }
+  hooksDispatcher = new HooksDispatcher(stateAllocator, updateDom);
+  updateDom();
 }
 
-export default new Tempo();
+export function useState<T>(initialValue: T): [T, (value: T) => void] {
+  if (!hooksDispatcher) {
+    throw new Error('Forbiden hook call outside component function');
+  }
+  return hooksDispatcher.useState(initialValue);
+}
+
+export function useRef<T>(initialValue: T | null): { current: T | null } {
+  if (!hooksDispatcher) {
+    throw new Error('Forbiden hook call outside component function');
+  }
+  return hooksDispatcher.useRef(initialValue);
+}
+
+export function useEffect(callback: () => void, deps?: any[]): void {
+  if (!hooksDispatcher) {
+    throw new Error('Forbiden hook call outside component function');
+  }
+  return hooksDispatcher.useEffect(callback, deps);
+}

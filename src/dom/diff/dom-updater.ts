@@ -14,7 +14,12 @@ export class DomUpdater {
 
   public updateDom(newVdom: VdomNode): void {
     if (this.vdomBridge) {
-      this.visitNodePairChildren(this.vdomBridge, newVdom);
+      this.updateNodes(
+        this.vdomBridge.children!,
+        newVdom.children!,
+        this.vdomBridge.domElem!,
+      );
+
       this.eventRegister.removeUnused();
       return;
     }
@@ -32,13 +37,11 @@ export class DomUpdater {
     this.rootDomElem.appendChild(frag);
   }
 
-  private visitNodePairChildren(
-    oldNode: BridgeNode,
-    newNode: VdomNode,
+  private updateNodes(
+    oldChildren: BridgeNode[],
+    newChildren: VdomNode[],
+    parentDomElem: DomElem,
   ): void {
-    const oldChildren = oldNode.children;
-    const newChildren = newNode.children;
-
     if (!oldChildren || !newChildren) {
       return;
     }
@@ -50,63 +53,135 @@ export class DomUpdater {
       if (oldCh.type === 'Blank' && newCh.type === 'Blank') {
         continue;
       }
-      if (newCh.type === 'Blank') {
-        this.detachNodeRef(oldCh, oldNode.domElem!);
+      if (oldCh.type !== 'Blank' && newCh.type === 'Blank') {
+        this.detachNodeRef(oldCh, parentDomElem);
+
+        switch (oldCh.type) {
+          case 'Text':
+            parentDomElem.removeChild(oldCh.domTextNode!);
+            return;
+          case 'Tag':
+            (oldCh as BridgeNode).domElem!.remove();
+            return;
+          case 'Comp':
+            (oldCh.children![0] as BridgeNode).domElem!.remove();
+          default:
+            throw new Error('Unexpected node type to detach');
+        }
         oldChildren[i] = { type: 'Blank' };
         continue;
       }
-      if (
-        oldCh.type !== 'Blank' &&
-        this.tryResolveNodesDiff(oldCh, newCh)
-      ) {
+      if (oldCh.type === 'Blank') {
+        const frag = new DocumentFragment();
+
+        this.attachTag(newCh, frag);
+        this.insertFragment(frag, oldChildren, i, parentDomElem);
         continue;
       }
 
-      const frag = new DocumentFragment();
+      switch (oldCh.type) {
+        case 'Text':
+          if (oldCh.text! !== newCh.text!) {
+            oldCh.domTextNode!.nodeValue = newCh.text!;
+            oldCh.text = newCh.text!;
+          }
+          break;
+        case 'Tag': {
+          if (oldCh.tag === newCh.tag) {
+            this.resolveTagDiff(oldCh, newCh);
+            break;
+          }
+          const frag = new DocumentFragment();
+          this.attachTag(newCh, frag);
 
-      if (oldCh.type === 'Keymap') {
-        const ctx = newCh.keymapCtx!;
-
-        ctx.keys.forEach((key: string | number) => {
-          const node = ctx.nodeMap.get(key)!;
-          this.attachTag(node, frag);
-        });
-      } else {
-        this.attachNode(newCh, frag);
-      }
-
-      let nextDomElem: DomElem | undefined;
-
-      for (let j = i + 1; j < oldChildren.length; j++) {
-        const candidate = oldChildren[j] as BridgeNode;
-
-        if (!candidate.domElem && candidate.type !== 'Keymap') {
-          continue;
-        }
-        if (candidate.domElem) {
-          nextDomElem = candidate.domElem;
+          oldCh.domElem!.replaceWith(frag);
+          oldChildren[i] = newCh;
           break;
         }
-        if (!candidate.keymapCtx) {
-          throw new Error('Keymap context not defined');
-        }
-        if (candidate.keymapCtx.keys.length === 0) {
-          continue;
-        }
-        const ctx = candidate.keymapCtx;
-        const key = ctx.keys[0]!;
-        const node = ctx.nodeMap.get(key)!;
+        case 'Comp': {
+          const oldCompRootTag = oldCh.children![0] as BridgeNode;
+          const newCompRootTag = newCh.children![0]!;
 
-        nextDomElem = (node as BridgeNode).domElem!;
+          if (
+            oldCh.compName === newCh.compName &&
+            oldCompRootTag.tag === newCompRootTag.tag
+          ) {
+            this.resolveTagDiff(oldCompRootTag, newCompRootTag);
+            break;
+          }
+          const frag = new DocumentFragment();
+          this.attachTag(newCompRootTag, frag);
+
+          oldCompRootTag.domElem!.replaceWith(frag);
+          oldChildren[i] = newCh;
+          break;
+        }
+        case 'Keymap': {
+          const newCtx = newCh.keymapCtx!;
+
+          if (
+            oldCh.keymapCtx!.keys.length > 0 ||
+            newCtx.keys.length === 0
+          ) {
+            this.resolveKeymapDiff(oldCh, newCh);
+            break;
+          }
+          const frag = new DocumentFragment();
+
+          newCtx.keys.forEach((key: string | number) => {
+            const node = newCtx.nodeMap.get(key)!;
+            this.attachTag(node, frag);
+          });
+
+          this.insertFragment(frag, oldChildren, i, parentDomElem);
+          oldChildren[i] = newCh;
+          break;
+        }
+        default:
+          throw new Error('Unexpected node');
+      }
+    }
+  }
+
+  private insertFragment(
+    fragment: DocumentFragment,
+    nodes: BridgeNode[],
+    index: number,
+    parentDomElem: DomElem,
+  ): void {
+    let nextDomElem: DomElem | undefined;
+
+    for (let i = index + 1; i < nodes.length; i++) {
+      const candidate = nodes[i] as BridgeNode;
+
+      if (candidate.domElem) {
+        nextDomElem = candidate.domElem;
         break;
       }
+      if (candidate.type === 'Comp') {
+        nextDomElem = (candidate.children![0] as BridgeNode).domElem!;
+        break;
+      }
+      if (candidate.type !== 'Keymap') {
+        continue;
+      }
+      if (!candidate.keymapCtx) {
+        throw new Error('Keymap context not defined');
+      }
+      if (candidate.keymapCtx.keys.length === 0) {
+        continue;
+      }
+      const ctx = candidate.keymapCtx;
+      const key = ctx.keys[0]!;
+      const node = ctx.nodeMap.get(key)!;
 
-      oldChildren[i] = newCh;
-
-      nextDomElem
-        ? nextDomElem.before(frag)
-        : oldNode.domElem!.appendChild(frag);
+      nextDomElem = (node as BridgeNode).domElem!;
+      break;
     }
+
+    nextDomElem
+      ? nextDomElem.before(fragment)
+      : parentDomElem.appendChild(fragment);
   }
 
   private attachNode(node: BridgeNode, parentNode: Node): void {
@@ -115,6 +190,9 @@ export class DomUpdater {
         return this.attachText(node, parentNode);
       case 'Tag':
         return this.attachTag(node, parentNode);
+      case 'Comp':
+        const compRootNode = node.children![0] as BridgeNode;
+        return this.attachTag(compRootNode, parentNode);
       case 'Keymap':
         node.keymapCtx!.keys.forEach((key: string | number) => {
           const tag = node.keymapCtx!.nodeMap.get(key) as BridgeNode;
@@ -167,41 +245,7 @@ export class DomUpdater {
     }
   }
 
-  private tryResolveNodesDiff(
-    oldNode: BridgeNode,
-    newNode: VdomNode,
-  ): boolean {
-    switch (oldNode.type) {
-      case 'Text':
-        return this.tryResolveTextDiff(oldNode, newNode);
-      case 'Tag':
-        return this.tryResolveTagDiff(oldNode, newNode);
-      case 'Keymap':
-        return this.tryResolveKeymapDiff(oldNode, newNode);
-      default:
-        throw new Error('Unexpected node');
-    }
-  }
-
-  private tryResolveTextDiff(
-    oldNode: BridgeNode,
-    newNode: VdomNode,
-  ): boolean {
-    if (oldNode.text! !== newNode.text!) {
-      oldNode.domTextNode!.nodeValue = newNode.text!;
-      oldNode.text = newNode.text!;
-    }
-    return true;
-  }
-
-  private tryResolveTagDiff(
-    oldNode: BridgeNode,
-    newNode: VdomNode,
-  ): boolean {
-    if (oldNode.tag! !== newNode.tag!) {
-      return false;
-    }
-
+  private resolveTagDiff(oldNode: BridgeNode, newNode: VdomNode): void {
     for (let i = 0; i < oldNode.attrs!.length; i++) {
       const oldAttr = oldNode.attrs![i]!;
       const newAttr = newNode.attrs![i]!;
@@ -230,15 +274,14 @@ export class DomUpdater {
       this.eventRegister.register(e);
     });
 
-    this.visitNodePairChildren(oldNode, newNode);
-
-    return true;
+    this.updateNodes(
+      oldNode.children!,
+      newNode.children!,
+      oldNode.domElem!,
+    );
   }
 
-  private tryResolveKeymapDiff(
-    oldNode: BridgeNode,
-    newNode: VdomNode,
-  ): boolean {
+  private resolveKeymapDiff(oldNode: BridgeNode, newNode: VdomNode): void {
     if (!oldNode.keymapCtx || !newNode.keymapCtx) {
       throw new Error('Keymap context not defined');
     }
@@ -249,9 +292,6 @@ export class DomUpdater {
     const newKeys = newNode.keymapCtx.keys;
     const newNodeMap = newNode.keymapCtx.nodeMap;
 
-    if (newKeys.length > 0 && oldKeys.length === 0) {
-      return false;
-    }
     if (newKeys.length === 0 && oldKeys.length > 0) {
       oldKeys.forEach((key: string | number) => {
         const node = oldNodeMap.get(key)!;
@@ -260,7 +300,7 @@ export class DomUpdater {
 
       oldNode.keymapCtx.keys = [];
       oldNode.keymapCtx.nodeMap = new Map();
-      return true;
+      return;
     }
     if (oldNode.keymapCtx.id !== newNode.keymapCtx.id) {
       let firstDomElem: DomElem;
@@ -285,7 +325,7 @@ export class DomUpdater {
       firstDomElem!.replaceWith(frag);
       oldNode.keymapCtx = newNode.keymapCtx;
 
-      return true;
+      return;
     }
 
     let i = 0;
@@ -300,7 +340,7 @@ export class DomUpdater {
       const newCh = newNodeMap.get(newKey)!;
 
       if (oldKey === newKey) {
-        this.tryResolveTagDiff(oldCh, newCh);
+        this.resolveTagDiff(oldCh, newCh);
         continue;
       }
 
@@ -331,7 +371,7 @@ export class DomUpdater {
           beforeExpectedDomElem.after(oldCh.domElem!);
         }
 
-        this.tryResolveTagDiff(expectedCh, newCh);
+        this.resolveTagDiff(expectedCh, newCh);
         continue;
       }
 
@@ -368,7 +408,7 @@ export class DomUpdater {
 
         oldNodeMap.delete(oldKey);
 
-        this.tryResolveTagDiff(expectedCh, newCh);
+        this.resolveTagDiff(expectedCh, newCh);
         continue;
       }
 
@@ -388,6 +428,10 @@ export class DomUpdater {
       oldNodeMap.set(newKey, newCh);
     }
 
+    if (i === oldKeys.length && i === newKeys.length) {
+      return;
+    }
+
     if (i < oldKeys.length) {
       const tmpIndex = i;
 
@@ -399,24 +443,21 @@ export class DomUpdater {
       }
 
       oldKeys.splice(tmpIndex, oldKeys.length - tmpIndex);
-      return true;
+      return;
     }
-    if (i < newKeys.length) {
-      const lastOldNode = oldNodeMap.get(oldKeys.at(-1)!) as BridgeNode;
-      const lastElem = lastOldNode.domElem!;
-      const frag = new DocumentFragment();
 
-      for (i; i < newKeys.length; i++) {
-        const node = newNodeMap.get(newKeys[i]!) as BridgeNode;
-        this.attachTag(node, frag);
+    const lastOldNode = oldNodeMap.get(oldKeys.at(-1)!) as BridgeNode;
+    const lastElem = lastOldNode.domElem!;
+    const frag = new DocumentFragment();
 
-        oldKeys.push(newKeys[i]!);
-        oldNodeMap.set(newKeys[i]!, node);
-      }
+    for (i; i < newKeys.length; i++) {
+      const node = newNodeMap.get(newKeys[i]!) as BridgeNode;
+      this.attachTag(node, frag);
 
-      lastElem.after(frag);
-      return true;
+      oldKeys.push(newKeys[i]!);
+      oldNodeMap.set(newKeys[i]!, node);
     }
-    return true;
+
+    lastElem.after(frag);
   }
 }
