@@ -1,12 +1,19 @@
 import { DomElem } from '../dom/dom.types';
 import { EventHandler, VdomEventType } from '../dom/events/event.types';
 
-export type VdomNodeType = 'Root' | 'Text' | 'Tag' | 'Keymap' | 'Blank';
+export type VdomNodeType =
+  | 'Root'
+  | 'Text'
+  | 'Tag'
+  | 'Comp'
+  | 'Keymap'
+  | 'Blank';
 
 export type VdomNode = {
   type: VdomNodeType;
   text?: string;
   tag?: string;
+  compName?: string;
   ref?: Ref;
   keymapKey?: string | number;
   attrs?: VdomTagAttr[];
@@ -44,7 +51,7 @@ export type ComponentUnwrapDto = {
   unwrapChildrenCallback?: (dest: VdomNode[]) => boolean;
 };
 
-export type ComponentNode = {
+export type ComponentInfo = {
   componentId?: string | number;
   componentFunc?: ComponentFunc;
   props?: AnyObject;
