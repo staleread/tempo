@@ -3,6 +3,9 @@ export type LexerMode = 'TAG' | 'TXT' | 'VAR' | 'TXT_VAR';
 type TransitionTokenType = 'eof' | '<' | '>' | '{' | '}' | '"';
 
 type VarTokenType =
+  | '('
+  | ')'
+  | ','
   | 'dot'
   | 'in'
   | 'by'

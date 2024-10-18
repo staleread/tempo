@@ -509,7 +509,14 @@ export class ComponentUnwrapper {
         );
         return false;
       }
-      map.set(event.event, handler as EventHandler);
+
+      const args: any[] = [];
+
+      if (event.args.length && !this.tryGetVarArray(event.args, args)) {
+        return false;
+      }
+
+      map.set(event.event, (e?: Event) => handler(...args, e));
     }
 
     node.eventsMap = map;
@@ -764,6 +771,22 @@ export class ComponentUnwrapper {
     }
 
     outString.str = str;
+    return true;
+  }
+
+  private tryGetVarArray(varArr: Var[], outArr: any[]): boolean {
+    if (!varArr.length) {
+      return false;
+    }
+
+    for (let i = 0; i < varArr.length; i++) {
+      const outValue = { value: undefined };
+
+      if (!this.tryGetVar(varArr[i]!, outValue)) {
+        return false;
+      }
+      outArr.push(outValue.value);
+    }
     return true;
   }
 

@@ -106,6 +106,12 @@ export class Lexer {
     switch (char) {
       case '.':
         return this.createToken('dot');
+      case '(':
+        return this.createToken('(');
+      case ')':
+        return this.createToken(')');
+      case ',':
+        return this.createToken(',');
       case '}':
         this.mode = 'TAG';
         return this.createToken('}');
