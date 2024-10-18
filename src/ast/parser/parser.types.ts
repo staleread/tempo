@@ -46,6 +46,7 @@ export type EventAttr = {
   event: VdomEventType;
   pos: number;
   handler: Var;
+  args: Var[];
 };
 
 export type PropAttr = {

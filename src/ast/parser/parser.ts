@@ -657,11 +657,39 @@ export class Parser {
     if (!this.tryParseVar(handler)) {
       return false;
     }
+    if (this.token().type === '}') {
+      this.index++;
+      if (res) dest.push({ event, pos, handler, args: [] });
+      return res;
+    }
+    if (!this.tryReadExpectedTokenInsideTag('(')) {
+      return false;
+    }
+
+    const args: Var[] = [];
+    let isFirst = true;
+
+    while (isFirst || this.token().type === ',') {
+      !isFirst && this.index++;
+
+      const arg: Var = [];
+
+      if (!this.tryParseVar(arg)) {
+        return false;
+      }
+      args.push(arg);
+
+      isFirst = false;
+    }
+
+    if (!this.tryReadExpectedTokenInsideTag(')')) {
+      return false;
+    }
     if (!this.tryReadExpectedTokenInsideTag('}')) {
       return false;
     }
 
-    if (res) dest.push({ event, pos, handler });
+    if (res) dest.push({ event, pos, handler, args });
     return res;
   }
 
